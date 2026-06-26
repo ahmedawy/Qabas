@@ -1,0 +1,51 @@
+<?php
+
+return [
+    // 23 Primary Tags
+    'راوي' => ['linkTable' => 'nouns', 'category' => 'inline'],
+    'حديث' => ['linkTable' => null, 'category' => 'structural'],
+    'مسألة' => ['linkTable' => null, 'category' => 'structural'],
+    'طرف' => ['linkTable' => null, 'category' => 'inline'],
+    'متن' => ['linkTable' => null, 'category' => 'structural'],
+    'غريب' => ['linkTable' => 'lexiconitems', 'category' => 'inline'],
+    'الصفحات' => ['linkTable' => null, 'category' => 'metadata'],
+    'قول' => ['linkTable' => null, 'category' => 'inline'],
+    'تكشيف' => ['linkTable' => null, 'category' => 'metadata'],
+    'سند' => ['linkTable' => null, 'category' => 'structural'],
+    'مصطلح_صيغ' => ['linkTable' => null, 'category' => 'inline'],
+    'هامش' => ['linkTable' => null, 'category' => 'metadata'],
+    'آية' => ['linkTable' => 'quranayat', 'category' => 'inline'],
+    'قرآن' => ['linkTable' => null, 'category' => 'structural'],
+    'تعريف' => ['linkTable' => null, 'category' => 'metadata'],
+    'تفسير' => ['linkTable' => null, 'category' => 'structural'],
+    'تواريخ' => ['linkTable' => 'matndates', 'category' => 'inline'],
+    'علم' => ['linkTable' => 'nouns', 'category' => 'inline'],
+    'فوائد' => ['linkTable' => null, 'category' => 'metadata'],
+    'شعر' => ['linkTable' => null, 'category' => 'structural'],
+    'زيادات' => ['linkTable' => 'nouns', 'category' => 'inline'],
+    'قراءة' => ['linkTable' => null, 'category' => 'inline'],
+    'إدراج' => ['linkTable' => null, 'category' => 'metadata'],
+
+    // 10 Sub-tags
+    'رقم_حديث' => ['linkTable' => null, 'category' => 'inline'],
+    'رقم_الفقرة' => ['linkTable' => null, 'category' => 'metadata'],
+    'صيغة_تحديث' => ['linkTable' => null, 'category' => 'inline'],
+    'شطر_بيت' => ['linkTable' => null, 'category' => 'structural'],
+    'علم_رجل' => ['linkTable' => 'nouns', 'category' => 'inline'],
+    'علم_مكان' => ['linkTable' => 'lexiconitems', 'category' => 'inline'],
+    'نوع_قراءة' => ['linkTable' => null, 'category' => 'metadata'],
+    'مصطلح_متون' => ['linkTable' => null, 'category' => 'structural'],
+    'نص_مخفي' => ['linkTable' => null, 'category' => 'metadata'],
+    'نه' => ['linkTable' => null, 'category' => 'metadata'],
+
+    // Compound Matn tags (hcompoundmatn)
+    'Root'               => ['linkTable' => null, 'category' => 'structural'],
+    'Document'           => ['linkTable' => null, 'category' => 'structural'],
+    'MutonBook'          => ['linkTable' => null, 'category' => 'structural'],
+    'Muton'              => ['linkTable' => null, 'category' => 'structural'],
+    'MMHit'              => ['linkTable' => null, 'category' => 'inline'],
+    'MMMainHadith'       => ['linkTable' => null, 'category' => 'structural'],
+    'MMPortionSources'   => ['linkTable' => null, 'category' => 'metadata'],
+    'MMPortionsFootNote' => ['linkTable' => null, 'category' => 'metadata'],
+    'CompounMatnSame'    => ['linkTable' => null, 'category' => 'inline'],
+];

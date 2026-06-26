@@ -1,0 +1,486 @@
+# Final Plan: Full Content Removal + Linking Table + Frontend Migration
+
+## Goal
+
+1. Migrate XML tags from `booktoc_services` (600K rows) and `hcompoundmatn` (16K rows)
+2. Create `annotation_links` denormalized table for fast tag-based lookups
+3. Update all backend controllers to use `CleanContent` + `Annotations`
+4. Drop the `Content` / `Matn` columns from all 3 tables
+5. Update the frontend to consume `CleanContent` + `Annotations`
+
+---
+
+## Data Inventory
+
+| Table | Rows | XML Rows | Content Column | Status |
+|---|---|---|---|---|
+| `booktoc_hadith` | 339,607 | 339,607 | `Content` | ✅ Already migrated |
+| `booktoc_services` | 600,575 | 336,195 | `Content` | ❌ Needs migration |
+| `hcompoundmatn` | 16,640 | 16,640 | `Matn` | ❌ Needs migration |
+
+### Tag Differences
+
+`hcompoundmatn.Matn` uses a **completely different tag set** from hadith/services:
+
+| hcompoundmatn Tags | Purpose |
+|---|---|
+| `Root` | Document root wrapper |
+| `Document`, `MutonBook` | Book-level grouping |
+| `Muton` | Individual matn segment |
+| `MMHit` | Variant reading highlight (has `HIDs`, `MMID`, `MMSText` attrs) |
+| `MMMainHadith` | Primary hadith reference |
+| `MMPortionSources`, `MMPortionsFootNote` | Source cross-references |
+| `CompounMatnSame` | Identical text marker |
+
+> [!NOTE]
+> `AsanedComp` column has 0 non-empty rows — it's effectively unused.
+
+---
+
+## Phase 1: Migrate `booktoc_services` (Data)
+
+### 1A. Schema Migration
+
+#### [NEW] `database/migrations/..._add_annotation_columns_to_booktoc_services.php`
+
+- Create backup: `booktoc_services_Backup_20260625`
+- Add `CleanContent` (MEDIUMTEXT, nullable) after `Content`
+- Add `Annotations` (JSON, nullable) after `CleanContent`
+
+---
+
+### 1B. Generalize Migration Command
+
+#### [MODIFY] [MigrateAnnotations.php](file:///d:/xampp/htdocs/Hadith/api/app/Console/Commands/MigrateAnnotations.php)
+
+Add `--table` and `--content-column` options:
+
+```php
+protected $signature = 'hadith:migrate-annotations
+                        {--table=booktoc_hadith : Target table name}
+                        {--content-column=Content : Source column with XML}
+                        {--chunk=1000 : Rows per batch}
+                        {--dry-run : Parse without writing}';
+```
+
+The existing parser works unchanged — same XML tag syntax in both tables. Run:
+```bash
+php artisan hadith:migrate-annotations --table=booktoc_services
+```
+
+---
+
+### 1C. Model Update
+
+#### [MODIFY] [BookTocService.php](file:///d:/xampp/htdocs/Hadith/api/app/Models/BookTocService.php)
+
+- Add `@property string|null $CleanContent` and `@property array|null $Annotations` to docblock
+- Add `'Annotations' => 'json'` to `$casts`
+
+---
+
+### 1D. Verification
+
+Run the deep verification script against `booktoc_services` (same 10-point check).
+
+---
+
+## Phase 2: Migrate `hcompoundmatn` (Data)
+
+### 2A. Schema Migration
+
+#### [NEW] `database/migrations/..._add_annotation_columns_to_hcompoundmatn.php`
+
+- Create backup: `hcompoundmatn_Backup_20260625`
+- Add `CleanMatn` (MEDIUMTEXT, nullable) after `Matn`
+- Add `MatnAnnotations` (JSON, nullable) after `CleanMatn`
+
+> [!NOTE]
+> We use `CleanMatn` / `MatnAnnotations` (not `CleanContent` / `Annotations`) because the source column is `Matn`, not `Content`. This keeps naming consistent.
+
+---
+
+### 2B. Run Migration
+
+```bash
+php artisan hadith:migrate-annotations --table=hcompoundmatn --content-column=Matn
+```
+
+The command will write to `CleanMatn` and `MatnAnnotations` columns (the command will detect column names based on the `--content-column` option: if `Matn` → writes to `CleanMatn`/`MatnAnnotations`; if `Content` → writes to `CleanContent`/`Annotations`).
+
+---
+
+### 2C. Register New Tag Types
+
+#### [MODIFY] [tag-types.php](file:///d:/xampp/htdocs/Hadith/api/config/tag-types.php)
+
+Add the `hcompoundmatn`-specific tags:
+
+```php
+// Compound Matn tags (hcompoundmatn)
+'Root'               => ['linkTable' => null, 'category' => 'structural'],
+'Document'           => ['linkTable' => null, 'category' => 'structural'],
+'MutonBook'          => ['linkTable' => null, 'category' => 'structural'],
+'Muton'              => ['linkTable' => null, 'category' => 'structural'],
+'MMHit'              => ['linkTable' => null, 'category' => 'inline'],
+'MMMainHadith'       => ['linkTable' => null, 'category' => 'structural'],
+'MMPortionSources'   => ['linkTable' => null, 'category' => 'metadata'],
+'MMPortionsFootNote' => ['linkTable' => null, 'category' => 'metadata'],
+'CompounMatnSame'    => ['linkTable' => null, 'category' => 'inline'],
+```
+
+---
+
+### 2D. Model Update
+
+#### [MODIFY] [CompoundMatn.php](file:///d:/xampp/htdocs/Hadith/api/app/Models/CompoundMatn.php)
+
+- Add `@property string|null $CleanMatn` and `@property array|null $MatnAnnotations` to docblock
+- Add `'MatnAnnotations' => 'json'` to `$casts`
+
+---
+
+### 2E. Verification
+
+Run deep verification against `hcompoundmatn` (adapted for `Matn` → `CleanMatn`).
+
+---
+
+## Phase 3: Create `annotation_links` Denormalized Table
+
+> [!IMPORTANT]
+> This replaces the slow `Content LIKE '%<tag%ربط="ID"%'` queries in `GetIndexNamesController` and `GetIndexPoetryController` with fast indexed lookups.
+
+### 3A. Schema Migration
+
+#### [NEW] `database/migrations/..._create_annotation_links_table.php`
+
+```sql
+CREATE TABLE annotation_links (
+    id           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    source_table ENUM('booktoc_hadith', 'booktoc_services') NOT NULL,
+    source_id    INT NOT NULL,          -- MainID in source table
+    tag_type     VARCHAR(50) NOT NULL,  -- e.g. 'راوي', 'غريب', 'علم_رجل'
+    link_id      INT NOT NULL,          -- the ربط value (FK to nouns, lexiconitems, etc.)
+    INDEX idx_tag_link (tag_type, link_id),
+    INDEX idx_source (source_table, source_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+---
+
+### 3B. Population Command
+
+#### [NEW] `app/Console/Commands/PopulateAnnotationLinks.php`
+
+Reads the `Annotations` JSON from both `booktoc_hadith` and `booktoc_services`, and for every annotation with a non-null `linkId`, inserts a row into `annotation_links`.
+
+```bash
+php artisan hadith:populate-annotation-links
+```
+
+**Estimated rows**: Based on sampling (1,662 linkId annotations per 100 rows), approximately **5.6M rows** for `booktoc_hadith` + additional rows from `booktoc_services`. The composite index `(tag_type, link_id)` makes lookups O(log n).
+
+---
+
+### 3C. Rewrite Index Controllers
+
+#### [MODIFY] [GetIndexNamesController.php](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetIndexNamesController.php)
+
+**Before** (lines 63, 78):
+```php
+->where('Content', 'LIKE', '%<'.$tag.'%ربط="%'.$id.'%"%')
+```
+
+**After**:
+```php
+->whereIn('MainID', function ($q) use ($tag, $id) {
+    $q->select('source_id')
+      ->from('annotation_links')
+      ->where('source_table', 'booktoc_hadith')  // or booktoc_services
+      ->where('tag_type', $tag)
+      ->where('link_id', (int) $id);
+})
+```
+
+#### [MODIFY] [GetIndexPoetryController.php](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetIndexPoetryController.php)
+
+Same pattern — lines 54, 69.
+
+---
+
+## Phase 4: Update All Backend Controllers
+
+Every controller that selects `Content` must switch to `CleanContent`.
+
+### `booktoc_hadith` controllers
+
+| Controller | Line(s) | Change |
+|---|---|---|
+| [HadithSummaryResource](file:///d:/xampp/htdocs/Hadith/api/app/Http/Resources/HadithSummaryResource.php) | 29 | Add `Annotations` field |
+| [HadithDetailResource](file:///d:/xampp/htdocs/Hadith/api/app/Http/Resources/HadithDetailResource.php) | 28-30 | Remove `Content`, keep `CleanContent` + `Annotations` |
+| [GetSubjectTreeController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetSubjectTreeController.php) | 50 | `h.Content` → `h.CleanContent as Content` |
+| [GroupedHadithResource](file:///d:/xampp/htdocs/Hadith/api/app/Http/Resources/GroupedHadithResource.php) | 30 | Read `CleanContent` |
+| [GetGroupedMtnController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetGroupedMtnController.php) | 75 | `Content` → `CleanContent as Content` |
+| [GetAtrafExtraController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetAtrafExtraController.php) | 68-69 | `Content as SrcText/TgtText` → `CleanContent as ...` |
+| [GetIndexNamesController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetIndexNamesController.php) | 71, 86 | `Content as Content` → `CleanContent as Content` |
+| [GetIndexPoetryController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetIndexPoetryController.php) | 62, 77 | `Content as Content` → `CleanContent as Content` |
+
+### `booktoc_services` controllers
+
+| Controller | Line(s) | Change |
+|---|---|---|
+| [GetControversialController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetControversialController.php) | 50 | `s.Content` → `s.CleanContent as Content` |
+| [GetLexiconGhareebController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetLexiconGhareebController.php) | 50 | `s.Content` → `s.CleanContent as Content` |
+| [GetLexiconPlacesController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetLexiconPlacesController.php) | 50 | `s.Content` → `s.CleanContent as Content` |
+| [GetIndexVersesController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetIndexVersesController.php) | 57 | `s.Content` → `s.CleanContent as Content` |
+| [GetScSayScienceController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetScSayScienceController.php) | 48, 85 | `Content` → `CleanContent` |
+| [GetNarratorDetailController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetNarratorDetailController.php) | 94 | `Content` → `CleanContent` |
+
+### `hcompoundmatn` controllers
+
+| Controller | Line(s) | Change |
+|---|---|---|
+| [GetHadithDetailController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetHadithDetailController.php) | 131 | `$compoundMatn->Matn` → `$compoundMatn->CleanMatn` |
+| [GetHadithDetailController](file:///d:/xampp/htdocs/Hadith/api/app/Http/Controllers/Api/V1/GetHadithDetailController.php) | 129-133 | Add `matn_annotations` to response |
+| [CompoundMatnResource](file:///d:/xampp/htdocs/Hadith/api/app/Http/Resources/CompoundMatnResource.php) | 26 | `Matn` → `CleanMatn`, add `MatnAnnotations` |
+
+---
+
+## Phase 5: Drop Content Columns
+
+> [!CAUTION]
+> Execute ONLY after all controllers are updated and tested. Backup tables remain as safety net.
+
+#### [NEW] `database/migrations/..._drop_content_columns.php`
+
+```php
+// booktoc_hadith
+Schema::table('booktoc_hadith', fn (Blueprint $t) => $t->dropColumn('Content'));
+
+// booktoc_services
+Schema::table('booktoc_services', fn (Blueprint $t) => $t->dropColumn('Content'));
+
+// hcompoundmatn
+Schema::table('hcompoundmatn', fn (Blueprint $t) => $t->dropColumn('Matn'));
+```
+
+Also update models to remove `@property string $Content` / `$Matn` from docblocks.
+
+---
+
+## Phase 6: Frontend Updates
+
+### 6A. TypeScript Types
+
+#### [MODIFY] [index.ts](file:///d:/xampp/htdocs/Hadith/spa/src/types/index.ts)
+
+```typescript
+// NEW type
+export interface Annotation {
+  type: string;
+  start: number;
+  length: number;
+  linkId: number | null;
+  parentIndex: number | null;
+  attrs: Record<string, string> | null;
+}
+
+// UPDATE HadithSummary — Content → CleanContent + Annotations
+export interface HadithSummary {
+  MainID: number;
+  BookID: number;
+  BookName: string;
+  HadithNum: number;
+  CleanContent: string;
+  Annotations: Annotation[];
+  PartNum: number;
+  PageNum: number;
+}
+
+// UPDATE HadithDetail — Content → CleanContent + Annotations
+export interface HadithDetail {
+  MainID: number;
+  BookID: number;
+  BookName: string;
+  HadithNum: number;
+  CleanContent: string;
+  Annotations: Annotation[];
+  ParentID: number | null;
+  PartNum: number;
+  PageNum: number;
+  TarqeemHarf: string;
+}
+
+// UPDATE CombinedMatn — matn_xml → clean_matn + matn_annotations
+export interface CombinedMatn {
+  id: number;
+  clean_matn: string;
+  matn_annotations: Annotation[];
+  asaned_comp: string;
+}
+```
+
+> [!NOTE]
+> `ServiceText.Content` stays as-is — the backend aliases `CleanContent as Content`, so the field name doesn't change for Flow B. The value is just clean text now.
+
+---
+
+### 6B. Annotation-Based Renderer
+
+#### [NEW] [annotationRenderer.ts](file:///d:/xampp/htdocs/Hadith/spa/src/utils/annotationRenderer.ts)
+
+Converts `CleanContent` + `Annotation[]` → `ASTNode[]` (same type as `hadithParser.ts`):
+
+**Algorithm**:
+1. Build parent-child tree from flat `Annotation[]` using `parentIndex`
+2. Sort root annotations by `start` ascending
+3. Walk the clean text, slicing character ranges into `text` nodes and wrapping annotated ranges into `element` nodes with `tag`, `attrs` (including synthesized `ربط` from `linkId`)
+4. Recurse for nested children
+
+Output is identical `ASTNode[]`, so `HadithContentRenderer`'s `renderASTNode` switch/case works unchanged.
+
+---
+
+### 6C. Component Updates
+
+#### [MODIFY] [HadithContentRenderer](file:///d:/xampp/htdocs/Hadith/spa/src/features/hadiths/HadithCard.tsx#L15-L163)
+
+Add optional `annotations` prop:
+```tsx
+export const HadithContentRenderer: React.FC<{
+  content: string;
+  annotations?: Annotation[];
+  onNarratorClick?: (id: number) => void;
+  onLexiconClick?: (wordId: number) => void;
+}> = ({ content, annotations, onNarratorClick, onLexiconClick }) => {
+  const ast = annotations && annotations.length > 0
+    ? buildASTFromAnnotations(content, annotations)
+    : getHadithAST(content);  // fallback for ServiceText
+  // ... renderASTNode unchanged
+};
+```
+
+#### [MODIFY] [HadithCard.tsx](file:///d:/xampp/htdocs/Hadith/spa/src/features/hadiths/HadithCard.tsx)
+
+```diff
+- content={hadith.Content}
++ content={hadith.CleanContent}
++ annotations={hadith.Annotations}
+```
+
+#### [MODIFY] [HadithDetailModal.tsx](file:///d:/xampp/htdocs/Hadith/spa/src/features/hadiths/HadithDetailModal.tsx)
+
+```diff
+  {/* Line 214: Main hadith text */}
+- content={hadith.Content}
++ content={hadith.CleanContent}
++ annotations={hadith.Annotations}
+
+  {/* Line 342: Combined matn — now also annotation-based */}
+- content={data.combined_matn.matn_xml}
++ content={data.combined_matn.clean_matn}
++ annotations={data.combined_matn.matn_annotations}
+```
+
+#### [MODIFY] [BookmarksPanel.tsx](file:///d:/xampp/htdocs/Hadith/spa/src/features/auth/BookmarksPanel.tsx)
+
+```diff
+- {h.Content.replace(/<[^>]*>/g, '')}
++ {h.CleanContent}
+```
+
+#### No structural changes needed:
+- **ThematicHub / SciencesHub / AtrafHub** — `ServiceText.Content` field name unchanged (backend aliases `CleanContent as Content`). `cleanXml()` becomes a harmless no-op.
+- **NarratorDrawer** — Same, receives clean text via alias.
+- **hadithParser.ts** — Kept as fallback for any remaining XML content (e.g. `ServiceText` from backends that still alias).
+
+---
+
+## Execution Order
+
+```mermaid
+graph TD
+    A["Phase 1: Migrate booktoc_services<br/>(600K rows)"] --> C["Phase 3: Create annotation_links table<br/>+ populate from both tables"]
+    B["Phase 2: Migrate hcompoundmatn<br/>(16K rows)"] --> C
+    C --> D["Phase 4: Update all backend controllers<br/>(14 controllers + 4 resources)"]
+    D --> E["Phase 6: Frontend updates<br/>(types + renderer + 4 components)"]
+    D --> F["Phase 5: Drop Content columns<br/>(3 tables, after full testing)"]
+    E --> G["Build + Integration Test"]
+    F --> G
+```
+
+---
+
+## File Change Summary
+
+| Phase | File | Action |
+|---|---|---|
+| 1 | `migrations/..._booktoc_services.php` | NEW |
+| 1 | `MigrateAnnotations.php` | MODIFY — add `--table`, `--content-column` |
+| 1 | `BookTocService.php` | MODIFY — add casts + docblock |
+| 2 | `migrations/..._hcompoundmatn.php` | NEW |
+| 2 | `config/tag-types.php` | MODIFY — add compound matn tags |
+| 2 | `CompoundMatn.php` | MODIFY — add casts + docblock |
+| 3 | `migrations/..._annotation_links.php` | NEW |
+| 3 | `PopulateAnnotationLinks.php` | NEW |
+| 4 | `HadithSummaryResource.php` | MODIFY |
+| 4 | `HadithDetailResource.php` | MODIFY |
+| 4 | `GetSubjectTreeController.php` | MODIFY |
+| 4 | `GroupedHadithResource.php` | MODIFY |
+| 4 | `GetGroupedMtnController.php` | MODIFY |
+| 4 | `GetAtrafExtraController.php` | MODIFY |
+| 4 | `GetIndexNamesController.php` | MODIFY |
+| 4 | `GetIndexPoetryController.php` | MODIFY |
+| 4 | `GetControversialController.php` | MODIFY |
+| 4 | `GetLexiconGhareebController.php` | MODIFY |
+| 4 | `GetLexiconPlacesController.php` | MODIFY |
+| 4 | `GetIndexVersesController.php` | MODIFY |
+| 4 | `GetScSayScienceController.php` | MODIFY |
+| 4 | `GetNarratorDetailController.php` | MODIFY |
+| 4 | `GetHadithDetailController.php` | MODIFY |
+| 4 | `CompoundMatnResource.php` | MODIFY |
+| 5 | `migrations/..._drop_content.php` | NEW |
+| 5 | `BookTocHadith.php` | MODIFY — remove Content property |
+| 5 | `BookTocService.php` | MODIFY — remove Content property |
+| 5 | `CompoundMatn.php` | MODIFY — remove Matn property |
+| 6 | `types/index.ts` | MODIFY |
+| 6 | `utils/annotationRenderer.ts` | NEW |
+| 6 | `HadithCard.tsx` | MODIFY |
+| 6 | `HadithDetailModal.tsx` | MODIFY |
+| 6 | `BookmarksPanel.tsx` | MODIFY |
+
+**Total: 7 new files, 24 modified files**
+
+---
+
+## Verification Plan
+
+### Automated
+```bash
+# Phase 1: booktoc_services migration
+php artisan hadith:migrate-annotations --table=booktoc_services
+php artisan tinker verify_deep_services.php
+
+# Phase 2: hcompoundmatn migration
+php artisan hadith:migrate-annotations --table=hcompoundmatn --content-column=Matn
+php artisan tinker verify_deep_compound.php
+
+# Phase 3: Linking table
+php artisan hadith:populate-annotation-links
+# Verify counts match JSON annotations
+
+# Phase 6: Frontend
+cd d:\xampp\htdocs\Hadith\spa && npx tsc --noEmit && npm run build
+```
+
+### Manual
+1. **Search** → verify clean text with colored annotation highlights
+2. **Chapter view** → verify hadith cards render annotations
+3. **Detail modal** → verify annotations + combined matn renders correctly
+4. **Bookmarks** → verify clean text snippets
+5. **ThematicHub** → verify ServiceText content renders (Flow B alias)
+6. **NarratorDrawer sources** → verify service content renders
+7. **IndexNames** → verify tag-based search returns results via `annotation_links`
+8. **IndexPoetry** → verify poetry tag search via `annotation_links`
+9. **AtrafExtra** → verify comparison texts use clean text

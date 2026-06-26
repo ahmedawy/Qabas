@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-amiri: "Amiri", serif;
+}
+
+/* Custom global rules for Arabic Sunnah Encyclopedia */
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+.dark body {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+/* Hadith typography helper */
+.hadith-text {
+  font-family: var(--font-amiri);
+  line-height: 2.25rem;
+  font-size: 1.5rem;
+  direction: rtl;
+}

@@ -1,0 +1,59 @@
+import React from 'react';
+import type { Book } from '../../types';
+
+interface BookCardProps {
+  book: Book;
+  isSelected: boolean;
+  onSelect: (book: Book) => void;
+}
+
+export const BookCard: React.FC<BookCardProps> = ({ book, isSelected, onSelect }) => {
+  return (
+    <div
+      onClick={() => onSelect(book)}
+      className={`relative overflow-hidden rounded-2xl border p-6 transition-all duration-300 cursor-pointer text-right flex flex-col justify-between h-full group ${
+        isSelected
+          ? 'border-emerald-500 bg-emerald-500/5 dark:bg-emerald-500/10 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500'
+          : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xl hover:shadow-slate-100/50 dark:hover:shadow-none hover:-translate-y-1'
+      }`}
+    >
+      {/* Category Tag */}
+      <div className="flex justify-between items-start gap-2 mb-4">
+        <span className="text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950/30 group-hover:text-emerald-800 dark:group-hover:text-emerald-300 transition-colors duration-300">
+          {book.category.split(' (')[0]}
+        </span>
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+          الوفاة: {book.AuthorDeath} هـ
+        </span>
+      </div>
+
+      {/* Book Title */}
+      <h3 className="text-xl font-bold font-amiri text-slate-900 dark:text-slate-100 mb-2 leading-relaxed group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+        {book.Title}
+      </h3>
+
+      {/* Author Name */}
+      <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-3">
+        {book.AuthorName}
+      </p>
+
+      {/* Short Summary */}
+      <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-3 mb-6 leading-relaxed flex-grow font-sans">
+        {book.Summary.replace(/<[^>]*>/g, '').trim()}
+      </p>
+
+      {/* Footer/Action */}
+      <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/80 mt-auto">
+        <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+          معرّف الكتاب: #{book.ID}
+        </span>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:gap-2 transition-all duration-300">
+          تصفح الكتاب 
+          <svg className="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </span>
+      </div>
+    </div>
+  );
+};

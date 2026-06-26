@@ -1,0 +1,24 @@
+# Hadith Encyclopedia SPA - Apache routing rules
+# This file routes all non-asset requests to index.html for client-side routing
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /Hadith/
+
+    # If the request is for the api subfolder, skip SPA routing
+    RewriteCond %{REQUEST_URI} ^/Hadith/api/ [NC]
+    RewriteRule ^ - [L]
+
+    # Don't rewrite requests for actual files or directories
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route everything else to index.html for React Router
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+# Enable CORS headers for API requests (handled by Laravel too, but belt & suspenders)
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>
