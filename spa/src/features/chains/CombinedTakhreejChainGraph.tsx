@@ -3,6 +3,7 @@ import {
   ReactFlow,
   Background,
   Controls,
+  MiniMap,
   useNodesState,
   useEdgesState,
   Position,
@@ -25,6 +26,7 @@ interface NarratorNodeData extends Record<string, unknown> {
   DeathYear: string;
   MartabaIbnHajar: string;
   onSelect: (id: number) => void;
+  index?: number;
 }
 
 const NarratorCustomNode = ({ data }: NodeProps<Node<NarratorNodeData>>) => {
@@ -38,7 +40,7 @@ const NarratorCustomNode = ({ data }: NodeProps<Node<NarratorNodeData>>) => {
     >
       <Handle 
         type="target" 
-        position={Position.Right} 
+        position={Position.Top} 
         style={{ background: '#10b981', width: 8, height: 8 }} 
       />
       
@@ -71,7 +73,7 @@ const NarratorCustomNode = ({ data }: NodeProps<Node<NarratorNodeData>>) => {
 
       <Handle 
         type="source" 
-        position={Position.Left} 
+        position={Position.Bottom} 
         style={{ background: '#10b981', width: 8, height: 8 }} 
       />
     </div>
@@ -85,7 +87,7 @@ const nodeTypes = {
 const getLayoutedElements = (
   nodes: Node<NarratorNodeData>[],
   edges: Edge[],
-  direction = 'RL'
+  direction = 'TB'
 ) => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
@@ -105,8 +107,8 @@ const getLayoutedElements = (
     const nodeWithPosition = dagreGraph.node(node.id);
     return {
       ...node,
-      targetPosition: Position.Right,
-      sourcePosition: Position.Left,
+      targetPosition: Position.Top,
+      sourcePosition: Position.Bottom,
       position: {
         x: nodeWithPosition.x - 140,
         y: nodeWithPosition.y - 37.5,
@@ -114,7 +116,12 @@ const getLayoutedElements = (
     };
   });
 
-  return { nodes: layoutedNodes, edges };
+  return { 
+    nodes: layoutedNodes, 
+    edges, 
+    width: dagreGraph.graph().width || 0,
+    height: dagreGraph.graph().height || 0
+  };
 };
 
 interface CombinedTakhreejChainGraphProps {
@@ -128,6 +135,7 @@ export const CombinedTakhreejChainGraph: React.FC<CombinedTakhreejChainGraphProp
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<NarratorNodeData>>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const [graphSize, setGraphSize] = useState({ width: 0, height: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -136,6 +144,7 @@ export const CombinedTakhreejChainGraph: React.FC<CombinedTakhreejChainGraphProp
     if (hadithIds.length === 0) {
       setNodes([]);
       setEdges([]);
+      setGraphSize({ width: 0, height: 0 });
       return;
     }
 
@@ -166,6 +175,7 @@ export const CombinedTakhreejChainGraph: React.FC<CombinedTakhreejChainGraphProp
       const layouted = getLayoutedElements(formattedNodes, formattedEdges);
       setNodes(layouted.nodes);
       setEdges(layouted.edges);
+      setGraphSize({ width: layouted.width, height: layouted.height });
     } catch (err: any) {
       setError(err.message || 'فشل في تحميل شجرة الإسناد المجمعة للتخريج');
     } finally {
@@ -257,9 +267,25 @@ export const CombinedTakhreejChainGraph: React.FC<CombinedTakhreejChainGraphProp
           fitView
           minZoom={0.2}
           maxZoom={1.5}
+          translateExtent={[
+            [-500, -500],
+            [graphSize.width + 500, graphSize.height + 500]
+          ]}
+          nodeExtent={[
+            [-500, -500],
+            [graphSize.width + 500, graphSize.height + 500]
+          ]}
         >
           <Background color="#334155" gap={16} size={1} />
           <Controls position="bottom-right" />
+          <MiniMap 
+            nodeColor={(n) => {
+              if (n.data?.Name?.toString().includes('غير معرف')) return '#64748b';
+              return '#10b981';
+            }}
+            maskColor="rgba(15, 23, 42, 0.7)"
+            style={{ backgroundColor: '#1e293b' }}
+          />
         </ReactFlow>
       </div>
     </div>
