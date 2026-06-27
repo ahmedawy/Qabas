@@ -72,7 +72,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 gap-2">
+      <div className="toc-tree-stack-2">
         <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
         <span className="text-slate-400 dark:text-slate-500 text-xs">جاري تحميل الفهرس...</span>
       </div>
@@ -81,15 +81,15 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
 
   if (error) {
     return (
-      <div className="text-center py-6 px-4">
-        <p className="text-xs text-red-500 mb-2">{error}</p>
+      <div className="toc-tree-text-4">
+        <p className="toc-tree-text-5">{error}</p>
         <button
           onClick={() => {
             setLoading(true);
             setError(null);
             api.getToc(bookId).then(data => { setNodes(data.toc); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
           }}
-          className="text-xs text-emerald-600 hover:text-emerald-500 font-semibold underline"
+          className="toc-tree-text-6"
         >
           إعادة المحاولة
         </button>
@@ -121,7 +121,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
       </div>
 
       {/* TOC Node List */}
-      <div className="flex-grow overflow-y-auto space-y-1 pr-1 custom-scrollbar max-h-[500px]">
+      <div className="toc-tree-element-10">
         {tree.length === 0 ? (
           <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
             لا توجد أبواب مطابقة

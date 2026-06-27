@@ -401,7 +401,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Banner */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-900/60 to-slate-900 border border-emerald-800/40 p-8 mb-8 shadow-xl">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="atraf-hub-grid-11"></div>
         <div className="relative z-10 max-w-3xl">
           <h1 className="text-3xl font-black text-emerald-300 leading-tight">
             بوابة علوم الحديث وفهارس الآيات والأعلام والشعر
@@ -470,7 +470,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
               {/* Breadcrumbs */}
               {termPath.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadTermNodes(0)} className="text-emerald-450 hover:underline">الرئيسية</button>
+                  <button onClick={() => loadTermNodes(0)} className="sciences-hub-text-2">الرئيسية</button>
                   {termPath.map((node, i) => (
                     <React.Fragment key={node.ID}>
                       <span>←</span>
@@ -532,17 +532,17 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                 {termDefinitions.map((def, i) => (
                   <div
                     key={i}
-                    className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 space-y-3"
+                    className="sciences-hub-card-10"
                   >
-                    <div className="flex justify-between items-center text-xs">
+                    <div className="atraf-hub-wrapper-21">
                       <span
                         onClick={() => onSelectNarrator && def.ScholarName ? api.getNarratorsList(def.ScholarName).then(r => r.results.length > 0 && onSelectNarrator(r.results[0].ID)) : null}
-                        className="font-black text-emerald-450 hover:underline cursor-pointer"
+                        className="sciences-hub-title-11"
                       >
                         القول للحافظ: {def.ScholarName}
                       </span>
                       {def.BookName && (
-                        <span className="text-[10px] text-slate-550">المصدر: {def.BookName} (ج {def.PartNum} ص {def.PageNum})</span>
+                        <span className="sciences-hub-text-12">المصدر: {def.BookName} (ج {def.PartNum} ص {def.PageNum})</span>
                       )}
                     </div>
                     <p className="text-sm text-slate-300 leading-relaxed font-semibold bg-slate-950/40 rounded-lg p-3.5 border border-slate-850">
@@ -559,7 +559,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
       {/* Tab 2: Scholarly Judgments */}
       {activeTab === 'judgments' && (
         <div className="space-y-6">
-          <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+          <div className="atraf-hub-card-6">
             <h3 className="text-sm font-bold text-slate-200 mb-4">ابحث بأحكام أئمة الحديث ونقاد الأثر</h3>
             <input
               type="text"
@@ -572,7 +572,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-slate-450">الأحكام والمرويات المسجلة ({judgmentResults.length})</h4>
+            <h4 className="atraf-hub-title-5">الأحكام والمرويات المسجلة ({judgmentResults.length})</h4>
             {loading && judgmentResults.length === 0 ? (
               <div className="flex py-12 justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
@@ -589,13 +589,13 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                     onClick={() => onSelectHadith ? onSelectHadith(item.MainID) : null}
                     className="group rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                   >
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="narrator-hub-wrapper-1">
                       <span className="text-xs font-black text-amber-500">{item.BookName} (حقم: {item.HadithNum})</span>
-                      <span className="rounded bg-emerald-950/20 text-emerald-450 border border-emerald-900/30 px-2 py-0.5 text-[10px] font-bold">
+                      <span className="sciences-hub-title-14">
                         {item.JudgmentText}
                       </span>
                     </div>
-                    <h5 className="font-extrabold text-slate-200 leading-relaxed mb-2.5">
+                    <h5 className="sciences-hub-text-15">
                       {item.Title}
                     </h5>
                     <span className="text-[10px] text-slate-500 block">الناقد الموثق للرتبة: {item.ScholarName}</span>
@@ -613,8 +613,8 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">علوم الحديث الفرعية</h3>
-              <div className="space-y-1 max-h-96 overflow-y-auto pr-1">
+              <h3 className="atraf-hub-title-2">علوم الحديث الفرعية</h3>
+              <div className="sciences-hub-element-17">
                 <button
                   onClick={() => setSelectedScienceTypeId('all')}
                   className={`w-full text-right text-xs px-3 py-2 rounded-lg transition-all ${
@@ -644,7 +644,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
 
           {/* Results */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+            <div className="atraf-hub-card-6">
               <h3 className="text-sm font-bold text-slate-200 mb-4">تصفية وبحث في مرويات العلوم</h3>
               <input
                 type="text"
@@ -657,7 +657,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-sm font-bold text-slate-450">نصوص علوم الحديث المقابلة ({scienceResults.length})</h4>
+              <h4 className="atraf-hub-title-5">نصوص علوم الحديث المقابلة ({scienceResults.length})</h4>
               {loading && scienceResults.length === 0 ? (
                 <div className="flex py-12 justify-center">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
@@ -674,13 +674,13 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                       onClick={() => onSelectHadith ? onSelectHadith(item.MainID) : null}
                       className="group rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                     >
-                      <div className="flex justify-between items-center mb-3">
+                      <div className="narrator-hub-wrapper-1">
                         <span className="text-xs font-black text-amber-500">{item.BookName} (حقم: {item.HadithNum})</span>
                         <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px] text-slate-400 font-semibold border border-slate-700/60">
                           {item.ServiceTypeName}
                         </span>
                       </div>
-                      <h5 className="font-extrabold text-slate-200 leading-relaxed">
+                      <h5 className="sciences-hub-text-19">
                         {item.Title}
                       </h5>
                     </div>
@@ -720,8 +720,8 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
 
               {quranSearchResults.length > 0 && (
                 <div>
-                  <h4 className="text-xs font-bold text-slate-450 mb-2 pb-1 border-b border-slate-850">نتائج البحث:</h4>
-                  <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                  <h4 className="sciences-hub-title-20">نتائج البحث:</h4>
+                  <div className="sciences-hub-element-3">
                     {quranSearchResults.map((v) => (
                       <button
                         key={v.ID}
@@ -756,8 +756,8 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
 
             {/* Surahs selector */}
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">سور القرآن الكريم</h3>
-              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+              <h3 className="atraf-hub-title-2">سور القرآن الكريم</h3>
+              <div className="sciences-hub-element-3">
                 {surahs.map((s) => (
                   <button
                     key={s.ID}
@@ -777,8 +777,8 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
             {/* Verses selector */}
             {selectedSurahId !== null && (
               <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-                <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">آيات السورة الكريمة</h3>
-                <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                <h3 className="atraf-hub-title-2">آيات السورة الكريمة</h3>
+                <div className="sciences-hub-element-3">
                   {verses.map((v) => (
                     <button
                       key={v.ID}
@@ -823,7 +823,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                     <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
                       {hit.Title}
                     </h5>
-                    <div className="text-sm text-slate-350 leading-relaxed bg-slate-950/20 p-3 rounded-lg border border-slate-800/50 font-medium">
+                    <div className="sciences-hub-text-8">
                       <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
                     </div>
                   </div>
@@ -840,7 +840,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
           {/* Subcategories Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">تصنيفات الأعلام</h3>
+              <h3 className="atraf-hub-title-2">تصنيفات الأعلام</h3>
               <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 mb-4">
                 {nameSubcategories.map((sub) => (
                   <button
@@ -859,24 +859,24 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
 
               {/* Items List */}
               <h3 className="text-xs font-bold text-slate-500 mb-3 pb-1 border-b border-slate-850">مسرد الأعلام والأشخاص</h3>
-              <div className="mb-3 flex gap-2">
+              <div className="sciences-hub-element-22">
                 <input
                   type="text"
                   placeholder="فلترة الأسماء..."
                   value={namesQuery}
                   onChange={(e) => setNamesQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-2 py-1.5 text-xs text-slate-100 focus:outline-hidden"
+                  className="sciences-hub-text-23"
                   dir="rtl"
                 />
                 <button
                   type="button"
                   onClick={handleNamesSearch}
-                  className="rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-bold text-white"
+                  className="sciences-hub-title-24"
                 >
                   تصفية
                 </button>
               </div>
-              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+              <div className="sciences-hub-element-3">
                 {nameItems.map((item) => (
                   <button
                     key={item.ID}
@@ -908,25 +908,25 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
             ) : (
               <div className="space-y-6">
                 <div>
-                  <span className="text-[10px] text-slate-550 block mb-2 font-bold uppercase tracking-wider">مواضع متون الأحاديث (Hadiths):</span>
+                  <span className="sciences-hub-title-4">مواضع متون الأحاديث (Hadiths):</span>
                   {nameHadiths.length === 0 ? (
-                    <div className="text-xs text-slate-550 py-3 bg-slate-900/10 rounded border border-dashed border-slate-800/60 text-center">لا توجد مرويات حديثية مباشرة مسجلة لهذا العلم.</div>
+                    <div className="sciences-hub-text-5">لا توجد مرويات حديثية مباشرة مسجلة لهذا العلم.</div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="atraf-hub-grid-9">
                       {nameHadiths.map((hit) => (
                         <div
                           key={hit.MainID}
                           onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
                           className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-2.5">
-                            <span className="text-xs font-black text-emerald-450">{hit.BookName}</span>
+                          <div className="sciences-hub-wrapper-6">
+                            <span className="atraf-hub-title-20">{hit.BookName}</span>
                             <span className="text-[10px] text-slate-500">حقم: {hit.HadithNum}</span>
                           </div>
-                          <h5 className="font-extrabold text-slate-200 text-xs md:text-sm leading-relaxed mb-3">
+                          <h5 className="sciences-hub-text-7">
                             {hit.Title}
                           </h5>
-                          <div className="text-xs text-slate-355 leading-relaxed line-clamp-2">
+                          <div className="sciences-hub-text-9">
                             <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
                           </div>
                         </div>
@@ -936,25 +936,25 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                 </div>
 
                 <div className="pt-4">
-                  <span className="text-[10px] text-slate-550 block mb-2 font-bold uppercase tracking-wider">مواضع شروح السيرة والتعليقات (Services):</span>
+                  <span className="sciences-hub-title-4">مواضع شروح السيرة والتعليقات (Services):</span>
                   {nameServices.length === 0 ? (
-                    <div className="text-xs text-slate-550 py-3 bg-slate-900/10 rounded border border-dashed border-slate-800/60 text-center">لا توجد شروح سيرة أو إيضاحات إضافية مسجلة لهذا العلم.</div>
+                    <div className="sciences-hub-text-5">لا توجد شروح سيرة أو إيضاحات إضافية مسجلة لهذا العلم.</div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="atraf-hub-grid-9">
                       {nameServices.map((hit) => (
                         <div
                           key={hit.MainID}
                           onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
                           className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-2.5">
+                          <div className="sciences-hub-wrapper-6">
                             <span className="text-xs font-black text-amber-500">{hit.BookName}</span>
                             <span className="text-[10px] text-slate-500">ج {hit.PartNum} ص {hit.PageNum}</span>
                           </div>
-                          <h5 className="font-extrabold text-slate-200 text-xs md:text-sm leading-relaxed mb-3">
+                          <h5 className="sciences-hub-text-7">
                             {hit.Title}
                           </h5>
-                          <div className="text-xs text-slate-355 leading-relaxed line-clamp-2">
+                          <div className="sciences-hub-text-9">
                             <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
                           </div>
                         </div>
@@ -974,7 +974,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
           {/* Poetry Rhymes Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">مسرد القوافي وأشطر الشعر</h3>
+              <h3 className="atraf-hub-title-2">مسرد القوافي وأشطر الشعر</h3>
               <div className="mb-4">
                 <input
                   type="text"
@@ -1025,25 +1025,25 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
             ) : (
               <div className="space-y-6">
                 <div>
-                  <span className="text-[10px] text-slate-550 block mb-2 font-bold uppercase tracking-wider">مواضع متون الأحاديث (Hadiths):</span>
+                  <span className="sciences-hub-title-4">مواضع متون الأحاديث (Hadiths):</span>
                   {poetryHadiths.length === 0 ? (
-                    <div className="text-xs text-slate-550 py-3 bg-slate-900/10 rounded border border-dashed border-slate-800/60 text-center">لا توجد مرويات حديثية مباشرة تستشهد بهذا البيت.</div>
+                    <div className="sciences-hub-text-5">لا توجد مرويات حديثية مباشرة تستشهد بهذا البيت.</div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="atraf-hub-grid-9">
                       {poetryHadiths.map((hit) => (
                         <div
                           key={hit.MainID}
                           onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
                           className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-2.5">
-                            <span className="text-xs font-black text-emerald-450">{hit.BookName}</span>
+                          <div className="sciences-hub-wrapper-6">
+                            <span className="atraf-hub-title-20">{hit.BookName}</span>
                             <span className="text-[10px] text-slate-500">حقم: {hit.HadithNum}</span>
                           </div>
-                          <h5 className="font-extrabold text-slate-200 text-xs md:text-sm leading-relaxed mb-3">
+                          <h5 className="sciences-hub-text-7">
                             {hit.Title}
                           </h5>
-                          <div className="text-xs text-slate-350 leading-relaxed line-clamp-2">
+                          <div className="sciences-hub-text-27">
                             <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
                           </div>
                         </div>
@@ -1053,25 +1053,25 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                 </div>
 
                 <div className="pt-4">
-                  <span className="text-[10px] text-slate-550 block mb-2 font-bold uppercase tracking-wider">مواضع شروح اللغة والشواهد البينية (Services):</span>
+                  <span className="sciences-hub-title-4">مواضع شروح اللغة والشواهد البينية (Services):</span>
                   {poetryServices.length === 0 ? (
-                    <div className="text-xs text-slate-550 py-3 bg-slate-900/10 rounded border border-dashed border-slate-800/60 text-center">لا توجد شروح لغوية أو شواهد تفسيرية مسجلة لهذا البيت الشعري.</div>
+                    <div className="sciences-hub-text-5">لا توجد شروح لغوية أو شواهد تفسيرية مسجلة لهذا البيت الشعري.</div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="atraf-hub-grid-9">
                       {poetryServices.map((hit) => (
                         <div
                           key={hit.MainID}
                           onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
                           className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                         >
-                          <div className="flex justify-between items-start mb-2.5">
+                          <div className="sciences-hub-wrapper-6">
                             <span className="text-xs font-black text-amber-500">{hit.BookName}</span>
                             <span className="text-[10px] text-slate-500">ج {hit.PartNum} ص {hit.PageNum}</span>
                           </div>
-                          <h5 className="font-extrabold text-slate-200 text-xs md:text-sm leading-relaxed mb-3">
+                          <h5 className="sciences-hub-text-7">
                             {hit.Title}
                           </h5>
-                          <div className="text-xs text-slate-355 leading-relaxed line-clamp-2">
+                          <div className="sciences-hub-text-9">
                             <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
                           </div>
                         </div>
@@ -1090,7 +1090,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
           <div className="relative w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
-              <h3 className="font-black text-slate-200 text-sm md:text-base leading-relaxed">
+              <h3 className="atraf-hub-title-25">
                 تفاصيل موضع الشرح والاستدلال
               </h3>
               <button
@@ -1101,10 +1101,10 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
               </button>
             </div>
             <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
-              <h4 className="text-base font-black text-emerald-450 leading-relaxed">
+              <h4 className="sciences-hub-title-28">
                 {selectedHadithDetail.Title}
               </h4>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-450 border-y border-slate-800/80 py-3">
+              <div className="atraf-hub-text-27">
                 <span className="font-bold text-slate-300">الكتاب: {selectedHadithDetail.BookName}</span>
                 <span>رقم الفقرة: {selectedHadithDetail.HadithNum}</span>
                 {selectedHadithDetail.PartNum !== undefined && <span>الجزء: {selectedHadithDetail.PartNum}</span>}
@@ -1114,7 +1114,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                 <HadithContentRenderer content={selectedHadithDetail.CleanContent} annotations={selectedHadithDetail.Annotations || undefined} />
               </div>
             </div>
-            <div className="px-6 py-3.5 border-t border-slate-800 bg-slate-950/40 flex justify-end">
+            <div className="atraf-hub-wrapper-29">
               <button
                 onClick={() => setSelectedHadithDetail(null)}
                 className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-slate-100 transition-all"

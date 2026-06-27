@@ -3,6 +3,95 @@ import { api } from '../../api/client';
 import type { HadithDetailResponse } from '../../types';
 import { HadithContentRenderer } from './HadithCard';
 import { TransmissionChainSvg } from '../chains/TransmissionChainSvg';
+import { NarratorDrawer } from '../narrators/NarratorDrawer';
+
+
+interface NarratorChainViewerProps {
+  sanadId: number;
+  fallbackIds: string;
+  onNarratorClick?: (id: number) => void;
+}
+
+const NarratorChainViewer: React.FC<NarratorChainViewerProps> = ({
+  sanadId,
+  fallbackIds,
+  onNarratorClick,
+}) => {
+  const [narrators, setNarrators] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<boolean>(false);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    setError(false);
+    api.getTransmissionChain(sanadId)
+      .then((res) => {
+        if (active) {
+          setNarrators(res.narrators || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setError(true);
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [sanadId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 py-2 font-sans">
+        <div className="w-3.5 h-3.5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <span>جاري تحميل أسماء الرواة...</span>
+      </div>
+    );
+  }
+
+  if (error || narrators.length === 0) {
+    const ids = fallbackIds ? fallbackIds.trim().split(/\s+/).map(Number).filter(id => !isNaN(id)) : [];
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 font-mono bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 dir-rtl">
+        {ids.map((id, idx) => (
+          <React.Fragment key={id}>
+            {idx > 0 && <span className="text-slate-400">←</span>}
+            <button
+              onClick={() => onNarratorClick?.(id)}
+              className="hover:underline hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer"
+            >
+              #{id}
+            </button>
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800/80 leading-relaxed dir-rtl">
+      {narrators.map((n, idx) => (
+        <React.Fragment key={n.ID}>
+          {idx > 0 && (
+            <span className="text-slate-400 dark:text-slate-600 font-bold select-none px-1">
+              ←
+            </span>
+          )}
+          <button
+            onClick={() => onNarratorClick?.(n.ID)}
+            title={`${n.Name} (توفي سنة ${n.DeathYear || 'غير محددة'}) - الطبقة: ${n.Tabaqa || 'غير محددة'}`}
+            className="inline-flex items-center px-3 py-1.5 text-xs font-semibold bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-slate-200 dark:hover:text-emerald-300 rounded-xl transition-all border border-slate-200 dark:border-slate-800 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/60 cursor-pointer"
+          >
+            {n.Name || n.AbbName || `راوٍ #${n.ID}`}
+          </button>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
 
 
 interface HadithDetailModalProps {
@@ -15,7 +104,7 @@ interface HadithDetailModalProps {
 export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
   hadithId,
   onClose,
-  onNarratorClick,
+  onNarratorClick: _onNarratorClick,
   onLexiconClick,
 }) => {
   const [currentHadithId, setCurrentHadithId] = useState(hadithId);
@@ -24,6 +113,11 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'text' | 'judgments' | 'chains' | 'takhreeg'>('text');
   const [selectedSanadId, setSelectedSanadId] = useState<number | null>(null);
+  const [selectedNarratorId, setSelectedNarratorId] = useState<number | null>(null);
+
+  const handleLocalNarratorClick = (id: number) => {
+    setSelectedNarratorId(id);
+  };
 
   useEffect(() => {
     setCurrentHadithId(hadithId);
@@ -63,7 +157,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-slate-950/60">
+      <div className="hadith-detail-modal-element-4">
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col items-center gap-4 max-w-sm w-full">
           <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-slate-500 dark:text-slate-400 text-sm font-sans">جاري تحميل بطاقة الحديث...</p>
@@ -74,16 +168,16 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
 
   if (error || !data) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-slate-950/60">
+      <div className="hadith-detail-modal-element-4">
         <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 shadow-2xl max-w-md w-full text-center">
-          <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-4">
+          <div className="hadith-detail-modal-text-11">
             <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">عذراً، فشل تحميل التفاصيل</h3>
-          <p className="text-sm text-red-600 dark:text-red-400 mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
+          <h3 className="hadith-detail-modal-title-12">عذراً، فشل تحميل التفاصيل</h3>
+          <p className="books-grid-text-1">{error}</p>
+          <div className="hadith-detail-modal-element-13">
             <button
               onClick={onClose}
               className="px-6 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-sm transition-all"
@@ -99,11 +193,18 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
   const { hadith, breadcrumbs, judgments, chains } = data;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-10 backdrop-blur-md bg-slate-950/60 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden text-right font-sans animate-in slide-in-from-bottom duration-300">
+    <div className="hadith-detail-modal-element-15">
+      <div 
+        dir="rtl"
+        className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl rounded-3xl w-full max-h-[85vh] flex flex-col md:flex-row overflow-hidden text-right font-sans animate-in slide-in-from-bottom duration-300 ${
+          selectedNarratorId !== null ? 'max-w-7xl' : 'max-w-4xl'
+        }`}
+      >
+        <div className="flex flex-col flex-1 min-w-0 h-full max-h-[85vh]">
+          
         
         {/* Modal Header */}
-        <div className="p-6 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/30">
+        <div className="hadith-detail-modal-card-17">
           <button
             onClick={onClose}
             className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400"
@@ -114,18 +215,18 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
             </svg>
           </button>
           
-          <div className="flex flex-col gap-1 items-end">
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+          <div className="hadith-detail-modal-stack-19">
+            <span className="hadith-detail-modal-text-20">
               بطاقة الحديث التفصيلية
             </span>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
+            <h2 className="hadith-detail-modal-title-21">
               {hadith.BookName} - حديث رقم {hadith.HadithNum}
             </h2>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <div className="flex border-b border-slate-100 dark:border-slate-800/80 px-6 bg-slate-50/20 dark:bg-slate-900/10">
+        <div className="hadith-detail-modal-element-22">
           <button
             onClick={() => setActiveTab('text')}
             className={`py-3 px-4 font-semibold text-sm border-b-2 transition-all select-none ${
@@ -146,7 +247,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
           >
             أحكام أهل العلم
             {judgments.length > 0 && (
-              <span className="absolute top-2.5 left-0.5 bg-emerald-500 text-white font-mono text-[9px] px-1 rounded-full scale-90">
+              <span className="hadith-detail-modal-text-23">
                 {judgments.length}
               </span>
             )}
@@ -161,7 +262,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
           >
             طرق وأسانيد الرواية
             {chains.length > 0 && (
-              <span className="absolute top-2.5 left-0.5 bg-indigo-500 text-white font-mono text-[9px] px-1 rounded-full scale-90">
+              <span className="hadith-detail-modal-text-24">
                 {chains.length}
               </span>
             )}
@@ -176,7 +277,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
           >
             التخريج والزوائد
             {((data.takhreej && data.takhreej.length > 0) || (data.shawahed && data.shawahed.comparisons && data.shawahed.comparisons.length > 0)) && (
-              <span className="absolute top-2.5 left-0.5 bg-amber-500 text-white font-mono text-[9px] px-1 rounded-full scale-90">
+              <span className="hadith-detail-modal-text-25">
                 {(data.takhreej?.length || 0) + (data.shawahed?.comparisons?.length || 0)}
               </span>
             )}
@@ -191,12 +292,12 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
             <div className="space-y-6">
               {/* Breadcrumbs Path */}
               {breadcrumbs.length > 0 && (
-                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80">
+                <div className="hadith-detail-modal-card-27">
                   <h4 className="text-xs text-slate-400 dark:text-slate-500 font-semibold mb-2">الموضع والتبويب الفقهي للحديث:</h4>
                   <div className="flex flex-row-reverse flex-wrap items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 font-medium">
                     {breadcrumbs.map((crumb, idx) => (
                       <React.Fragment key={crumb.MainID}>
-                        <span className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                        <span className="hadith-detail-modal-text-30">
                           {crumb.Title}
                         </span>
                         {idx < breadcrumbs.length - 1 && (
@@ -209,32 +310,32 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
               )}
 
               {/* Hadith Text Box */}
-              <div className="p-6 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-800/50 shadow-inner">
+              <div className="hadith-detail-modal-card-32">
                 <HadithContentRenderer
                   content={hadith.CleanContent}
                   annotations={hadith.Annotations}
-                  onNarratorClick={onNarratorClick}
+                  onNarratorClick={handleLocalNarratorClick}
                   onLexiconClick={onLexiconClick}
                 />
               </div>
 
               {/* Layout Page and Part reference cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+              <div className="hadith-detail-modal-grid-33">
+                <div className="hadith-detail-modal-card-1">
                   <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mb-1">الجزء</div>
-                  <div className="text-base font-bold text-slate-700 dark:text-slate-200 font-mono">{hadith.PartNum}</div>
+                  <div className="hadith-detail-modal-title-3">{hadith.PartNum}</div>
                 </div>
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                <div className="hadith-detail-modal-card-1">
                   <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mb-1">الصفحة</div>
-                  <div className="text-base font-bold text-slate-700 dark:text-slate-200 font-mono">{hadith.PageNum}</div>
+                  <div className="hadith-detail-modal-title-3">{hadith.PageNum}</div>
                 </div>
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                <div className="hadith-detail-modal-card-1">
                   <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mb-1">رمز الترقيم</div>
-                  <div className="text-base font-bold text-slate-700 dark:text-slate-200 font-mono">{hadith.TarqeemHarf || '-'}</div>
+                  <div className="hadith-detail-modal-title-3">{hadith.TarqeemHarf || '-'}</div>
                 </div>
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                <div className="hadith-detail-modal-card-1">
                   <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold mb-1">رقم المتن العام</div>
-                  <div className="text-base font-bold text-slate-700 dark:text-slate-200 font-mono">#{hadith.MainID}</div>
+                  <div className="hadith-detail-modal-title-3">#{hadith.MainID}</div>
                 </div>
               </div>
             </div>
@@ -252,15 +353,15 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                   {judgments.map((j, idx) => (
                     <div
                       key={idx}
-                      className="p-5 rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/40 flex flex-col gap-2"
+                      className="hadith-detail-modal-stack-34"
                     >
-                      <div className="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-800/50">
+                      <div className="hadith-detail-modal-wrapper-35">
                         <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">حكم الناقد:</span>
-                        <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        <span className="hadith-detail-modal-title-36">
                           {j.ScientistName}
                         </span>
                       </div>
-                      <p className="text-base font-medium text-slate-800 dark:text-slate-100 leading-relaxed font-sans mt-2">
+                      <p className="hadith-detail-modal-text-37">
                         {j.Say}
                       </p>
                     </div>
@@ -282,10 +383,10 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                   {chains.map((c) => (
                     <div
                       key={c.SanadID}
-                      className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col gap-3"
+                      className="hadith-detail-modal-stack-38"
                     >
                       <div className="flex justify-between items-center text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2">
-                        <span className="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded font-bold">
+                        <span className="hadith-detail-modal-title-40">
                           معرّف الإسناد: #{c.SanadID}
                         </span>
                         <span className="font-mono text-slate-500">
@@ -293,12 +394,14 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                         </span>
                       </div>
                       
-                      {/* Narrators ID list chain view */}
+                      {/* Narrators name list chain view */}
                       <div className="space-y-2">
-                        <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500">سلسلة الرواة (ممثلة بالرموز المعرفة):</h4>
-                        <p className="text-sm text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-100 dark:border-slate-800/80 leading-relaxed">
-                          {c.SandRwah}
-                        </p>
+                        <h4 className="text-xs font-semibold text-slate-400 dark:text-slate-500">سلسلة الرواة (ممثلة بالأسماء المتصلة ببطاقاتهم):</h4>
+                        <NarratorChainViewer
+                          sanadId={c.SanadID}
+                          fallbackIds={c.SandRwah}
+                          onNarratorClick={handleLocalNarratorClick}
+                        />
                       </div>
 
                       <div className="flex justify-between items-center text-xs text-slate-400 dark:text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/60 mt-1 pb-1">
@@ -307,17 +410,17 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                           onClick={() => {
                             setSelectedSanadId(selectedSanadId === c.SanadID ? null : c.SanadID);
                           }}
-                          className="text-indigo-600 dark:text-indigo-400 font-extrabold hover:underline cursor-pointer"
+                          className="hadith-detail-modal-text-45"
                         >
                           {selectedSanadId === c.SanadID ? 'إغلاق شجرة الإسناد ▲' : 'عرض شجرة الإسناد التفاعلية (SVG) ◀'}
                         </button>
                       </div>
                       
-                      {selectedSanadId === c.SanadID && onNarratorClick && (
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                      {selectedSanadId === c.SanadID && handleLocalNarratorClick && (
+                        <div className="hadith-detail-modal-element-46">
                           <TransmissionChainSvg
                             sanadId={c.SanadID}
-                            onSelectNarrator={onNarratorClick}
+                            onSelectNarrator={handleLocalNarratorClick}
                           />
                         </div>
                       )}
@@ -335,14 +438,14 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
               {/* Combined Matn Section */}
               {data.combined_matn && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-bold text-indigo-600 dark:text-indigo-400 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                  <h3 className="hadith-detail-modal-title-47">
                     المتن المجمع وفوائد الروايات البديلة (Combined Matn XML)
                   </h3>
-                  <div className="p-5 rounded-2xl bg-indigo-500/5 dark:bg-indigo-500/[0.02] border border-indigo-500/10 shadow-inner">
+                  <div className="hadith-detail-modal-card-48">
                     <HadithContentRenderer
                       content={data.combined_matn.clean_matn}
                       annotations={data.combined_matn.matn_annotations}
-                      onNarratorClick={onNarratorClick}
+                      onNarratorClick={handleLocalNarratorClick}
                       onLexiconClick={onLexiconClick}
                     />
                   </div>
@@ -351,7 +454,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
 
               {/* Takhreej Cross references grid */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                <h3 className="hadith-detail-modal-title-6">
                   مواضع تخريج الحديث في دواوين السنة (Takhreej References)
                 </h3>
                 {(!data.takhreej || data.takhreej.length === 0) ? (
@@ -359,7 +462,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                     لا توجد مواضع تخريج مسجلة لهذا الحديث.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="hadith-detail-modal-grid-49">
                     {data.takhreej.map((t) => (
                       <div
                         key={t.HadithMainID}
@@ -370,9 +473,9 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                             : 'bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700'
                         }`}
                       >
-                        <div className="flex justify-between text-xs items-center font-bold">
+                        <div className="hadith-detail-modal-wrapper-50">
                           <span>{t.BookName}</span>
-                          <span className="font-mono bg-slate-200/50 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px]">
+                          <span className="hadith-detail-modal-text-51">
                             حديث {t.HadithNum}
                           </span>
                         </div>
@@ -390,7 +493,7 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
 
               {/* Shawahed Motaba'at Comparison */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+                <h3 className="hadith-detail-modal-title-6">
                   المتابعات والشواهد ومقارنة المتون (Motaba'at Comparisons)
                 </h3>
                 {(!data.shawahed || !data.shawahed.comparisons || data.shawahed.comparisons.length === 0) ? (
@@ -398,16 +501,16 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                     لا توجد مقارنات متون أو شواهد مسجلة في هذه الطبعة.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="hadith-detail-modal-grid-54">
                     {data.shawahed.comparisons.map((c, idx) => (
                       <div
                         key={idx}
                         onClick={() => setCurrentHadithId(c.SlaveMatnID)}
-                        className="p-4 bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/80 rounded-xl hover:border-slate-200 dark:hover:border-slate-700 cursor-pointer flex flex-col gap-1.5"
+                        className="hadith-detail-modal-stack-55"
                       >
-                        <div className="flex justify-between items-center text-xs font-bold">
+                        <div className="hadith-detail-modal-wrapper-56">
                           <span className="text-slate-700 dark:text-slate-300">{c.BookName} (حديث {c.HadithNum})</span>
-                          <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-[10px] rounded font-semibold">
+                          <span className="hadith-detail-modal-text-58">
                             {c.Comment} (تطابق {c.MatchSort}%)
                           </span>
                         </div>
@@ -425,17 +528,30 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+        <div className="hadith-detail-modal-card-60">
           <span className="text-[10px] text-slate-400 dark:text-slate-500">
             تنبيه: انقر على أسماء الرواة الملونين داخل النص للوصول السريع إلى معاجم التراجم.
           </span>
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+            className="hadith-detail-modal-title-62"
           >
             إغلاق البطاقة
           </button>
         </div>
+
+        </div>
+
+        {/* LEFT SIDE: Narrator details panel */}
+        {selectedNarratorId !== null && (
+          <div className="w-full md:w-[420px] shrink-0 border-t md:border-t-0 md:border-l border-slate-200 dark:border-slate-800 flex flex-col h-full bg-slate-900 text-slate-100 animate-in slide-in-from-left duration-300">
+            <NarratorDrawer
+              narratorId={selectedNarratorId}
+              onClose={() => setSelectedNarratorId(null)}
+              inline={true}
+            />
+          </div>
+        )}
 
       </div>
     </div>

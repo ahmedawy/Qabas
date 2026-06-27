@@ -64,8 +64,8 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-xl bg-slate-900/40 border border-slate-800 p-6">
-        <div className="flex flex-col items-center gap-3">
+      <div className="transmission-chain-svg-card-2">
+        <div className="transmission-chain-svg-stack-3">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
           <span className="text-xs text-slate-400">جاري رسم شجرة الإسناد...</span>
         </div>
@@ -75,7 +75,7 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
 
   if (error) {
     return (
-      <div className="rounded-xl bg-red-950/20 border border-red-900/40 p-5 text-center text-sm text-red-400">
+      <div className="transmission-chain-svg-text-4">
         <p>فشل رسم شجرة الإسناد: {error}</p>
       </div>
     );
@@ -90,21 +90,21 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
   }
 
   // Layout parameters
-  const nodeHeight = 70;
-  const nodeGap = 50; // vertical gap between nodes
+  const nodeHeight = 75;
+  const nodeGap = 45; // vertical gap between nodes
   const totalHeight = narrators.length * (nodeHeight + nodeGap) - nodeGap + 60;
-  const svgWidth = 500;
+  const svgWidth = 600;
   const centerX = svgWidth / 2;
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-6 shadow-xl backdrop-blur-xs flex flex-col items-center">
+    <div className="transmission-chain-svg-stack-5">
       {/* Title info */}
       <div className="w-full border-b border-slate-800 pb-4 mb-6 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <h4 className="text-base font-bold text-slate-200 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
+        <h4 className="transmission-chain-svg-title-7">
+          <span className="transmission-chain-svg-badge-8"></span>
           <span>شجرة اتصال السند التفاعلية</span>
         </h4>
-        <span className="rounded-full bg-slate-800 border border-slate-700/60 px-3 py-1 text-xs text-emerald-400 font-semibold">
+        <span className="transmission-chain-svg-text-9">
           معرّف الإسناد: #{sanadId} • {narrators.length} رواة
         </span>
       </div>
@@ -189,111 +189,64 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
             const isAuthor = index === narrators.length - 1;
             const isUnknown = n.Name.includes('غير معرف');
 
-            // Choose color scheme
-            let gradient = 'url(#emeraldGradient)';
-            let glow = 'glow-emerald';
-            if (isAuthor) {
-              gradient = 'url(#amberGradient)';
-              glow = 'glow-amber';
-            } else if (isUnknown) {
-              gradient = 'url(#grayGradient)';
-              glow = 'none';
-            }
+
 
             return (
               <g
                 key={n.ID}
-                transform={`translate(0, 0)`}
                 className="cursor-pointer group"
                 onClick={() => onSelectNarrator(n.ID)}
               >
-                {/* Outer interactive capsule node */}
-                <rect
-                  x={centerX - 170}
+                <foreignObject
+                  x={centerX - 230}
                   y={y}
-                  width={340}
+                  width={460}
                   height={nodeHeight}
-                  rx="14"
-                  fill="#0f172a"
-                  stroke={isUnknown ? '#334155' : (isAuthor ? '#b45309' : '#047857')}
-                  strokeWidth="1.5"
-                  className="group-hover:stroke-emerald-400 group-hover:fill-slate-900 transition-all duration-300 shadow-md"
-                />
-
-                {/* Left indicators */}
-                <circle
-                  cx={centerX - 135}
-                  cy={y + nodeHeight / 2}
-                  r="18"
-                  fill={gradient}
-                  filter={glow !== 'none' ? `url(#${glow})` : undefined}
-                  className="group-hover:scale-110 transition-transform duration-300"
-                />
-                
-                {/* Node order number */}
-                <text
-                  x={centerX - 135}
-                  y={y + nodeHeight / 2 + 4}
-                  textAnchor="middle"
-                  fill="#ffffff"
-                  fontSize="10.5"
-                  fontWeight="bold"
                 >
-                  {index + 1}
-                </text>
-
-                {/* Narrator Name Text */}
-                <text
-                  x={centerX - 100}
-                  y={y + 30}
-                  textAnchor="start"
-                  fill={isUnknown ? '#64748b' : '#f1f5f9'}
-                  fontSize="13"
-                  fontWeight="800"
-                  className="group-hover:fill-emerald-400 transition-colors"
-                >
-                  {n.Name.length > 34 ? `${n.Name.substring(0, 32)}...` : n.Name}
-                </text>
-
-                {/* Subtext info */}
-                <text
-                  x={centerX - 100}
-                  y={y + 50}
-                  textAnchor="start"
-                  fill="#64748b"
-                  fontSize="10"
-                  fontWeight="bold"
-                >
-                  {isUnknown 
-                    ? 'رابط مفقود في السلسلة' 
-                    : `${n.Tabaqa || 'الطبقة غير محددة'} ${n.DeathYear ? `• ت: ${n.DeathYear}` : ''}`}
-                </text>
-
-                {/* Assessment Badge right aligned */}
-                {!isUnknown && n.MartabaIbnHajar && (
-                  <g transform={`translate(${centerX + 80}, ${y + 25})`}>
-                    <rect
-                      x="0"
-                      y="0"
-                      width="75"
-                      height="20"
-                      rx="6"
-                      fill={n.MartabaIbnHajar.includes('ثقة') ? '#022c22' : '#1c1917'}
-                      stroke={n.MartabaIbnHajar.includes('ثقة') ? '#064e3b' : '#44403c'}
-                      strokeWidth="1"
-                    />
-                    <text
-                      x="37"
-                      y="13"
-                      textAnchor="middle"
-                      fill={n.MartabaIbnHajar.includes('ثقة') ? '#34d399' : '#a8a29e'}
-                      fontSize="9.5"
-                      fontWeight="bold"
+                  <div className="w-full h-full flex flex-row items-center gap-3.5 bg-slate-900/95 border border-slate-800 rounded-2xl px-4 py-2.5 hover:bg-slate-850 hover:border-emerald-500/80 transition-all duration-300 shadow-md hover:shadow-emerald-500/5 select-none dir-rtl text-right">
+                    {/* Circle Indicator on the Right */}
+                    <div 
+                      className={`w-9 h-9 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-inner ${
+                        isAuthor 
+                          ? 'bg-gradient-to-b from-amber-500 to-amber-700 shadow-amber-500/10' 
+                          : isUnknown 
+                            ? 'bg-gradient-to-b from-slate-500 to-slate-700 shadow-slate-500/10' 
+                            : 'bg-gradient-to-b from-emerald-500 to-emerald-700 shadow-emerald-500/10'
+                      }`}
                     >
-                      {n.MartabaIbnHajar.split(' ').slice(0, 2).join(' ')}
-                    </text>
-                  </g>
-                )}
+                      {index + 1}
+                    </div>
+
+                    {/* Text content in the middle (wraps naturally) */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <div 
+                        className={`text-xs font-extrabold leading-snug group-hover:text-emerald-400 transition-colors duration-300 line-clamp-2 ${
+                          isUnknown ? 'text-slate-500' : 'text-slate-100'
+                        }`}
+                      >
+                        {n.Name}
+                      </div>
+                      <div className="text-[10px] font-semibold text-slate-500 mt-1">
+                        {isUnknown 
+                          ? 'رابط مفقود في السلسلة' 
+                          : `${n.Tabaqa || 'الطبقة غير محددة'} ${n.DeathYear ? `• ت: ${n.DeathYear}` : ''}`}
+                      </div>
+                    </div>
+
+                    {/* Assessment Badge on the Left */}
+                    {!isUnknown && n.MartabaIbnHajar && (
+                      <div 
+                        className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-xl border transition-all ${
+                          n.MartabaIbnHajar.includes('ثقة') 
+                            ? 'bg-emerald-950/30 text-emerald-400 border-emerald-900/60 group-hover:bg-emerald-950/50' 
+                            : 'bg-slate-950/40 text-slate-400 border-slate-800/80 group-hover:bg-slate-950/60'
+                        }`}
+                      >
+                        {n.MartabaIbnHajar.split(' ').slice(0, 2).join(' ')}
+                      </div>
+                    )}
+                  </div>
+                </foreignObject>
               </g>
             );
           })}
@@ -301,16 +254,16 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
       </div>
 
       <div className="mt-4 flex gap-6 text-xs text-slate-500 font-semibold justify-center">
-        <div className="flex items-center gap-1.5">
-          <span className="h-3.5 w-3.5 rounded bg-emerald-600 border border-emerald-500"></span>
+        <div className="transmission-chain-svg-element-1">
+          <span className="transmission-chain-svg-element-14"></span>
           <span>رواة الطبقات والتابعين</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3.5 w-3.5 rounded bg-amber-600 border border-amber-550"></span>
+        <div className="transmission-chain-svg-element-1">
+          <span className="transmission-chain-svg-element-15"></span>
           <span>المصنّف / صاحب الكتاب</span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-3.5 w-3.5 rounded bg-slate-600 border border-slate-500"></span>
+        <div className="transmission-chain-svg-element-1">
+          <span className="transmission-chain-svg-element-16"></span>
           <span>راوٍ غير معرّف</span>
         </div>
       </div>

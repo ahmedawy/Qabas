@@ -18,7 +18,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSelected, onSelect }
       }`}
     >
       {/* Category Tag */}
-      <div className="flex justify-between items-start gap-2 mb-4">
+      <div className="book-card-wrapper-2">
         <span className="text-[10px] font-semibold tracking-wide px-2.5 py-1 rounded-full uppercase bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-950/30 group-hover:text-emerald-800 dark:group-hover:text-emerald-300 transition-colors duration-300">
           {book.category.split(' (')[0]}
         </span>
@@ -28,12 +28,12 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSelected, onSelect }
       </div>
 
       {/* Book Title */}
-      <h3 className="text-xl font-bold font-amiri text-slate-900 dark:text-slate-100 mb-2 leading-relaxed group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors duration-300">
+      <h3 className="book-card-title-5">
         {book.Title}
       </h3>
 
       {/* Author Name */}
-      <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-3">
+      <p className="book-card-text-6">
         {book.AuthorName}
       </p>
 
@@ -43,13 +43,13 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSelected, onSelect }
       </p>
 
       {/* Footer/Action */}
-      <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/80 mt-auto">
+      <div className="book-card-element-8">
         <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
           معرّف الكتاب: #{book.ID}
         </span>
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:gap-2 transition-all duration-300">
+        <span className="book-card-text-10">
           تصفح الكتاب 
-          <svg className="w-4 h-4 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="book-card-element-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </span>

@@ -54,7 +54,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-slate-950/60 transition-opacity duration-300">
+    <div className="auth-modal-element-3">
       <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-md p-6 text-right font-sans animate-in zoom-in-95 duration-200 flex flex-col relative text-slate-100">
         
         {/* Close Button */}
@@ -68,12 +68,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
         </button>
 
         {/* Modal Title */}
-        <h2 className="text-xl font-black text-center mb-6 text-emerald-400">
+        <h2 className="auth-modal-title-6">
           بوابة العضوية والمزامنة
         </h2>
 
         {/* Tabs */}
-        <div className="flex bg-slate-950 p-1.5 rounded-xl mb-6">
+        <div className="auth-modal-element-7">
           <button
             onClick={() => { setActiveTab('login'); setError(null); }}
             className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
@@ -98,7 +98,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
 
         {/* Error message */}
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl p-3 mb-4 text-xs font-bold leading-relaxed">
+          <div className="auth-modal-title-8">
             ⚠️ {error}
           </div>
         )}
@@ -165,7 +165,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onSuccess
             className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md mt-6 cursor-pointer"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
+              <span className="auth-modal-element-11">
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
                 جاري معالجة الطلب...
               </span>

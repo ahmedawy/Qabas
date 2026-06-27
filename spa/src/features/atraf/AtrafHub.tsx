@@ -209,7 +209,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Banner */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-900/60 to-slate-900 border border-emerald-800/40 p-8 mb-8 shadow-xl">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="atraf-hub-grid-11"></div>
         <div className="relative z-10 max-w-3xl">
           <h1 className="text-3xl font-black text-emerald-300 leading-tight">
             بوابة الأطراف والمقارنات البينية
@@ -254,15 +254,15 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">حدد كتب أطراف السنن</h3>
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+              <h3 className="atraf-hub-title-2">حدد كتب أطراف السنن</h3>
+              <div className="atraf-hub-element-16">
                 {books.map((book) => (
                   <label key={book.ID} className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer select-none leading-relaxed">
                     <input
                       type="checkbox"
                       checked={selectedBookIds.includes(book.ID)}
                       onChange={() => handleBookToggle(book.ID)}
-                      className="mt-0.5 rounded border-slate-700 bg-slate-950 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900"
+                      className="atraf-hub-text-18"
                     />
                     <span>{book.Title}</span>
                   </label>
@@ -279,8 +279,8 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                 onSelectLetter={handleSelectLetter}
               />
             )}
-            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-6">
-              <div className="flex gap-4 mb-4">
+            <div className="atraf-hub-card-30">
+              <div className="atraf-hub-element-31">
                 <button
                   type="button"
                   onClick={() => setSearchType('text')}
@@ -313,26 +313,26 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                 )}
                 <div>
                   <label className="block text-xs text-slate-400 mb-2">مقطع متن الطرف</label>
-                  <div className="flex gap-4">
+                  <div className="atraf-hub-element-14">
                     <input
                       type="text"
                       placeholder="أدخل كلمة أو جملة من أول الحديث (الطرف)..."
                       value={atrafQuery}
                       onChange={(e) => setAtrafQuery(e.target.value)}
-                      className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden"
+                      className="atraf-hub-text-15"
                       dir="rtl"
                     />
                     <button
                       type="submit"
                       disabled={loading || selectedBookIds.length === 0}
-                      className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-40"
+                      className="atraf-hub-text-19"
                     >
                       {loading ? 'جاري التحميل...' : 'ابحث الآن'}
                     </button>
                   </div>
                 </div>
                 {selectedBookIds.length === 0 && (
-                  <p className="text-xs text-amber-500/80">⚠️ الرجاء اختيار كتاب واحد على الأقل من الجانب الأيمن.</p>
+                  <p className="atraf-hub-text-32">⚠️ الرجاء اختيار كتاب واحد على الأقل من الجانب الأيمن.</p>
                 )}
               </form>
             </div>
@@ -345,7 +345,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                   حدد الكتب وخيارات التصفية لعرض قائمة أطراف الأحاديث مع إسنادها وتفاصيل موضعها
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-4">
+                <div className="atraf-hub-grid-9">
                   {atrafResults.map((atraf) => (
                     <div
                       key={atraf.MainID}
@@ -356,7 +356,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                         {renderHighlighted(atraf.Text, atrafQuery)}
                       </h5>
                       <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400">
-                        <span className="bg-emerald-950/20 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded font-semibold">{atraf.BookName}</span>
+                        <span className="atraf-hub-text-34">{atraf.BookName}</span>
                         <span>الحديث رقم: {atraf.HadithNum}</span>
                         {atraf.PartNum !== undefined && <span>الجزء: {atraf.PartNum}</span>}
                         {atraf.PageNum !== undefined && <span>الصفحة: {atraf.PageNum}</span>}
@@ -373,9 +373,9 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
       {/* Tab 2: Side-by-Side Comparison */}
       {activeTab === 'comparison' && (
         <div className="space-y-6">
-          <div className="rounded-xl bg-slate-900 border border-slate-800 p-6">
+          <div className="atraf-hub-card-35">
             <h3 className="text-sm font-bold text-slate-200 mb-4">قارن بين كتابين لمعاينة مقارنة المتون وجمل الاختلاف</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="atraf-hub-grid-36">
               <div>
                 <label className="block text-xs text-slate-400 mb-2">الكتاب المصدر الرئيسي (Source)</label>
                 <select
@@ -409,12 +409,12 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
               {loading ? 'جاري تحميل المقارنة البينية البارزة...' : 'قارن المتون البينية الآن'}
             </button>
             {sourceBookId === targetBookId && (
-              <p className="mt-2 text-xs text-amber-500 text-center">⚠️ يجب اختيار كتابين مختلفين للمقارنة.</p>
+              <p className="atraf-hub-text-38">⚠️ يجب اختيار كتابين مختلفين للمقارنة.</p>
             )}
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-slate-450">نصوص المقارنة الجملية البينية ({comparisonResults.length} متناً)</h4>
+            <h4 className="atraf-hub-title-5">نصوص المقارنة الجملية البينية ({comparisonResults.length} متناً)</h4>
             {comparisonResults.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-800 py-12 text-center text-slate-500 text-sm">
                 لم يتم إيجاد متون مقارنة مقابلة بين الكتابين المحددين أو اختر كتابين آخرين
@@ -422,11 +422,11 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
             ) : (
               <div className="space-y-6">
                 {comparisonResults.map((item) => (
-                  <div key={item.MainID} className="rounded-xl border border-slate-800 bg-slate-900/30 overflow-hidden">
-                    <div className="bg-slate-900 border-b border-slate-800 px-5 py-3">
-                      <span className="text-xs font-black text-emerald-450">الحديث الرئيسي: {item.Title}</span>
+                  <div key={item.MainID} className="atraf-hub-element-39">
+                    <div className="atraf-hub-element-40">
+                      <span className="atraf-hub-title-20">الحديث الرئيسي: {item.Title}</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x md:divide-x-reverse divide-slate-800">
+                    <div className="atraf-hub-grid-41">
                       {/* Source */}
                       <div className="p-5 space-y-2">
                         <span className="text-[10px] font-bold text-slate-500 block">المصدر الرئيسي الأول:</span>
@@ -437,7 +437,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                       {/* Target */}
                       <div className="p-5 space-y-2">
                         <span className="text-[10px] font-bold text-slate-500 block">المقارن به الثاني:</span>
-                        <div className="text-sm text-slate-350 leading-relaxed font-medium bg-amber-950/5 p-3 rounded-lg border border-amber-950/10">
+                        <div className="atraf-hub-text-43">
                           <HadithContentRenderer content={item.TgtCleanContent} annotations={item.TgtAnnotations || undefined} />
                         </div>
                       </div>
@@ -456,15 +456,15 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">حدد المصنف للزوائد</h3>
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+              <h3 className="atraf-hub-title-2">حدد المصنف للزوائد</h3>
+              <div className="atraf-hub-element-16">
                 {books.map((book) => (
                   <label key={book.ID} className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer select-none leading-relaxed">
                     <input
                       type="checkbox"
                       checked={extraBookIds.includes(book.ID)}
                       onChange={() => handleExtraBookToggle(book.ID)}
-                      className="mt-0.5 rounded border-slate-700 bg-slate-950 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900"
+                      className="atraf-hub-text-18"
                     />
                     <span>{book.Title}</span>
                   </label>
@@ -475,21 +475,21 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
 
           {/* Main Area */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+            <div className="atraf-hub-card-6">
               <h3 className="text-sm font-bold text-slate-200 mb-4">ابحث في رواة زوائد الكتاب المحدّد</h3>
-              <form onSubmit={handleExtraSearch} className="flex gap-4">
+              <form onSubmit={handleExtraSearch} className="atraf-hub-element-14">
                 <input
                   type="text"
                   placeholder="ابحث باسم الراوي داخل الزوائد..."
                   value={extraQuery}
                   onChange={(e) => setExtraQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden"
+                  className="atraf-hub-text-15"
                   dir="rtl"
                 />
                 <button
                   type="submit"
                   disabled={loading || extraBookIds.length === 0}
-                  className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-40"
+                  className="atraf-hub-text-19"
                 >
                   {loading ? 'جاري التحميل...' : 'اعرض الرواة'}
                 </button>
@@ -508,14 +508,14 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                     <div
                       key={n.ID}
                       onClick={() => onSelectNarrator ? onSelectNarrator(n.ID) : null}
-                      className="group rounded-xl border border-slate-800 bg-slate-900/40 p-4.5 hover:border-emerald-800/60 hover:bg-slate-900/60 transition-all cursor-pointer"
+                      className="group atraf-hub-card-44"
                     >
-                      <h5 className="font-extrabold text-slate-200 group-hover:text-emerald-400 transition-colors text-sm leading-relaxed mb-2.5">
+                      <h5 className="atraf-hub-text-45">
                         {renderHighlighted(n.Name, extraQuery)}
                       </h5>
-                      <div className="flex justify-between items-center text-xs">
+                      <div className="atraf-hub-wrapper-21">
                         <span className="text-slate-500">{n.Tabaqa || 'الطبقة غير معروفة'}</span>
-                        <span className="rounded bg-emerald-950/20 text-emerald-450 border border-emerald-900/30 px-2 py-0.5 font-bold">
+                        <span className="atraf-hub-title-46">
                           {n.HadithsCount} مرويات زائدة
                         </span>
                       </div>
@@ -533,21 +533,21 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main List */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+            <div className="atraf-hub-card-6">
               <h3 className="text-sm font-bold text-slate-200 mb-4">ابحث في متون ومجموعات المتون المشتركة</h3>
-              <form onSubmit={handleGroupedSearch} className="flex gap-4">
+              <form onSubmit={handleGroupedSearch} className="atraf-hub-element-14">
                 <input
                   type="text"
                   placeholder="ابحث بكلمة في المتون المشتركة..."
                   value={groupedQuery}
                   onChange={(e) => setGroupedQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden"
+                  className="atraf-hub-text-15"
                   dir="rtl"
                 />
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-40"
+                  className="atraf-hub-text-47"
                 >
                   {loading ? '...' : 'ابحث'}
                 </button>
@@ -557,7 +557,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
             {/* List */}
             <div className="space-y-4">
               <h4 className="text-sm font-bold text-slate-400">المجموعات البينية ({groupedResults.length})</h4>
-              <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+              <div className="atraf-hub-element-48">
                 {groupedResults.map((item) => (
                   <div
                     key={item.ID}
@@ -567,7 +567,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                       : 'bg-slate-900/30 text-slate-350 border-slate-800/80 hover:bg-slate-900/50'
                     }`}
                   >
-                    <div className="text-xs line-clamp-2 leading-relaxed font-semibold">
+                    <div className="atraf-hub-text-49">
                       <HadithContentRenderer content={item.CleanMatn} annotations={item.MatnAnnotations || undefined} />
                     </div>
                     <div className="mt-2.5 flex justify-between text-[10px] text-slate-500">
@@ -596,9 +596,9 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                 ) : (
                   <div className="space-y-4">
                     {/* Compound Matn with highlights */}
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-5 space-y-3">
-                      <span className="text-[10px] font-black text-amber-500 bg-amber-950/20 px-2.5 py-0.5 rounded border border-amber-900/20">نص المتن الجامع مع الشواهد والفروق</span>
-                      <div className="text-sm text-slate-200 leading-relaxed font-bold bg-slate-950/40 rounded-lg p-4 border border-slate-800/60">
+                    <div className="atraf-hub-card-51">
+                      <span className="atraf-hub-title-52">نص المتن الجامع مع الشواهد والفروق</span>
+                      <div className="atraf-hub-title-53">
                         {(() => {
                           const found = groupedResults.find(r => r.HadithMainID === selectedGroupHadith);
                           return found ? (
@@ -610,16 +610,16 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
 
                     <h5 className="text-xs font-bold text-slate-500">الأحاديث المطابقة والنسخ المشتركة في الكتب الأخرى:</h5>
                     {groupedHadiths.length === 0 ? (
-                      <div className="text-center py-6 text-slate-550 text-xs">لا توجد نسخ خارجية مسجلة في مجموعات الربط البيني لهذا الحديث.</div>
+                      <div className="atraf-hub-text-55">لا توجد نسخ خارجية مسجلة في مجموعات الربط البيني لهذا الحديث.</div>
                     ) : (
                       <div className="space-y-4">
                         {groupedHadiths.map((h, i) => (
-                          <div key={i} className="rounded-xl border border-slate-800 bg-slate-900/20 p-5 space-y-3">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="font-extrabold text-emerald-450">{h.BookName}</span>
+                          <div key={i} className="atraf-hub-card-56">
+                            <div className="atraf-hub-wrapper-21">
+                              <span className="atraf-hub-text-57">{h.BookName}</span>
                               <span className="text-slate-500">حديث رقم: {h.HadithNum} (ج {h.PartNum} ص {h.PageNum})</span>
                             </div>
-                            <div className="text-sm text-slate-355 leading-relaxed font-medium bg-slate-950/20 p-3 rounded-lg border border-slate-800/40">
+                            <div className="atraf-hub-text-58">
                               <HadithContentRenderer content={h.CleanContent} annotations={h.Annotations || undefined} />
                             </div>
                           </div>
@@ -639,7 +639,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
           <div className="relative w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
-              <h3 className="font-black text-slate-200 text-sm md:text-base leading-relaxed">
+              <h3 className="atraf-hub-title-25">
                 تفاصيل موضع الحديث والطرف
               </h3>
               <button
@@ -650,10 +650,10 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
               </button>
             </div>
             <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
-              <h4 className="text-base font-black text-emerald-400 leading-relaxed">
+              <h4 className="atraf-hub-title-59">
                 {selectedHadithDetail.Title}
               </h4>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-450 border-y border-slate-800/80 py-3">
+              <div className="atraf-hub-text-27">
                 <span className="font-bold text-slate-300">الكتاب: {selectedHadithDetail.BookName}</span>
                 <span>رقم الحديث: {selectedHadithDetail.HadithNum}</span>
                 {selectedHadithDetail.PartNum !== undefined && <span>الجزء: {selectedHadithDetail.PartNum}</span>}
@@ -663,7 +663,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                 <HadithContentRenderer content={selectedHadithDetail.CleanContent} annotations={selectedHadithDetail.Annotations || undefined} />
               </div>
             </div>
-            <div className="px-6 py-3.5 border-t border-slate-800 bg-slate-950/40 flex justify-end">
+            <div className="atraf-hub-wrapper-29">
               <button
                 onClick={() => setSelectedHadithDetail(null)}
                 className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-slate-100 transition-all"

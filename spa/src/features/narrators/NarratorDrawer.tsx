@@ -6,9 +6,10 @@ import { HadithContentRenderer } from '../hadiths/HadithCard';
 interface NarratorDrawerProps {
   narratorId: number | null;
   onClose: () => void;
+  inline?: boolean;
 }
 
-export const NarratorDrawer: React.FC<NarratorDrawerProps> = ({ narratorId, onClose }) => {
+export const NarratorDrawer: React.FC<NarratorDrawerProps> = ({ narratorId, onClose, inline = false }) => {
   const [history, setHistory] = useState<number[]>([]);
   const [currentId, setCurrentId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -139,18 +140,8 @@ export const NarratorDrawer: React.FC<NarratorDrawerProps> = ({ narratorId, onCl
 
   const narrator = data?.narrator;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
-      <div className="absolute inset-0 overflow-hidden">
-        {/* Backdrop overlay */}
-        <div 
-          className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300" 
-          onClick={onClose}
-        ></div>
-
-        <div className="pointer-events-none fixed inset-y-0 left-0 flex max-w-full pr-10">
-          <div className="pointer-events-auto w-screen max-w-lg transform transition-transform duration-300 ease-in-out sm:duration-500 translate-x-0">
-            <div className="flex h-full flex-col overflow-y-scroll border-r border-slate-700 bg-slate-900 text-slate-100 shadow-2xl">
+  const drawerContent = (
+    <div className={`flex h-full flex-col overflow-y-scroll border-r border-slate-700 bg-slate-900 text-slate-100 shadow-2xl ${inline ? 'border border-slate-800 rounded-3xl h-full max-h-[75vh] overflow-hidden' : ''}`}>
               {/* Header */}
               <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-800 bg-slate-900/90 px-6 py-4 backdrop-blur-md">
                 <div className="flex items-center gap-3">
@@ -575,6 +566,24 @@ export const NarratorDrawer: React.FC<NarratorDrawerProps> = ({ narratorId, onCl
                 )}
               </div>
             </div>
+  );
+
+  if (inline) {
+    return drawerContent;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Backdrop overlay */}
+        <div 
+          className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-300" 
+          onClick={onClose}
+        ></div>
+
+        <div className="pointer-events-none fixed inset-y-0 left-0 flex max-w-full pr-10">
+          <div className="pointer-events-auto w-screen max-w-lg transform transition-transform duration-300 ease-in-out sm:duration-500 translate-x-0">
+            {drawerContent}
           </div>
         </div>
       </div>

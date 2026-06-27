@@ -11,8 +11,8 @@ const ARABIC_LETTERS = [
 
 export const AlphabetBar: React.FC<AlphabetBarProps> = ({ selectedLetter, onSelectLetter }) => {
   return (
-    <div className="flex flex-col gap-2.5 bg-white dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm animate-in fade-in duration-200">
-      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/80 pb-2">
+    <div className="alphabet-bar-stack-1">
+      <div className="alphabet-bar-wrapper-2">
         <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
           التصفح الأبجدي للأطراف (أ - ي)
         </span>

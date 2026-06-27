@@ -57,7 +57,7 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <div className="app-stack-2">
         <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
         <p className="text-slate-500 dark:text-slate-400 text-sm">جاري تحميل كتب منصة قبس...</p>
       </div>
@@ -66,19 +66,19 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
 
   if (error) {
     return (
-      <div className="text-center py-16 bg-red-500/5 dark:bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-lg mx-auto">
-        <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="books-grid-text-3">
+        <svg className="books-grid-text-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
         </svg>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-2">خطأ في التحميل</h3>
-        <p className="text-sm text-red-600 dark:text-red-400 mb-6">{error}</p>
+        <h3 className="books-grid-title-5">خطأ في التحميل</h3>
+        <p className="books-grid-text-1">{error}</p>
         <button
           onClick={() => {
             setError(null);
             setLoading(true);
             api.getBooks().then(data => { setBooks(data.books); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
           }}
-          className="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm transition-colors duration-300 font-semibold"
+          className="books-grid-text-6"
         >
           إعادة المحاولة
         </button>
@@ -89,7 +89,7 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
   return (
     <div className="space-y-8">
       {filterType === 'all' && (
-        <div className="flex justify-center animate-in fade-in duration-300">
+        <div className="books-grid-wrapper-7">
           <div className="flex bg-slate-100 dark:bg-slate-900 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-800/80 gap-1.5 w-full max-w-md shadow-inner">
             <button
               onClick={() => setActiveTab('primary')}
@@ -116,9 +116,9 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
       )}
 
       {/* Search and Category Headers */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full"></span>
+      <div className="books-grid-wrapper-9">
+        <h2 className="books-grid-title-2">
+          <span className="books-grid-badge-10"></span>
           {filterType === 'hadith' && 'كتب متون الحديث المسندة'}
           {filterType === 'services' && 'الكتب والخدمات العلمية'}
           {filterType === 'all' && (activeTab === 'primary' ? 'كتب متون الحديث المسندة' : 'الكتب العلمية الخدمية والشروح')}

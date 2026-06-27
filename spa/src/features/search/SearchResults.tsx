@@ -27,7 +27,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <div className="app-stack-2">
         <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
         <span className="text-slate-400 dark:text-slate-500 text-sm">جاري البحث في الأحاديث...</span>
       </div>

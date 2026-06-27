@@ -49,7 +49,7 @@ export const HadithContentRenderer: React.FC<{
           <span
             key={index}
             onClick={() => !isNaN(cleanId) && onNarratorClick?.(cleanId)}
-            className="px-1 py-0.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 dark:text-amber-300 font-semibold cursor-pointer border-b border-amber-400/30 transition-colors text-[0.95em]"
+            className="hadith-card-text-1"
             title="انقر لعرض ترجمة الراوي"
           >
             {reactChildren}
@@ -60,7 +60,7 @@ export const HadithContentRenderer: React.FC<{
           <span
             key={index}
             onClick={() => !isNaN(cleanId) && onLexiconClick?.(cleanId)}
-            className="px-1 py-0.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-800 dark:text-rose-300 font-semibold cursor-pointer border-b border-rose-400/30 transition-colors text-[0.95em]"
+            className="hadith-card-text-2"
             title="انقر لعرض معنى الكلمة الغريبة"
           >
             {reactChildren}
@@ -79,7 +79,7 @@ export const HadithContentRenderer: React.FC<{
         );
       case 'علم_مكان':
         return (
-          <span key={index} className="text-sky-600 dark:text-sky-400 font-semibold text-[0.95em]">
+          <span key={index} className="hadith-card-text-3">
             {reactChildren}
           </span>
         );
@@ -96,13 +96,13 @@ export const HadithContentRenderer: React.FC<{
         );
       case 'علم_نبي':
         return (
-          <span key={index} className="text-amber-700 dark:text-amber-550 font-semibold text-[0.95em]">
+          <span key={index} className="hadith-card-text-4">
             {reactChildren}
           </span>
         );
       case 'علم_ملائكة':
         return (
-          <span key={index} className="text-indigo-600 dark:text-indigo-400 font-semibold text-[0.95em]">
+          <span key={index} className="hadith-card-text-5">
             {reactChildren}
           </span>
         );
@@ -139,13 +139,13 @@ export const HadithContentRenderer: React.FC<{
         return null;
       case 'قرآن':
         return (
-          <span key={index} className="text-emerald-700 dark:text-emerald-300 font-semibold font-serif px-1">
+          <span key={index} className="hadith-card-text-10">
             {reactChildren}
           </span>
         );
       case 'آية':
         return (
-          <span key={index} className="text-emerald-700 dark:text-emerald-400 font-semibold font-serif">
+          <span key={index} className="hadith-card-text-11">
             ﴿ {reactChildren} ﴾
           </span>
         );
@@ -153,7 +153,7 @@ export const HadithContentRenderer: React.FC<{
         return (
           <span
             key={index}
-            className="px-1 py-0.5 rounded bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-medium cursor-help border-b border-indigo-400/30 transition-colors text-[0.95em]"
+            className="hadith-card-text-12"
             title={attrs['MMSText'] || 'رواية بديلة'}
           >
             {reactChildren}
@@ -171,7 +171,7 @@ export const HadithContentRenderer: React.FC<{
     : getHadithAST(content);
 
   return (
-    <span className="hadith-text select-text leading-loose">
+    <span className="hadith-card-element-13">
       {ast.map((node, idx) => renderASTNode(node, idx))}
     </span>
   );
@@ -206,7 +206,7 @@ export const HadithCard: React.FC<HadithCardProps> = ({
               </svg>
             </button>
           )}
-          <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+          <span className="hadith-card-text-16">
             {hadith.BookName}
           </span>
           <span>•</span>
@@ -228,7 +228,7 @@ export const HadithCard: React.FC<HadithCardProps> = ({
       </div>
 
       {/* Footer Actions */}
-      <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-2">
+      <div className="hadith-card-element-18">
         <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
           معرّف المتن: #{hadith.MainID}
         </span>
@@ -236,10 +236,10 @@ export const HadithCard: React.FC<HadithCardProps> = ({
         {onDetailClick && (
           <button
             onClick={() => onDetailClick(hadith)}
-            className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 px-4 py-2 rounded-xl border border-emerald-500/20 hover:border-emerald-500/30 transition-all flex items-center gap-1.5"
+            className="hadith-card-title-20"
           >
             <span>عرض التخريج والأسانيد</span>
-            <svg className="w-3.5 h-3.5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="hadith-card-element-21" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </button>

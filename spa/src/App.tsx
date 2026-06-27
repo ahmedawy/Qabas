@@ -18,6 +18,7 @@ import { StatisticsHub } from './features/statistics/StatisticsHub';
 import { AuthModal } from './features/auth/AuthModal';
 import { BookmarksPanel } from './features/auth/BookmarksPanel';
 import { NavigationMenu } from './components/NavigationMenu';
+import qabasLogo from './assets/Qabas-Logo.gif';
 
 // Import custom hooks
 import { useAuth } from './hooks/useAuth';
@@ -242,7 +243,7 @@ function App() {
       {/* Premium Header */}
       <header className="border-b border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md sticky top-0 z-40 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="app-element-6">
             {/* Sidebar toggle button (visible when a book is selected) */}
             {selectedBook && !search.isSearching && currentView === 'library' && (
               <button
@@ -260,11 +261,9 @@ function App() {
               </button>
             )}
 
-            <span
-              onClick={handleHomeClick}
-              className="text-2xl font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent cursor-pointer font-sans">
-              منصة قبس للسنة النبوية
-            </span>
+            <div onClick={handleHomeClick} className="app-logo">
+              <img src={qabasLogo} alt="Qabas Logo" className="app-logo-image" />
+            </div>
 
             {/* Navigation Tabs */}
             <NavigationMenu
@@ -281,28 +280,28 @@ function App() {
           <div className="flex items-center gap-3">
             {/* User Profile / Auth Controls */}
             {auth.user ? (
-              <div className="flex items-center gap-2">
+              <div className="app-element-4">
                 <button
                   onClick={() => auth.setIsBookmarksOpen(true)}
-                  className="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer text-xs font-bold"
+                  className="app-title-8"
                   title="المفضلة وسجل البحث"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                   </svg>
                   <span className="hidden sm:inline">المفضلة</span>
-                  <span className="bg-amber-500 text-slate-900 rounded-full w-4 h-4 flex items-center justify-center font-mono font-bold text-[9px]">
+                  <span className="app-title-9">
                     {bookmarks.bookmarkedList.length}
                   </span>
                 </button>
 
-                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-350 px-2 truncate max-w-[100px] hidden md:inline">
+                <div className="app-card-10">
+                  <span className="app-title-11">
                     {auth.user.name}
                   </span>
                   <button
                     onClick={handleLogoutClick}
-                    className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-rose-500 hover:text-rose-600 transition-all cursor-pointer"
+                    className="app-text-12"
                     title="تسجيل الخروج"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -314,7 +313,7 @@ function App() {
             ) : (
               <button
                 onClick={() => auth.setIsAuthModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-all text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5"
+                className="app-title-13"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -326,15 +325,15 @@ function App() {
             {/* Theme Toggle */}
             <button
               onClick={toggleDarkMode}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              className="app-element-14"
               aria-label="Toggle theme"
             >
               {darkMode ? (
-                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="app-text-15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m2.828 0l-.707-.707m12.728-12.728l-.707-.707M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : (
-                <svg className="w-5 h-5 text-slate-700 dark:text-slate-350" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="app-text-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
               )}
@@ -349,23 +348,23 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
             <span
               onClick={handleHomeClick}
-              className="cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+              className="app-text-18"
             >
               الرئيسية
             </span>
             <span className="text-[10px]">◀</span>
             {!search.isSearching && selectedBook ? (
               <>
-                <span className="text-emerald-600 dark:text-emerald-400 font-amiri text-sm">{selectedBook.Title}</span>
+                <span className="app-text-19">{selectedBook.Title}</span>
                 {selectedNode && (
                   <>
                     <span className="text-[10px]">◀</span>
-                    <span className="truncate max-w-[200px] md:max-w-md text-slate-600 dark:text-slate-350">{selectedNode.Title}</span>
+                    <span className="app-text-20">{selectedNode.Title}</span>
                   </>
                 )}
               </>
             ) : (
-              <span className="text-emerald-600 dark:text-emerald-400">البحث الجاري</span>
+              <span className="app-text-21">البحث الجاري</span>
             )}
           </div>
         </div>
@@ -394,7 +393,7 @@ function App() {
               </select>
             </div>
 
-            <div className="flex flex-col flex-grow overflow-hidden">
+            <div className="app-stack-26">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">شجرة التبويب (الفهرس):</h2>
               <div className="flex-grow overflow-hidden">
                 <TocTree
@@ -408,7 +407,7 @@ function App() {
         )}
 
         {/* LEFT/MAIN VIEW: Reading and Search Panel */}
-        <main className="flex-grow overflow-y-auto pr-1 flex flex-col gap-6 custom-scrollbar">
+        <main className="app-stack-28">
           {currentView === 'narrators' ? (
             <NarratorHub
               onSelectNarrator={handleNarratorClick}
@@ -460,8 +459,8 @@ function App() {
                   </button>
 
                   {error && (
-                    <div className="text-center py-8 bg-red-500/5 border border-red-500/10 rounded-2xl p-6">
-                      <p className="text-sm text-red-600 dark:text-red-400 font-semibold">{error}</p>
+                    <div className="app-text-29">
+                      <p className="app-text-30">{error}</p>
                     </div>
                   )}
 
@@ -508,17 +507,17 @@ function App() {
                   {/* Hadith List Results */}
                   <div className="space-y-6">
                     {loading ? (
-                      <div className="flex flex-col items-center justify-center py-20 gap-4">
+                      <div className="app-stack-2">
                         <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                         <span className="text-slate-400 dark:text-slate-500 text-sm">جاري تحميل النصوص النبوية...</span>
                       </div>
                     ) : error ? (
-                      <div className="text-center py-12 bg-red-500/5 border border-red-500/10 rounded-2xl p-6">
-                        <p className="text-sm text-red-500 dark:text-red-400 font-semibold">{error}</p>
+                      <div className="app-text-31">
+                        <p className="app-text-32">{error}</p>
                       </div>
                     ) : hadiths.length === 0 ? (
                       <div className="text-center py-20 text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-slate-900/40 rounded-2xl border border-slate-200 dark:border-slate-800">
-                        <h4 className="text-lg font-bold font-sans mb-1">استعرض محتويات الكتاب</h4>
+                        <h4 className="app-title-34">استعرض محتويات الكتاب</h4>
                         <p className="text-xs">اختر رقماً للحديث في الأعلى أو تصفح الأبواب عبر الفهرس الجانبي.</p>
                       </div>
                     ) : (
@@ -536,11 +535,11 @@ function App() {
                         ))}
 
                         {nextChapterPage && (
-                          <div className="flex justify-center pt-4 pb-8">
+                          <div className="app-wrapper-35">
                             <button
                               onClick={handleLoadMoreChapterHadiths}
                               disabled={loadingMore}
-                              className="px-6 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:hover:bg-emerald-800/60 text-emerald-700 dark:text-emerald-300 font-bold text-sm transition-all shadow-sm disabled:opacity-50 flex items-center gap-2 cursor-pointer"
+                              className="app-title-36"
                             >
                               {loadingMore && (
                                 <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -599,9 +598,9 @@ function App() {
 
       {/* LEXICON WORD DEFINITION OVERLAY POPUP */}
       {activeWordId !== null && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md bg-slate-950/60 transition-opacity">
+        <div className="app-element-37">
           <div className="bg-slate-900 border border-slate-800 shadow-2xl rounded-3xl w-full max-w-md p-6 text-right font-sans animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-            <div className="flex justify-between items-center pb-3 border-b border-slate-800 shrink-0">
+            <div className="app-wrapper-39">
               <button
                 onClick={() => setActiveWordId(null)}
                 className="text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
@@ -612,13 +611,13 @@ function App() {
               </button>
               <h3 className="text-sm font-bold text-slate-400">شرح غريب الحديث (المعجم)</h3>
             </div>
-            <div className="py-4 overflow-y-auto custom-scrollbar">
+            <div className="app-element-41">
               {wordLoading ? (
-                <div className="flex justify-center py-4">
+                <div className="app-wrapper-42">
                   <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent"></div>
                 </div>
               ) : (
-                <div className="text-slate-200 text-base leading-relaxed font-semibold font-amiri bg-slate-950/40 p-4 border border-slate-850 rounded-xl">
+                <div className="app-text-43">
                   {wordDefinition ? (
                     <HadithContentRenderer
                       content={wordDefinition}
@@ -632,10 +631,10 @@ function App() {
                 </div>
               )}
             </div>
-            <div className="flex justify-end pt-3 border-t border-slate-800 shrink-0">
+            <div className="app-wrapper-44">
               <button
                 onClick={() => setActiveWordId(null)}
-                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer"
+                className="app-title-45"
               >
                 إغلاق
               </button>

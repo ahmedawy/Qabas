@@ -26,7 +26,7 @@ export const TocNode: React.FC<TocNodeProps> = ({ node, selectedNodeId, onSelect
   };
 
   return (
-    <div className="select-none text-right font-sans">
+    <div className="toc-node-text-1">
       <div
         onClick={handleClick}
         className={`group flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all duration-200 gap-2 ${
@@ -36,7 +36,7 @@ export const TocNode: React.FC<TocNodeProps> = ({ node, selectedNodeId, onSelect
         }`}
       >
         {/* Title */}
-        <span className="text-sm truncate flex-grow leading-relaxed">
+        <span className="toc-node-text-2">
           {node.Title || '[مقطع بدون عنوان]'}
         </span>
 
@@ -57,7 +57,7 @@ export const TocNode: React.FC<TocNodeProps> = ({ node, selectedNodeId, onSelect
 
       {/* Children */}
       {hasChildren && isOpen && (
-        <div className="mr-4 mt-1 border-r border-slate-200 dark:border-slate-800 pr-2 space-y-1">
+        <div className="toc-node-element-3">
           {node.children!.map((child) => (
             <TocNode
               key={child.MainID}

@@ -463,7 +463,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
               {/* Path Breadcrumbs */}
               {subjectPath.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadSubjectChildren(0)} className="text-emerald-450 hover:underline">الرئيسية</button>
+                  <button onClick={() => loadSubjectChildren(0)} className="sciences-hub-text-2">الرئيسية</button>
                   {subjectPath.map((node, i) => (
                     <React.Fragment key={node.ID}>
                       <span>←</span>
@@ -583,7 +583,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
               {/* Breadcrumbs */}
               {controPath.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadControChildren(0)} className="text-emerald-455 hover:underline">الرئيسية</button>
+                  <button onClick={() => loadControChildren(0)} className="thematic-hub-text-4">الرئيسية</button>
                   {controPath.map((node, i) => (
                     <React.Fragment key={node.ID}>
                       <span>←</span>
@@ -655,7 +655,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                     <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
                       {exp.Title}
                     </h5>
-                    <div className="text-sm text-slate-350 leading-relaxed bg-slate-950/20 p-3 rounded-lg border border-slate-800/50 font-medium">
+                    <div className="sciences-hub-text-8">
                       <HadithContentRenderer content={exp.CleanContent} annotations={exp.Annotations || undefined} />
                     </div>
                   </div>
@@ -694,7 +694,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
               {/* Breadcrumbs */}
               {ghareebPath.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadGhareebChildren(0)} className="text-emerald-450 hover:underline">الرئيسية</button>
+                  <button onClick={() => loadGhareebChildren(0)} className="sciences-hub-text-2">الرئيسية</button>
                   {ghareebPath.map((node, i) => (
                     <React.Fragment key={node.ID}>
                       <span>←</span>
@@ -766,7 +766,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                     <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
                       {desc.Title}
                     </h5>
-                    <div className="text-sm text-slate-350 leading-relaxed bg-slate-950/20 p-3 rounded-lg border border-slate-800/50 font-medium">
+                    <div className="sciences-hub-text-8">
                       <HadithContentRenderer content={desc.CleanContent} annotations={desc.Annotations || undefined} />
                     </div>
                   </div>
@@ -805,7 +805,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
               {/* Breadcrumbs */}
               {placesPath.length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadPlacesChildren(1)} className="text-emerald-450 hover:underline">الرئيسية</button>
+                  <button onClick={() => loadPlacesChildren(1)} className="sciences-hub-text-2">الرئيسية</button>
                   {placesPath.map((node, i) => (
                     <React.Fragment key={node.ID}>
                       <span>←</span>
@@ -918,7 +918,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-slate-450">مسرد النتائج ({tab5Results.length})</h4>
+            <h4 className="atraf-hub-title-5">مسرد النتائج ({tab5Results.length})</h4>
             {loading ? (
               <div className="flex py-12 justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>

@@ -127,7 +127,7 @@ export const StatisticsHub: React.FC = () => {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Banner */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-900/60 to-slate-900 border border-emerald-800/40 p-8 mb-8 shadow-xl">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="atraf-hub-grid-11"></div>
         <div className="relative z-10 max-w-3xl">
           <h1 className="text-3xl font-black text-emerald-300 leading-tight">
             لوحة الإحصائيات والمؤشرات البيانية لمنصة قبس
@@ -224,7 +224,7 @@ export const StatisticsHub: React.FC = () => {
             <span>🔬</span> محلل تقاطعات الرواة المشتركين
           </h3>
           <div className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="narrator-drawer-grid-9">
               <div>
                 <label className="block text-xs font-semibold text-slate-450 mb-2">الكتاب الأول</label>
                 <select

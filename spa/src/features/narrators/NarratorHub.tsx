@@ -185,7 +185,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Banner */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-900/60 to-slate-900 border border-emerald-800/40 p-8 mb-8 shadow-xl">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="atraf-hub-grid-11"></div>
         <div className="relative z-10 max-w-3xl">
           <h1 className="text-3xl font-black text-emerald-300 leading-tight">
             المستودع الجامع للرواة والجرح والتعديل
@@ -229,29 +229,29 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
       {/* Tab 1 Content: Muti-Field Advanced Search */}
       {activeTab === 'search' && (
         <div className="space-y-6">
-          <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-6 backdrop-blur-xs">
-            <h3 className="text-base font-bold text-slate-200 mb-4">خيارات البحث المتقدم</h3>
+          <div className="narrator-hub-card-5">
+            <h3 className="narrator-hub-title-6">خيارات البحث المتقدم</h3>
             <form onSubmit={handleGeneralSearch} className="space-y-5">
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="narrator-hub-wrapper-7">
                 <input
                   type="text"
                   placeholder="ابحث عن راوٍ بالاسم، الكنية، اللقب..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden focus:ring-1 focus:ring-emerald-500"
+                  className="narrator-hub-text-8"
                   dir="rtl"
                 />
                 <button
                   type="submit"
                   disabled={searchLoading}
-                  className="rounded-lg bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors shadow-md disabled:opacity-50"
+                  className="narrator-hub-text-9"
                 >
                   {searchLoading ? 'جاري البحث...' : 'ابحث الآن'}
                 </button>
               </div>
 
               {/* Checkboxes */}
-              <div className="flex flex-wrap gap-x-6 gap-y-3 pt-2">
+              <div className="narrator-hub-element-10">
                 <span className="text-xs font-semibold text-slate-500 self-center">حقول البحث:</span>
                 {[
                   { field: 'Name', label: 'الاسم الكامل' },
@@ -265,7 +265,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                       type="checkbox"
                       checked={searchFields.includes(item.field)}
                       onChange={() => toggleSearchField(item.field)}
-                      className="rounded border-slate-700 bg-slate-950 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900"
+                      className="narrator-hub-text-13"
                     />
                     {item.label}
                   </label>
@@ -284,20 +284,20 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                 أدخل كلمة البحث واضغط على زر البحث لاستعراض الرواة
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="narrator-hub-grid-15">
                 {searchResults.map((n) => (
                   <div
                     key={n.ID}
                     onClick={() => onSelectNarrator(n.ID)}
-                    className="group rounded-xl border border-slate-800 bg-slate-900/40 p-5 hover:border-emerald-800/60 hover:bg-slate-900/70 transition-all duration-300 shadow-xs hover:shadow-emerald-950/20 hover:shadow-lg cursor-pointer"
+                    className="group narrator-hub-card-16"
                   >
-                    <h5 className="font-bold text-slate-200 group-hover:text-emerald-400 transition-colors leading-relaxed">
+                    <h5 className="narrator-hub-title-17">
                       {renderHighlighted(n.Name, searchQuery)}
                     </h5>
                     <div className="mt-3.5 flex flex-wrap gap-2 text-xs text-slate-400">
-                      {n.Tabaqa && <span className="bg-slate-850 px-2 py-1 rounded border border-slate-800">{n.Tabaqa}</span>}
-                      {n.DeathYear && <span className="bg-slate-850 px-2 py-1 rounded border border-slate-800">ت: {n.DeathYear}</span>}
-                      <span className="bg-emerald-950/20 text-emerald-400 border border-emerald-900/30 px-2.5 py-1 rounded font-semibold mr-auto">
+                      {n.Tabaqa && <span className="narrator-hub-element-2">{n.Tabaqa}</span>}
+                      {n.DeathYear && <span className="narrator-hub-element-2">ت: {n.DeathYear}</span>}
+                      <span className="narrator-hub-text-19">
                         {n.HadithsCount} حديثاً
                       </span>
                     </div>
@@ -315,15 +315,15 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
           {/* Sidebar Book Select */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">اختر المصنّفات والكتب</h3>
-              <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+              <h3 className="atraf-hub-title-2">اختر المصنّفات والكتب</h3>
+              <div className="atraf-hub-element-16">
                 {books.filter(b => b.ID <= 33).map((book) => (
                   <label key={book.ID} className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer select-none leading-relaxed">
                     <input
                       type="checkbox"
                       checked={selectedBookIds.includes(book.ID)}
                       onChange={() => handleBookCheckboxChange(book.ID)}
-                      className="mt-0.5 rounded border-slate-700 bg-slate-950 text-emerald-600 focus:ring-emerald-500 focus:ring-offset-slate-900"
+                      className="atraf-hub-text-18"
                     />
                     <span>{book.Title}</span>
                   </label>
@@ -334,27 +334,27 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
 
           {/* Main List */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+            <div className="atraf-hub-card-6">
               <h3 className="text-sm font-bold text-slate-200 mb-4">تصفية رواة الكتب</h3>
-              <div className="flex gap-4">
+              <div className="atraf-hub-element-14">
                 <input
                   type="text"
                   placeholder="ابحث باسم الراوي داخل الكتب المحددة..."
                   value={bookQuery}
                   onChange={(e) => setBookQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden"
+                  className="atraf-hub-text-15"
                   dir="rtl"
                 />
                 <button
                   onClick={handleBookSearch}
                   disabled={bookLoading || selectedBookIds.length === 0}
-                  className="rounded-lg bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors disabled:opacity-40"
+                  className="atraf-hub-text-19"
                 >
                   {bookLoading ? 'جاري التحميل...' : 'عرض الرواة'}
                 </button>
               </div>
               {selectedBookIds.length === 0 && (
-                <p className="mt-2 text-xs text-amber-500/80">⚠️ الرجاء اختيار كتاب واحد على الأقل من القائمة الجانبية.</p>
+                <p className="narrator-hub-text-20">⚠️ الرجاء اختيار كتاب واحد على الأقل من القائمة الجانبية.</p>
               )}
             </div>
 
@@ -371,29 +371,29 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                     <div
                       key={n.ID}
                       onClick={() => onSelectNarrator(n.ID)}
-                      className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 transition-all duration-300 shadow-xs cursor-pointer"
+                      className="narrator-hub-card-21"
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                        <h5 className="font-extrabold text-slate-200 text-sm sm:text-base leading-relaxed">
+                      <div className="narrator-hub-wrapper-22">
+                        <h5 className="narrator-hub-text-23">
                           {renderHighlighted(n.Name, bookQuery)}
                         </h5>
-                        <div className="flex gap-2 text-xs mr-auto sm:mr-0">
+                        <div className="narrator-hub-text-24">
                           {n.Tabaqa && <span className="bg-slate-850 px-2 py-0.5 rounded text-slate-400">{n.Tabaqa}</span>}
-                          <span className="bg-amber-950/20 text-amber-400 px-2.5 py-0.5 rounded border border-amber-900/30 font-bold">
+                          <span className="narrator-hub-title-26">
                             {n.HadithsCount} مرويات
                           </span>
                         </div>
                       </div>
 
                       {/* Summary of teachers / students */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-slate-800/60 pt-3">
+                      <div className="narrator-hub-grid-27">
                         <div className="text-xs">
                           <span className="font-bold text-slate-500 block mb-1">أبرز الشيوخ:</span>
-                          <p className="text-emerald-400 line-clamp-1 leading-relaxed">{n.sheikhs || 'غير محدد'}</p>
+                          <p className="narrator-hub-text-28">{n.sheikhs || 'غير محدد'}</p>
                         </div>
                         <div className="text-xs">
                           <span className="font-bold text-slate-500 block mb-1">أبرز التلاميذ:</span>
-                          <p className="text-amber-400 line-clamp-1 leading-relaxed">{n.talamidh || 'غير محدد'}</p>
+                          <p className="narrator-hub-text-29">{n.talamidh || 'غير محدد'}</p>
                         </div>
                       </div>
                     </div>
@@ -411,7 +411,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
           {/* Classification Values Sidebar */}
           <div className="lg:col-span-1 space-y-5">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <div className="flex rounded-md bg-slate-950 p-1 mb-4">
+              <div className="narrator-hub-element-30">
                 <button
                   onClick={() => { setClassCategory('Tabaqa'); setClassValue(''); }}
                   className={`flex-1 rounded-sm py-1.5 text-xs font-bold transition-all ${classCategory === 'Tabaqa' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-200'}`}
@@ -447,8 +447,8 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
 
           {/* Classification Main List */}
           <div className="lg:col-span-3 space-y-6">
-            <h4 className="text-sm font-bold text-slate-450">
-              قائمة الرواة المصنفين تحت {classCategory === 'Tabaqa' ? 'الطبقة' : 'البلد'}: <span className="text-emerald-400 font-extrabold">{classValue || 'لم يتم الاختيار'}</span>
+            <h4 className="atraf-hub-title-5">
+              قائمة الرواة المصنفين تحت {classCategory === 'Tabaqa' ? 'الطبقة' : 'البلد'}: <span className="narrator-hub-text-31">{classValue || 'لم يتم الاختيار'}</span>
             </h4>
 
             {classLoading ? (
@@ -465,9 +465,9 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                   <div
                     key={n.ID}
                     onClick={() => onSelectNarrator(n.ID)}
-                    className="rounded-xl border border-slate-800 bg-slate-900/40 p-4.5 hover:border-emerald-800/60 hover:bg-slate-900/60 transition-all cursor-pointer"
+                    className="narrator-hub-card-32"
                   >
-                    <h5 className="font-extrabold text-slate-200 text-sm mb-3.5 leading-relaxed">{n.Name}</h5>
+                    <h5 className="narrator-hub-text-33">{n.Name}</h5>
                     <dl className="grid grid-cols-2 gap-2 text-xs text-slate-400">
                       <div>
                         <span className="text-slate-500">سنة الوفاة:</span> {n.DeathYear || '-'}
@@ -490,7 +490,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
       {/* Tab 4 Content: Garh wa Ta'dil Lexicon */}
       {activeTab === 'garh' && (
         <div className="space-y-6">
-          <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+          <div className="atraf-hub-card-6">
             <h3 className="text-sm font-bold text-slate-200 mb-4">معجم مصطلحات وألفاظ التجريح والتعديل</h3>
             <input
               type="text"
@@ -503,7 +503,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
           </div>
 
           <div className="space-y-4">
-            <h4 className="text-sm font-bold text-slate-450">مسرد المصطلحات ({lexiconResults.length} مصطلحاً)</h4>
+            <h4 className="atraf-hub-title-5">مسرد المصطلحات ({lexiconResults.length} مصطلحاً)</h4>
             {lexiconLoading && lexiconResults.length === 0 ? (
               <div className="flex py-12 justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
@@ -513,7 +513,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                 لم يتم العثور على مصطلحات مطابقة للبحث
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="narrator-hub-grid-35">
                 {lexiconResults.map((item) => (
                   <div
                     key={item.ID}
@@ -524,13 +524,13 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                       setSearchFields(['Name']);
                       api.getNarratorsList(item.Term).then(res => setSearchResults(res.results)).catch(console.error);
                     }}
-                    className="group rounded-xl border border-slate-800 bg-slate-900/30 p-4 hover:border-amber-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    className="group narrator-hub-card-36"
                   >
-                    <div className="flex justify-between items-center">
-                      <span className="font-extrabold text-slate-200 group-hover:text-amber-400 transition-colors">
+                    <div className="narrator-hub-wrapper-37">
+                      <span className="narrator-hub-text-38">
                         {renderHighlighted(item.Term, lexiconQuery)}
                       </span>
-                      <span className="rounded-full bg-slate-800/80 px-2.5 py-0.5 text-xs text-amber-500 border border-amber-900/20 font-semibold group-hover:bg-amber-950/20 transition-all">
+                      <span className="narrator-hub-text-39">
                         {item.RwahCount} راوٍ
                       </span>
                     </div>
@@ -548,7 +548,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
           {/* Scholars Sidebar */}
           <div className="lg:col-span-1 space-y-4">
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4 pb-2 border-b border-slate-850">علماء النقد والجرح والتعديل</h3>
+              <h3 className="atraf-hub-title-2">علماء النقد والجرح والتعديل</h3>
               <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
                 {scientists.map((sci) => (
                   <button
@@ -569,7 +569,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
 
           {/* Opinions Results */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="rounded-xl bg-slate-900/60 border border-slate-800 p-5">
+            <div className="atraf-hub-card-6">
               <h3 className="text-sm font-bold text-slate-200 mb-4">أقوال ومرويات عالم الجرح والتعديل</h3>
               <input
                 type="text"
@@ -583,7 +583,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
 
             {/* Results cards */}
             <div className="space-y-4">
-              <h4 className="text-sm font-bold text-slate-450">أقوال الحافظ الناقد ({opinionResults.length} قولاً)</h4>
+              <h4 className="atraf-hub-title-5">أقوال الحافظ الناقد ({opinionResults.length} قولاً)</h4>
               {opinionLoading && opinionResults.length === 0 ? (
                 <div className="flex py-12 justify-center">
                   <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
@@ -598,10 +598,10 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                     <div
                       key={`${op.RawyID}-${idx}`}
                       onClick={() => onSelectNarrator(op.RawyID)}
-                      className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-md transition-all duration-300 cursor-pointer"
+                      className="narrator-hub-card-40"
                     >
-                      <div className="flex justify-between items-center mb-3">
-                        <span className="font-extrabold text-slate-200 text-sm leading-relaxed">
+                      <div className="narrator-hub-wrapper-1">
+                        <span className="narrator-hub-text-41">
                           الراوي: {renderHighlighted(op.RawyName || '', opinionQuery)}
                         </span>
                         {op.SaySort > 0 && (
@@ -610,7 +610,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-slate-350 bg-slate-950/40 rounded-lg p-3 border border-slate-800/50 leading-relaxed font-medium">
+                      <p className="narrator-hub-text-43">
                         «{op.Say}»
                       </p>
                     </div>
