@@ -5,40 +5,23 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\BreadcrumbResource;
-use App\Http\Resources\ChainResource;
-use App\Http\Resources\HadithDetailResource;
-use App\Http\Resources\HadithJudgmentResource;
-use App\Models\AsanedHadith;
 use App\Models\BookTocHadith;
-use App\Models\HadithJudgmentHit;
+use App\Models\HadithTakhreej;
+use App\Models\HadithShawahed;
+use App\Models\CompoundMatn;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
-class GetHadithDetailController extends Controller
+class GetHadithTakhreejController extends Controller
 {
     private BookTocHadith $hadithModel;
 
-    private HadithJudgmentHit $judgmentModel;
-
-    private AsanedHadith $asanedHadithModel;
-
-    /**
-     * Inject model constructor dependencies.
-     */
-    public function __construct(
-        BookTocHadith $hadithModel,
-        HadithJudgmentHit $judgmentModel,
-        AsanedHadith $asanedHadithModel
-    ) {
+    public function __construct(BookTocHadith $hadithModel)
+    {
         $this->hadithModel = $hadithModel;
-        $this->judgmentModel = $judgmentModel;
-        $this->asanedHadithModel = $asanedHadithModel;
     }
 
-    /**
-     * Handle the incoming request.
-     */
     public function __invoke(Request $request): JsonResponse
     {
         $id = (int) $request->input('id');
@@ -54,31 +37,11 @@ class GetHadithDetailController extends Controller
             return $this->errorResponse('Hadith not found', 404);
         }
 
-        // Fetch hierarchical path (adjacency list recursive CTE query)
-        if ($hadith->ParentID) {
-            $breadcrumbs = \App\Models\BookTocHadith::getAncestors($hadith);
-        } else {
-            $breadcrumbs = collect();
-        }
-
-
-        // Fetch authenticity judgments, eager loading relations
-        $judgments = $this->judgmentModel->newQuery()
-            ->where('HadithMainID', $id)
-            ->with(['say.scholar'])
-            ->get();
-
-        // Fetch available Sanad IDs and chains
-        $chains = $this->asanedHadithModel->newQuery()
-            ->where('HadithMainID', $id)
-            ->with(['chain'])
-            ->get();
-
         // 1. Fetch Takhreej cross-references
         $takhreejList = [];
-        $takhreegRow = \App\Models\HadithTakhreej::where('HadithMainID', $id)->first();
+        $takhreegRow = HadithTakhreej::where('HadithMainID', $id)->first();
         if ($takhreegRow && $takhreegRow->GroupID) {
-            $takhreejList = \App\Models\HadithTakhreej::where('GroupID', $takhreegRow->GroupID)
+            $takhreejList = HadithTakhreej::where('GroupID', $takhreegRow->GroupID)
                 ->join('booktoc_hadith', 'htakhreeg.HadithMainID', '=', 'booktoc_hadith.MainID')
                 ->select(
                     'htakhreeg.HadithMainID',
@@ -93,11 +56,11 @@ class GetHadithDetailController extends Controller
         }
 
         // 2. Fetch Motaba'at (Corroborating Chains)
-        $hasShawahed = \App\Models\HadithShawahed::where('HadithMainID', $id)->exists();
+        $hasShawahed = HadithShawahed::where('HadithMainID', $id)->exists();
         $comparisons = [];
         $bookId = $hadith->BookID;
         if ($hasShawahed && $bookId >= 1 && $bookId <= 33) {
-            $comparisons = \DB::table("hmatncomparison{$bookId}")
+            $comparisons = DB::table("hmatncomparison{$bookId}")
                 ->where('MasterMatnID', $id)
                 ->join('booktoc_hadith', "hmatncomparison{$bookId}.SlaveMatnID", '=', 'booktoc_hadith.MainID')
                 ->select(
@@ -113,13 +76,12 @@ class GetHadithDetailController extends Controller
         }
 
         // 3. Fetch Combined Matn (المتون المجمعة)
-        $compoundMatn = \App\Models\CompoundMatn::where('HadithMainID', $id)->first();
+        $compoundMatn = CompoundMatn::where('HadithMainID', $id)->first();
 
         return $this->jsonResponse([
-            'hadith' => new HadithDetailResource($hadith),
-            'breadcrumbs' => BreadcrumbResource::collection($breadcrumbs),
-            'judgments' => HadithJudgmentResource::collection($judgments),
-            'chains' => ChainResource::collection($chains),
+            'book_name' => $hadith->BookName,
+            'hadith_num' => $hadith->ID,
+            'book_id' => $hadith->BookID,
             'takhreej' => $takhreejList,
             'shawahed' => [
                 'has_shawahed' => $hasShawahed,

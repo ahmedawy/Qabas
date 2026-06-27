@@ -192,6 +192,17 @@ export interface GroupedMtnResult {
   HadithNum: number;
 }
 
+export interface ThematicPathNode {
+  ID: number;
+  Title: string;
+}
+
+export interface HadithThematicLink {
+  ID: number;
+  Text: string;
+  path: ThematicPathNode[];
+}
+
 export interface SubjectTreeNode {
   ID: number;
   SubjectTitle: string;
@@ -294,5 +305,7 @@ export interface IndexItemNode {
   Title: string;
   IndexID: number;
 }
+
+export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions';
 
 

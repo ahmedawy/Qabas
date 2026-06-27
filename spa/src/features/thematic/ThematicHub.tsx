@@ -1,21 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client';
-import type { SubjectTreeNode, ControversialTreeNode, LexiconTreeNode, ServiceText, Annotation } from '../../types';
+import type { SubjectTreeNode, ControversialTreeNode, LexiconTreeNode, ServiceText } from '../../types';
 import { highlightArabicText } from '../../utils/arabicHighlighter';
-import { HadithContentRenderer } from '../hadiths/HadithCard';
+import { HadithCard } from '../hadiths/HadithCard';
+import { Tree, buildTree } from '../../components/ui/tree';
+import type { TreeNodeData } from '../../components/ui/tree';
 
 interface ThematicHubProps {
-  onSelectHadith?: (id: number) => void;
   activeTab?: string | null;
   onTabChange?: (tab: string) => void;
+  initialSelectedSubjectId?: number | null;
+  initialSubjectPathIds?: number[];
+  onNarratorClick?: (id: number) => void;
+  onLexiconClick?: (wordId: number) => void;
+  onServiceClick?: (hadith: any, serviceType: any) => void;
+  bookmarkedIds?: Set<number>;
+  onToggleBookmark?: (hadith: any) => void;
 }
 
 type TabType = 'subject' | 'controversial' | 'ghareeb' | 'places' | 'amthal_dates';
 
 export const ThematicHub: React.FC<ThematicHubProps> = ({ 
-  onSelectHadith,
   activeTab: propActiveTab,
-  onTabChange
+  onTabChange,
+  initialSelectedSubjectId,
+  initialSubjectPathIds,
+  onNarratorClick,
+  onLexiconClick,
+  onServiceClick,
+  bookmarkedIds,
+  onToggleBookmark,
 }) => {
   const [localActiveTab, setLocalActiveTab] = useState<TabType>('subject');
   const activeTab = (propActiveTab as TabType) || localActiveTab;
@@ -29,47 +43,42 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
   const [loading, setLoading] = useState(false);
 
   // Tab 1: Subject Tree state
-  const [subjectPath, setSubjectPath] = useState<SubjectTreeNode[]>([]);
-  const [subjectNodes, setSubjectNodes] = useState<SubjectTreeNode[]>([]);
+  const [allSubjectNodes, setAllSubjectNodes] = useState<SubjectTreeNode[]>([]);
   const [subjectHadiths, setSubjectHadiths] = useState<ServiceText[]>([]);
   const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
   const [subjectSearchResults, setSubjectSearchResults] = useState<SubjectTreeNode[]>([]);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | null>(null);
+  const [subjectVisibleCount, setSubjectVisibleCount] = useState(20);
 
   // Tab 2: Controversial Hadiths state
-  const [controPath, setControPath] = useState<ControversialTreeNode[]>([]);
-  const [controNodes, setControNodes] = useState<ControversialTreeNode[]>([]);
+  const [allControNodes, setAllControNodes] = useState<ControversialTreeNode[]>([]);
   const [controExplanations, setControExplanations] = useState<ServiceText[]>([]);
   const [controSearchQuery, setControSearchQuery] = useState('');
   const [controSearchResults, setControSearchResults] = useState<ControversialTreeNode[]>([]);
+  const [selectedControId, setSelectedControId] = useState<number | null>(null);
+  const [controVisibleCount, setControVisibleCount] = useState(20);
 
   // Tab 3: Ghareeb Lexicon state
-  const [ghareebPath, setGhareebPath] = useState<LexiconTreeNode[]>([]);
-  const [ghareebNodes, setGhareebNodes] = useState<LexiconTreeNode[]>([]);
+  const [allGhareebNodes, setAllGhareebNodes] = useState<LexiconTreeNode[]>([]);
   const [ghareebDescriptions, setGhareebDescriptions] = useState<ServiceText[]>([]);
   const [ghareebSearchQuery, setGhareebSearchQuery] = useState('');
   const [ghareebSearchResults, setGhareebSearchResults] = useState<LexiconTreeNode[]>([]);
+  const [selectedGhareebId, setSelectedGhareebId] = useState<number | null>(null);
 
   // Tab 4: Places Lexicon state
-  const [placesPath, setPlacesPath] = useState<LexiconTreeNode[]>([]);
-  const [placesNodes, setPlacesNodes] = useState<LexiconTreeNode[]>([]);
+  const [allPlacesNodes, setAllPlacesNodes] = useState<LexiconTreeNode[]>([]);
   const [placesDescriptions, setPlacesDescriptions] = useState<ServiceText[]>([]);
   const [placesSearchQuery, setPlacesSearchQuery] = useState('');
   const [placesSearchResults, setPlacesSearchResults] = useState<LexiconTreeNode[]>([]);
+  const [selectedPlacesId, setSelectedPlacesId] = useState<number | null>(null);
+  const [placesVisibleCount, setPlacesVisibleCount] = useState(20);
 
   // Tab 5: Proverbs & Dates state
   const [subTab5, setSubTab5] = useState<'amthal' | 'dates'>('amthal');
   const [tab5Query, setTab5Query] = useState('');
   const [tab5Results, setTab5Results] = useState<{ ID: number; Text: string }[]>([]);
 
-  const [selectedHadithDetail, setSelectedHadithDetail] = useState<{
-    Title: string;
-    BookName: string;
-    HadithNum: string | number;
-    PartNum?: number;
-    PageNum?: number;
-    CleanContent: string;
-    Annotations: Annotation[] | null;
-  } | null>(null);
+
 
   // Initialize all trees
   useEffect(() => {
@@ -85,52 +94,56 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
     loadTab5Data();
   }, [subTab5, tab5Query]);
 
+  // Load ancestors and select initial thematic node
+  useEffect(() => {
+    if (initialSelectedSubjectId) {
+      setSelectedSubjectId(initialSelectedSubjectId);
+
+      const loadPathNodes = async () => {
+        if (initialSubjectPathIds && initialSubjectPathIds.length > 0) {
+          for (const parentId of initialSubjectPathIds) {
+            await loadSubjectChildren(parentId);
+          }
+        }
+        try {
+          const res = await api.getSubjectTree(initialSelectedSubjectId);
+          setSubjectHadiths(res.hadiths || []);
+        } catch (err) {
+          console.error(err);
+          setSubjectHadiths([]);
+        }
+      };
+      
+      loadPathNodes();
+    }
+  }, [initialSelectedSubjectId, initialSubjectPathIds]);
+
   // Tab 1: Load Subject Tree Children
-  const loadSubjectChildren = async (parentId: number, node?: SubjectTreeNode) => {
-    setLoading(true);
+  const loadSubjectChildren = async (parentId: number) => {
     try {
       const res = await api.getSubjectTree(undefined, parentId);
       if (res.nodes) {
-        setSubjectNodes(res.nodes);
-        setSubjectHadiths([]); // Clear hadiths until leaf selection
-
-        // Update path breadcrumbs
-        if (parentId === 0) {
-          setSubjectPath([]);
-        } else if (node) {
-          const idx = subjectPath.findIndex((p) => p.ID === node.ID);
-          if (idx !== -1) {
-            setSubjectPath(subjectPath.slice(0, idx + 1));
-          } else {
-            // Find parent index to replace sub-path if needed
-            const pIdx = subjectPath.findIndex((p) => p.ID === node.ParentID);
-            if (pIdx !== -1) {
-              setSubjectPath([...subjectPath.slice(0, pIdx + 1), node]);
-            } else {
-              setSubjectPath([...subjectPath, node]);
-            }
-          }
-        }
+        setAllSubjectNodes(prev => {
+          const newNodes = res.nodes!.filter(n => !prev.some(p => p.ID === n.ID));
+          return [...prev, ...newNodes];
+        });
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Tab 1: Load Hadiths for a Leaf Subject
   const selectSubjectLeaf = async (node: SubjectTreeNode) => {
     setLoading(true);
-    setSubjectNodes([]);
-    setSubjectPath([...subjectPath.filter(p => p.ID !== node.ID), node]);
+    setSubjectHadiths([]);
+    setSubjectVisibleCount(20);
     try {
       const res = await api.getSubjectTree(node.ID);
-      if (res.hadiths) {
-        setSubjectHadiths(res.hadiths);
-      }
+      setSubjectHadiths(res.hadiths || []);
     } catch (err) {
       console.error(err);
+      setSubjectHadiths([]);
     } finally {
       setLoading(false);
     }
@@ -154,49 +167,31 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
   };
 
   // Tab 2: Load Controversial Tree Children
-  const loadControChildren = async (parentId: number, node?: ControversialTreeNode) => {
-    setLoading(true);
+  const loadControChildren = async (parentId: number) => {
     try {
       const res = await api.getControversial(undefined, parentId);
       if (res.nodes) {
-        setControNodes(res.nodes);
-        setControExplanations([]);
-
-        if (parentId === 0) {
-          setControPath([]);
-        } else if (node) {
-          const idx = controPath.findIndex((p) => p.ID === node.ID);
-          if (idx !== -1) {
-            setControPath(controPath.slice(0, idx + 1));
-          } else {
-            const pIdx = controPath.findIndex((p) => p.ID === node.ParentID);
-            if (pIdx !== -1) {
-              setControPath([...controPath.slice(0, pIdx + 1), node]);
-            } else {
-              setControPath([...controPath, node]);
-            }
-          }
-        }
+        setAllControNodes(prev => {
+          const newNodes = res.nodes!.filter(n => !prev.some(p => p.ID === n.ID));
+          return [...prev, ...newNodes];
+        });
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Tab 2: Load Reconciliations for Controversial Node
   const selectControLeaf = async (node: ControversialTreeNode) => {
     setLoading(true);
-    setControNodes([]);
-    setControPath([...controPath.filter(p => p.ID !== node.ID), node]);
+    setControExplanations([]);
+    setControVisibleCount(20);
     try {
       const res = await api.getControversial(node.ID);
-      if (res.descriptions) {
-        setControExplanations(res.descriptions);
-      }
+      setControExplanations(res.descriptions || []);
     } catch (err) {
       console.error(err);
+      setControExplanations([]);
     } finally {
       setLoading(false);
     }
@@ -220,49 +215,30 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
   };
 
   // Tab 3: Load Ghareeb Lexicon Children
-  const loadGhareebChildren = async (parentId: number, node?: LexiconTreeNode) => {
-    setLoading(true);
+  const loadGhareebChildren = async (parentId: number) => {
     try {
       const res = await api.getLexiconGhareeb(undefined, parentId);
       if (res.items) {
-        setGhareebNodes(res.items);
-        setGhareebDescriptions([]);
-
-        if (parentId === 0) {
-          setGhareebPath([]);
-        } else if (node) {
-          const idx = ghareebPath.findIndex((p) => p.ID === node.ID);
-          if (idx !== -1) {
-            setGhareebPath(ghareebPath.slice(0, idx + 1));
-          } else {
-            const pIdx = ghareebPath.findIndex((p) => p.ID === node.ParentID);
-            if (pIdx !== -1) {
-              setGhareebPath([...ghareebPath.slice(0, pIdx + 1), node]);
-            } else {
-              setGhareebPath([...ghareebPath, node]);
-            }
-          }
-        }
+        setAllGhareebNodes(prev => {
+          const newNodes = res.items!.filter(n => !prev.some(p => p.ID === n.ID));
+          return [...prev, ...newNodes];
+        });
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Tab 3: Load Definitions for Ghareeb Word
   const selectGhareebLeaf = async (node: LexiconTreeNode) => {
     setLoading(true);
-    setGhareebNodes([]);
-    setGhareebPath([...ghareebPath.filter(p => p.ID !== node.ID), node]);
+    setGhareebDescriptions([]);
     try {
       const res = await api.getLexiconGhareeb(node.ID);
-      if (res.descriptions) {
-        setGhareebDescriptions(res.descriptions);
-      }
+      setGhareebDescriptions(res.descriptions || []);
     } catch (err) {
       console.error(err);
+      setGhareebDescriptions([]);
     } finally {
       setLoading(false);
     }
@@ -286,49 +262,31 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
   };
 
   // Tab 4: Load Places Lexicon Children
-  const loadPlacesChildren = async (parentId: number, node?: LexiconTreeNode) => {
-    setLoading(true);
+  const loadPlacesChildren = async (parentId: number) => {
     try {
       const res = await api.getLexiconPlaces(undefined, parentId);
       if (res.items) {
-        setPlacesNodes(res.items);
-        setPlacesDescriptions([]);
-
-        if (parentId === 1) {
-          setPlacesPath([]);
-        } else if (node) {
-          const idx = placesPath.findIndex((p) => p.ID === node.ID);
-          if (idx !== -1) {
-            setPlacesPath(placesPath.slice(0, idx + 1));
-          } else {
-            const pIdx = placesPath.findIndex((p) => p.ID === node.ParentID);
-            if (pIdx !== -1) {
-              setPlacesPath([...placesPath.slice(0, pIdx + 1), node]);
-            } else {
-              setPlacesPath([...placesPath, node]);
-            }
-          }
-        }
+        setAllPlacesNodes(prev => {
+          const newNodes = res.items!.filter(n => !prev.some(p => p.ID === n.ID));
+          return [...prev, ...newNodes];
+        });
       }
     } catch (err) {
       console.error(err);
-    } finally {
-      setLoading(false);
     }
   };
 
   // Tab 4: Load Narrators/Details for Place
   const selectPlacesLeaf = async (node: LexiconTreeNode) => {
     setLoading(true);
-    setPlacesNodes([]);
-    setPlacesPath([...placesPath.filter(p => p.ID !== node.ID), node]);
+    setPlacesDescriptions([]);
+    setPlacesVisibleCount(20);
     try {
       const res = await api.getLexiconPlaces(node.ID);
-      if (res.descriptions) {
-        setPlacesDescriptions(res.descriptions);
-      }
+      setPlacesDescriptions(res.descriptions || []);
     } catch (err) {
       console.error(err);
+      setPlacesDescriptions([]);
     } finally {
       setLoading(false);
     }
@@ -369,10 +327,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
     }
   };
 
-  // Show detailed content in modal
-  const showDetailModal = (title: string, bookName: string, num: string | number, part: number | undefined, page: number | undefined, content: string, annotations: Annotation[] | null) => {
-    setSelectedHadithDetail({ Title: title, BookName: bookName, HadithNum: num, PartNum: part, PageNum: page, CleanContent: content, Annotations: annotations });
-  };
+
 
   const renderHighlighted = (text: string, query: string) => {
     if (!query) return <span>{text}</span>;
@@ -440,18 +395,18 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Tree Browser */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4">ابحث بالمسائل الفقهية</h3>
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">ابحث بالمسائل الفقهية</h3>
               <form onSubmit={handleSubjectSearch} className="flex gap-2.5 mb-4">
                 <input
                   type="text"
                   placeholder="ابحث عن موضوع..."
                   value={subjectSearchQuery}
                   onChange={(e) => setSubjectSearchQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-emerald-500 focus:outline-hidden"
+                  className="flex-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:outline-none"
                   dir="rtl"
                 />
-                <button
+                                <button
                   type="submit"
                   disabled={loading}
                   className="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition-colors"
@@ -460,59 +415,59 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 </button>
               </form>
 
-              {/* Path Breadcrumbs */}
-              {subjectPath.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadSubjectChildren(0)} className="sciences-hub-text-2">الرئيسية</button>
-                  {subjectPath.map((node, i) => (
-                    <React.Fragment key={node.ID}>
-                      <span>←</span>
-                      <button
-                        onClick={() => loadSubjectChildren(node.ParentID, node)}
-                        className={`${i === subjectPath.length - 1 ? 'text-slate-200 font-extrabold' : 'text-emerald-450 hover:underline'}`}
-                      >
-                        {node.SubjectTitle}
-                      </button>
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-
-              {/* Children List */}
-              <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-                {subjectSearchQuery.trim() && subjectSearchResults.length > 0 ? (
-                  // Search Results View
-                  <div>
-                    <span className="text-[10px] text-slate-500 block mb-2">نتائج البحث المباشر:</span>
-                    {subjectSearchResults.map((node) => (
-                      <button
-                        key={node.ID}
-                        onClick={() => node.IsLeaf ? selectSubjectLeaf(node) : loadSubjectChildren(node.ID, node)}
-                        className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
-                      >
-                        <span>{renderHighlighted(node.SubjectTitle, subjectSearchQuery)}</span>
-                        <span className="text-[10px] text-slate-500">{node.IsLeaf ? 'ورقة فقهية' : 'تفرع'}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  // Normal Tree Children View
-                  subjectNodes.map((node) => (
+              {/* Tree View */}
+              {!subjectSearchQuery.trim() ? (
+                (() => {
+                  const subjectTreeData: TreeNodeData<SubjectTreeNode>[] = allSubjectNodes.map(n => ({
+                    id: n.ID,
+                    parentId: n.ParentID,
+                    title: n.SubjectTitle,
+                    isLeaf: n.IsLeaf,
+                    raw: n
+                  }));
+                  const subjectRoots = buildTree(subjectTreeData);
+                  return (
+                    <Tree
+                      roots={subjectRoots}
+                      selectedId={selectedSubjectId}
+                      onSelect={(node) => {
+                        setSelectedSubjectId(node.id);
+                        if (node.isLeaf) {
+                          selectSubjectLeaf(node.raw);
+                        }
+                      }}
+                      onLoadChildren={loadSubjectChildren}
+                      emptyMessage="جاري تحميل شجرة الموضوعات..."
+                    />
+                  );
+                })()
+              ) : subjectSearchResults.length > 0 ? (
+                // Search Results View
+                <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                  <span className="text-[10px] text-slate-500 block mb-2">نتائج البحث المباشر:</span>
+                  {subjectSearchResults.map((node) => (
                     <button
                       key={node.ID}
-                      onClick={() => node.IsLeaf ? selectSubjectLeaf(node) : loadSubjectChildren(node.ID, node)}
-                      className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-350 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
+                      onClick={() => {
+                        setSelectedSubjectId(node.ID);
+                        if (node.IsLeaf) {
+                          selectSubjectLeaf(node);
+                        } else {
+                          loadSubjectChildren(node.ID);
+                        }
+                      }}
+                      className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
                     >
-                      <span className={node.IsLeaf ? 'font-medium' : 'font-extrabold text-emerald-450'}>
-                        {node.SubjectTitle}
-                      </span>
-                      <span className="text-[10px] text-slate-500">
-                        {node.IsLeaf ? '•' : '◀'}
-                      </span>
+                      <span>{renderHighlighted(node.SubjectTitle, subjectSearchQuery)}</span>
+                      <span className="text-[10px] text-slate-500">{node.IsLeaf ? 'ورقة فقهية' : 'تفرع'}</span>
                     </button>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
+                  لا توجد نتائج مطابقة
+                </div>
+              )}
             </div>
           </div>
 
@@ -524,31 +479,44 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
               </div>
             ) : subjectHadiths.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-800 py-24 text-center text-slate-500 text-sm">
-                تصفح شجرة الموضوعات باليمين وانقر على مسألة (ورقة فقهية) لعرض نصوص الأحاديث النبوية المرتبطة بها
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 py-24 text-center text-slate-500 text-sm bg-white dark:bg-slate-900/20">
+                {selectedSubjectId 
+                  ? 'لا توجد نصوص مسجلة لهذه المسألة حالياً'
+                  : 'تصفح شجرة الموضوعات باليمين وانقر على مسألة (ورقة فقهية) لعرض نصوص الأحاديث النبوية المرتبطة بها'}
               </div>
             ) : (
               <div className="space-y-4">
-                {subjectHadiths.map((hit) => (
-                  <div
-                    key={hit.MainID}
-                    onClick={() => onSelectHadith ? onSelectHadith(hit.MainID) : showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
-                    className="group rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <h5 className="font-extrabold text-slate-200 group-hover:text-emerald-400 transition-colors leading-relaxed">
-                      {hit.Title}
-                    </h5>
-                    <div className="mt-3 text-xs text-slate-400 line-clamp-3 leading-relaxed">
-                      <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
-                    </div>
-                    <div className="mt-4.5 flex flex-wrap gap-2.5 text-[10px] text-slate-500 border-t border-slate-850 pt-2.5">
-                      <span className="bg-emerald-950/20 text-emerald-450 border border-emerald-900/30 px-2 py-0.5 rounded font-bold">{hit.BookName}</span>
-                      <span>الحديث رقم: {hit.HadithNum}</span>
-                      {hit.PartNum !== undefined && <span>ج: {hit.PartNum}</span>}
-                      {hit.PageNum !== undefined && <span>ص: {hit.PageNum}</span>}
-                    </div>
+                {subjectHadiths.slice(0, subjectVisibleCount).map((hit) => (
+                  <div key={hit.MainID} className="mb-4">
+                    <HadithCard
+                      hadith={hit}
+                      onNarratorClick={onNarratorClick}
+                      onLexiconClick={onLexiconClick}
+                      onServiceClick={onServiceClick}
+                      isBookmarked={bookmarkedIds?.has(hit.MainID)}
+                      onToggleBookmark={onToggleBookmark}
+                      extraHeaderContent={
+                        <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                          {hit.Title}
+                        </h5>
+                      }
+                    />
                   </div>
                 ))}
+                
+                {subjectHadiths.length > subjectVisibleCount && (
+                  <div className="flex justify-center mt-6 mb-12">
+                    <button
+                      onClick={() => setSubjectVisibleCount(prev => prev + 20)}
+                      className="group flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-800 hover:border-emerald-200 dark:hover:border-emerald-800/50 rounded-xl transition-all duration-300"
+                    >
+                      <span className="font-bold text-sm">عرض المزيد</span>
+                      <svg className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -560,15 +528,15 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Tree Browser */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4">تصفح مشكل الحديث ومختلف الآثار</h3>
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">تصفح مشكل الحديث ومختلف الآثار</h3>
               <form onSubmit={handleControSearch} className="flex gap-2 mb-4">
                 <input
                   type="text"
                   placeholder="ابحث بالكلمة في العناوين..."
                   value={controSearchQuery}
                   onChange={(e) => setControSearchQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-emerald-500 focus:outline-hidden"
+                  className="flex-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:outline-none"
                   dir="rtl"
                 />
                 <button
@@ -580,52 +548,59 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 </button>
               </form>
 
-              {/* Breadcrumbs */}
-              {controPath.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadControChildren(0)} className="thematic-hub-text-4">الرئيسية</button>
-                  {controPath.map((node, i) => (
-                    <React.Fragment key={node.ID}>
-                      <span>←</span>
-                      <button
-                        onClick={() => loadControChildren(node.ParentID, node)}
-                        className={`${i === controPath.length - 1 ? 'text-slate-200 font-black' : 'text-emerald-455 hover:underline'}`}
-                      >
-                        {node.Text}
-                      </button>
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-
-              {/* List */}
-              <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-                {controSearchQuery.trim() && controSearchResults.length > 0 ? (
-                  controSearchResults.map((node) => (
+              {/* Tree View */}
+              {!controSearchQuery.trim() ? (
+                (() => {
+                  const controTreeData: TreeNodeData<ControversialTreeNode>[] = allControNodes.map(n => ({
+                    id: n.ID,
+                    parentId: n.ParentID,
+                    title: n.Text,
+                    isLeaf: n.IsLeaf,
+                    raw: n
+                  }));
+                  const controRoots = buildTree(controTreeData);
+                  return (
+                    <Tree
+                      roots={controRoots}
+                      selectedId={selectedControId}
+                      onSelect={(node) => {
+                        setSelectedControId(node.id);
+                        if (node.isLeaf) {
+                          selectControLeaf(node.raw);
+                        }
+                      }}
+                      onLoadChildren={loadControChildren}
+                      emptyMessage="جاري تحميل الشجرة..."
+                    />
+                  );
+                })()
+              ) : controSearchResults.length > 0 ? (
+                // Search Results View
+                <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                  <span className="text-[10px] text-slate-500 block mb-2">نتائج البحث المباشر:</span>
+                  {controSearchResults.map((node) => (
                     <button
                       key={node.ID}
-                      onClick={() => node.IsLeaf ? selectControLeaf(node) : loadControChildren(node.ID, node)}
+                      onClick={() => {
+                        setSelectedControId(node.ID);
+                        if (node.IsLeaf) {
+                          selectControLeaf(node);
+                        } else {
+                          loadControChildren(node.ID);
+                        }
+                      }}
                       className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
                     >
                       <span>{renderHighlighted(node.Text, controSearchQuery)}</span>
                       <span className="text-[10px] text-slate-500">{node.IsLeaf ? 'مسألة مشكل' : 'تفرع'}</span>
                     </button>
-                  ))
-                ) : (
-                  controNodes.map((node) => (
-                    <button
-                      key={node.ID}
-                      onClick={() => node.IsLeaf ? selectControLeaf(node) : loadControChildren(node.ID, node)}
-                      className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-350 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
-                    >
-                      <span className={node.IsLeaf ? 'font-medium' : 'font-extrabold text-emerald-455'}>
-                        {node.Text}
-                      </span>
-                      <span className="text-[10px] text-slate-500">{node.IsLeaf ? '•' : '◀'}</span>
-                    </button>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
+                  لا توجد نتائج مطابقة
+                </div>
+              )}
             </div>
           </div>
 
@@ -637,29 +612,44 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
               </div>
             ) : controExplanations.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-800 py-24 text-center text-slate-500 text-sm">
-                اختر مسألة إشكال أو وجه اختلاف من الشجرة اليمنى لعرض نصوص شرح مشكل الآثار وتأويلها ودراستها المقارنة
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 py-24 text-center text-slate-500 text-sm bg-white dark:bg-slate-900/20">
+                {selectedControId
+                  ? 'لا توجد دراسات أو شروح مسجلة لهذه المسألة حالياً'
+                  : 'اختر مسألة إشكال أو وجه اختلاف من الشجرة اليمنى لعرض نصوص شرح مشكل الآثار وتأويلها ودراستها المقارنة'}
               </div>
             ) : (
               <div className="space-y-4">
-                {controExplanations.map((exp) => (
-                  <div
-                    key={exp.MainID}
-                    onClick={() => showDetailModal(exp.Title, exp.BookName, exp.HadithNum, exp.PartNum, exp.PageNum, exp.CleanContent, exp.Annotations)}
-                    className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-black text-amber-500">{exp.BookName}</span>
-                      <span className="text-[10px] text-slate-500">حقم: {exp.HadithNum}</span>
-                    </div>
-                    <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
-                      {exp.Title}
-                    </h5>
-                    <div className="sciences-hub-text-8">
-                      <HadithContentRenderer content={exp.CleanContent} annotations={exp.Annotations || undefined} />
-                    </div>
+                {controExplanations.slice(0, controVisibleCount).map((exp) => (
+                  <div key={exp.MainID} className="mb-4">
+                    <HadithCard
+                      hadith={exp as any}
+                      onNarratorClick={onNarratorClick}
+                      onLexiconClick={onLexiconClick}
+                      onServiceClick={onServiceClick}
+                      isBookmarked={bookmarkedIds?.has(exp.MainID)}
+                      onToggleBookmark={onToggleBookmark}
+                      extraHeaderContent={
+                        <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                          {exp.Title}
+                        </h5>
+                      }
+                    />
                   </div>
                 ))}
+                
+                {controExplanations.length > controVisibleCount && (
+                  <div className="flex justify-center mt-6 mb-12">
+                    <button
+                      onClick={() => setControVisibleCount(prev => prev + 20)}
+                      className="group flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-800 hover:border-emerald-200 dark:hover:border-emerald-800/50 rounded-xl transition-all duration-300"
+                    >
+                      <span className="font-bold text-sm">عرض المزيد</span>
+                      <svg className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -671,15 +661,15 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Tree Browser */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4">ابحث بمعجم غريب ألفاظ الحديث</h3>
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">ابحث بمعجم غريب ألفاظ الحديث</h3>
               <form onSubmit={handleGhareebSearch} className="flex gap-2 mb-4">
                 <input
                   type="text"
                   placeholder="ابحث عن كلمة غريبة..."
                   value={ghareebSearchQuery}
                   onChange={(e) => setGhareebSearchQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-emerald-500 focus:outline-hidden"
+                  className="flex-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:outline-none"
                   dir="rtl"
                 />
                 <button
@@ -691,52 +681,59 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 </button>
               </form>
 
-              {/* Breadcrumbs */}
-              {ghareebPath.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadGhareebChildren(0)} className="sciences-hub-text-2">الرئيسية</button>
-                  {ghareebPath.map((node, i) => (
-                    <React.Fragment key={node.ID}>
-                      <span>←</span>
-                      <button
-                        onClick={() => loadGhareebChildren(node.ParentID, node)}
-                        className={`${i === ghareebPath.length - 1 ? 'text-slate-200 font-black' : 'text-emerald-450 hover:underline'}`}
-                      >
-                        {node.Text}
-                      </button>
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-
-              {/* List */}
-              <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-                {ghareebSearchQuery.trim() && ghareebSearchResults.length > 0 ? (
-                  ghareebSearchResults.map((node) => (
+              {/* Tree View */}
+              {!ghareebSearchQuery.trim() ? (
+                (() => {
+                  const ghareebTreeData: TreeNodeData<LexiconTreeNode>[] = allGhareebNodes.map(n => ({
+                    id: n.ID,
+                    parentId: n.ParentID,
+                    title: n.Text,
+                    isLeaf: n.IsLeaf,
+                    raw: n
+                  }));
+                  const ghareebRoots = buildTree(ghareebTreeData);
+                  return (
+                    <Tree
+                      roots={ghareebRoots}
+                      selectedId={selectedGhareebId}
+                      onSelect={(node) => {
+                        setSelectedGhareebId(node.id);
+                        if (node.isLeaf) {
+                          selectGhareebLeaf(node.raw);
+                        }
+                      }}
+                      onLoadChildren={loadGhareebChildren}
+                      emptyMessage="جاري تحميل معجم الغريب..."
+                    />
+                  );
+                })()
+              ) : ghareebSearchResults.length > 0 ? (
+                // Search Results View
+                <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                  <span className="text-[10px] text-slate-500 block mb-2">نتائج البحث المباشر:</span>
+                  {ghareebSearchResults.map((node) => (
                     <button
                       key={node.ID}
-                      onClick={() => node.IsLeaf ? selectGhareebLeaf(node) : loadGhareebChildren(node.ID, node)}
+                      onClick={() => {
+                        setSelectedGhareebId(node.ID);
+                        if (node.IsLeaf) {
+                          selectGhareebLeaf(node);
+                        } else {
+                          loadGhareebChildren(node.ID);
+                        }
+                      }}
                       className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
                     >
                       <span>{renderHighlighted(node.Text, ghareebSearchQuery)}</span>
                       <span className="text-[10px] text-slate-500">{node.IsLeaf ? 'كلمة معجمية' : 'فرع'}</span>
                     </button>
-                  ))
-                ) : (
-                  ghareebNodes.map((node) => (
-                    <button
-                      key={node.ID}
-                      onClick={() => node.IsLeaf ? selectGhareebLeaf(node) : loadGhareebChildren(node.ID, node)}
-                      className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-350 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
-                    >
-                      <span className={node.IsLeaf ? 'font-medium' : 'font-extrabold text-emerald-450'}>
-                        {node.Text}
-                      </span>
-                      <span className="text-[10px] text-slate-500">{node.IsLeaf ? '•' : '◀'}</span>
-                    </button>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
+                  لا توجد نتائج مطابقة
+                </div>
+              )}
             </div>
           </div>
 
@@ -748,27 +745,28 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
               </div>
             ) : ghareebDescriptions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-800 py-24 text-center text-slate-500 text-sm">
-                اختر الحرف أو المصطلح أو الكلمة الغريبة باليمين لعرض مقتبسات قواميس غريب الحديث وشروح اللغة المقابلة لها
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 py-24 text-center text-slate-500 text-sm bg-white dark:bg-slate-900/20">
+                {selectedGhareebId
+                  ? 'لا توجد تفسيرات لغوية مسجلة لهذا المصطلح حالياً'
+                  : 'اختر الحرف أو المصطلح أو الكلمة الغريبة باليمين لعرض مقتبسات قواميس غريب الحديث وشروح اللغة المقابلة لها'}
               </div>
             ) : (
               <div className="space-y-4">
                 {ghareebDescriptions.map((desc) => (
-                  <div
-                    key={desc.MainID}
-                    onClick={() => showDetailModal(desc.Title, desc.BookName, desc.HadithNum, desc.PartNum, desc.PageNum, desc.CleanContent, desc.Annotations)}
-                    className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-black text-amber-500">{desc.BookName}</span>
-                      <span className="text-[10px] text-slate-500">حقم: {desc.HadithNum}</span>
-                    </div>
-                    <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
-                      {desc.Title}
-                    </h5>
-                    <div className="sciences-hub-text-8">
-                      <HadithContentRenderer content={desc.CleanContent} annotations={desc.Annotations || undefined} />
-                    </div>
+                  <div key={desc.MainID} className="mb-4">
+                    <HadithCard
+                      hadith={desc}
+                      onNarratorClick={onNarratorClick}
+                      onLexiconClick={onLexiconClick}
+                      onServiceClick={onServiceClick}
+                      isBookmarked={bookmarkedIds?.has(desc.MainID)}
+                      onToggleBookmark={onToggleBookmark}
+                      extraHeaderContent={
+                        <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                          {desc.Title}
+                        </h5>
+                      }
+                    />
                   </div>
                 ))}
               </div>
@@ -782,15 +780,15 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Tree Browser */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="text-sm font-bold text-slate-200 mb-4">ابحث بمعجم البلدان والقصور والديار</h3>
+            <div className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm">
+              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4">ابحث بمعجم البلدان والقصور والديار</h3>
               <form onSubmit={handlePlacesSearch} className="flex gap-2 mb-4">
                 <input
                   type="text"
                   placeholder="ابحث عن مكان..."
                   value={placesSearchQuery}
                   onChange={(e) => setPlacesSearchQuery(e.target.value)}
-                  className="flex-1 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-slate-100 focus:border-emerald-500 focus:outline-hidden"
+                  className="flex-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-xs text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:outline-none"
                   dir="rtl"
                 />
                 <button
@@ -802,52 +800,59 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 </button>
               </form>
 
-              {/* Breadcrumbs */}
-              {placesPath.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-400 mb-4 bg-slate-950/40 p-2.5 rounded-lg border border-slate-850">
-                  <button onClick={() => loadPlacesChildren(1)} className="sciences-hub-text-2">الرئيسية</button>
-                  {placesPath.map((node, i) => (
-                    <React.Fragment key={node.ID}>
-                      <span>←</span>
-                      <button
-                        onClick={() => loadPlacesChildren(node.ParentID, node)}
-                        className={`${i === placesPath.length - 1 ? 'text-slate-200 font-black' : 'text-emerald-450 hover:underline'}`}
-                      >
-                        {node.Text}
-                      </button>
-                    </React.Fragment>
-                  ))}
-                </div>
-              )}
-
-              {/* List */}
-              <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
-                {placesSearchQuery.trim() && placesSearchResults.length > 0 ? (
-                  placesSearchResults.map((node) => (
+              {/* Tree View */}
+              {!placesSearchQuery.trim() ? (
+                (() => {
+                  const placesTreeData: TreeNodeData<LexiconTreeNode>[] = allPlacesNodes.map(n => ({
+                    id: n.ID,
+                    parentId: n.ParentID,
+                    title: n.Text,
+                    isLeaf: n.IsLeaf,
+                    raw: n
+                  }));
+                  const placesRoots = buildTree(placesTreeData);
+                  return (
+                    <Tree
+                      roots={placesRoots}
+                      selectedId={selectedPlacesId}
+                      onSelect={(node) => {
+                        setSelectedPlacesId(node.id);
+                        if (node.isLeaf) {
+                          selectPlacesLeaf(node.raw);
+                        }
+                      }}
+                      onLoadChildren={loadPlacesChildren}
+                      emptyMessage="جاري تحميل معجم البلدان..."
+                    />
+                  );
+                })()
+              ) : placesSearchResults.length > 0 ? (
+                // Search Results View
+                <div className="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+                  <span className="text-[10px] text-slate-500 block mb-2">نتائج البحث المباشر:</span>
+                  {placesSearchResults.map((node) => (
                     <button
                       key={node.ID}
-                      onClick={() => node.IsLeaf ? selectPlacesLeaf(node) : loadPlacesChildren(node.ID, node)}
+                      onClick={() => {
+                        setSelectedPlacesId(node.ID);
+                        if (node.IsLeaf) {
+                          selectPlacesLeaf(node);
+                        } else {
+                          loadPlacesChildren(node.ID);
+                        }
+                      }}
                       className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
                     >
                       <span>{renderHighlighted(node.Text, placesSearchQuery)}</span>
                       <span className="text-[10px] text-slate-500">{node.IsLeaf ? 'موقع جغرافي' : 'حرف'}</span>
                     </button>
-                  ))
-                ) : (
-                  placesNodes.map((node) => (
-                    <button
-                      key={node.ID}
-                      onClick={() => node.IsLeaf ? selectPlacesLeaf(node) : loadPlacesChildren(node.ID, node)}
-                      className="w-full text-right text-xs px-3 py-2 rounded-lg text-slate-355 hover:bg-slate-800/40 hover:text-slate-100 flex justify-between items-center"
-                    >
-                      <span className={node.IsLeaf ? 'font-medium' : 'font-extrabold text-emerald-450'}>
-                        {node.Text}
-                      </span>
-                      <span className="text-[10px] text-slate-500">{node.IsLeaf ? '•' : '◀'}</span>
-                    </button>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
+                  لا توجد نتائج مطابقة
+                </div>
+              )}
             </div>
           </div>
 
@@ -859,29 +864,44 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent"></div>
               </div>
             ) : placesDescriptions.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-800 py-24 text-center text-slate-500 text-sm">
-                اختر بلداً أو دياراً أو قصراً بالجانب الأيمن لاستعراض مرويات موقعه الجغرافي وقائمة الرواة اللذين عاشوا أو رحلوا إليه
+              <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-800 py-24 text-center text-slate-500 text-sm bg-white dark:bg-slate-900/20">
+                {selectedPlacesId
+                  ? 'لا توجد شروح أو مرويات مرتبطة بهذا الموقع الجغرافي حالياً'
+                  : 'اختر بلداً أو دياراً أو قصراً بالجانب الأيمن لاستعراض مرويات موقعه الجغرافي وقائمة الرواة اللذين عاشوا أو رحلوا إليه'}
               </div>
             ) : (
               <div className="space-y-4">
-                {placesDescriptions.map((desc) => (
-                  <div
-                    key={desc.MainID}
-                    onClick={() => showDetailModal(desc.Title, desc.BookName, desc.HadithNum, desc.PartNum, desc.PageNum, desc.CleanContent, desc.Annotations)}
-                    className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-black text-amber-500">{desc.BookName}</span>
-                      <span className="text-[10px] text-slate-500">حقم: {desc.HadithNum}</span>
-                    </div>
-                    <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
-                      {desc.Title}
-                    </h5>
-                    <div className="text-sm text-slate-355 leading-relaxed bg-slate-950/20 p-3 rounded-lg border border-slate-800/50 font-medium">
-                      <HadithContentRenderer content={desc.CleanContent} annotations={desc.Annotations || undefined} />
-                    </div>
+                {placesDescriptions.slice(0, placesVisibleCount).map((desc) => (
+                  <div key={desc.MainID} className="mb-4">
+                    <HadithCard
+                      hadith={desc}
+                      onNarratorClick={onNarratorClick}
+                      onLexiconClick={onLexiconClick}
+                      onServiceClick={onServiceClick}
+                      isBookmarked={bookmarkedIds?.has(desc.MainID)}
+                      onToggleBookmark={onToggleBookmark}
+                      extraHeaderContent={
+                        <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                          {desc.Title}
+                        </h5>
+                      }
+                    />
                   </div>
                 ))}
+                
+                {placesDescriptions.length > placesVisibleCount && (
+                  <div className="flex justify-center mt-6 mb-12">
+                    <button
+                      onClick={() => setPlacesVisibleCount(prev => prev + 20)}
+                      className="group flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-800 hover:border-emerald-200 dark:hover:border-emerald-800/50 rounded-xl transition-all duration-300"
+                    >
+                      <span className="font-bold text-sm">عرض المزيد</span>
+                      <svg className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -948,46 +968,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
         </div>
       )}
 
-      {/* Local Hadith Detail Modal */}
-      {selectedHadithDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="relative w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
-              <h3 className="font-black text-slate-200 text-sm md:text-base leading-relaxed">
-                تفاصيل موضع الشرح والاستدلال
-              </h3>
-              <button
-                onClick={() => setSelectedHadithDetail(null)}
-                className="text-slate-400 hover:text-slate-200 text-lg font-bold transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
-              <h4 className="text-base font-black text-emerald-450 leading-relaxed">
-                {selectedHadithDetail.Title}
-              </h4>
-              <div className="flex flex-wrap gap-3 text-xs text-slate-450 border-y border-slate-800/80 py-3">
-                <span className="font-bold text-slate-300">الكتاب: {selectedHadithDetail.BookName}</span>
-                <span>رقم الفقرة: {selectedHadithDetail.HadithNum}</span>
-                {selectedHadithDetail.PartNum !== undefined && <span>الجزء: {selectedHadithDetail.PartNum}</span>}
-                {selectedHadithDetail.PageNum !== undefined && <span>الصفحة: {selectedHadithDetail.PageNum}</span>}
-              </div>
-              <div className="text-sm text-slate-300 leading-relaxed font-semibold bg-slate-950/40 rounded-xl p-4.5 border border-slate-850">
-                <HadithContentRenderer content={selectedHadithDetail.CleanContent} annotations={selectedHadithDetail.Annotations || undefined} />
-              </div>
-            </div>
-            <div className="px-6 py-3.5 border-t border-slate-800 bg-slate-950/40 flex justify-end">
-              <button
-                onClick={() => setSelectedHadithDetail(null)}
-                className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-slate-100 transition-all"
-              >
-                إغلاق النافذة
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

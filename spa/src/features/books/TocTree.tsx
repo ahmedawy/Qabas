@@ -1,34 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import type { TocNode as TocNodeType } from '../../types';
-import { TocNode } from './TocNode';
+import { Tree, buildTree } from '../../components/ui/tree';
+import type { TreeNodeData } from '../../components/ui/tree';
 
 interface TocTreeProps {
   bookId: number;
   selectedNodeId: number | null;
   onSelectNode: (node: TocNodeType) => void;
   onTocLoaded: (nodes: TocNodeType[]) => void;
-}
-
-// Transforms a flat array of nodes into a tree structure
-function buildTocTree(nodes: TocNodeType[]): TocNodeType[] {
-  const map: { [key: number]: TocNodeType & { children: TocNodeType[] } } = {};
-  const roots: TocNodeType[] = [];
-
-  nodes.forEach(node => {
-    map[node.MainID] = { ...node, children: [] };
-  });
-
-  nodes.forEach(node => {
-    const mapped = map[node.MainID];
-    if (node.ParentID !== null && map[node.ParentID]) {
-      map[node.ParentID].children.push(mapped);
-    } else {
-      roots.push(mapped);
-    }
-  });
-
-  return roots;
 }
 
 export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSelectNode, onTocLoaded }) => {
@@ -104,7 +84,15 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
     ? nodes 
     : nodes.filter(node => node.Title.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const tree = buildTocTree(filteredNodes);
+  const treeData: TreeNodeData<TocNodeType>[] = filteredNodes.map(n => ({
+    id: n.MainID,
+    parentId: n.ParentID,
+    title: n.Title,
+    isLeaf: n.IsLeaf,
+    raw: n
+  }));
+
+  const tree = buildTree(treeData);
 
   return (
     <div className="flex flex-col h-full space-y-4">
@@ -124,20 +112,12 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
 
       {/* TOC Node List */}
       <div className="toc-tree-element-10">
-        {tree.length === 0 ? (
-          <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-xs">
-            لا توجد أبواب مطابقة
-          </div>
-        ) : (
-          tree.map((node) => (
-            <TocNode
-              key={node.MainID}
-              node={node}
-              selectedNodeId={selectedNodeId}
-              onSelectNode={onSelectNode}
-            />
-          ))
-        )}
+        <Tree
+          roots={tree}
+          selectedId={selectedNodeId}
+          onSelect={(node) => onSelectNode(node.raw)}
+          emptyMessage="لا توجد أبواب مطابقة"
+        />
       </div>
     </div>
   );

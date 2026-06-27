@@ -9,17 +9,21 @@ import type {
   VerseIndex,
   IndexCategoryNode,
   IndexItemNode,
-  ServiceText,
-  Annotation
+  ServiceText
 } from '../../types';
 import { highlightArabicText } from '../../utils/arabicHighlighter';
-import { HadithContentRenderer } from '../hadiths/HadithCard';
+import { HadithCard } from '../hadiths/HadithCard';
 
 interface SciencesHubProps {
   onSelectHadith?: (id: number) => void;
   onSelectNarrator?: (id: number) => void;
   activeTab?: string | null;
   onTabChange?: (tab: string) => void;
+  onNarratorClick?: (id: number) => void;
+  onLexiconClick?: (wordId: number) => void;
+  onServiceClick?: (hadith: any, serviceType: any) => void;
+  bookmarkedIds?: Set<number>;
+  onToggleBookmark?: (hadith: any) => void;
 }
 
 type TabType = 'terms' | 'judgments' | 'sciences' | 'quran' | 'names' | 'poetry';
@@ -28,7 +32,12 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
   onSelectHadith, 
   onSelectNarrator,
   activeTab: propActiveTab,
-  onTabChange
+  onTabChange,
+  onNarratorClick,
+  onLexiconClick,
+  onServiceClick,
+  bookmarkedIds,
+  onToggleBookmark,
 }) => {
   const [localActiveTab, setLocalActiveTab] = useState<TabType>('terms');
   const activeTab = (propActiveTab as TabType) || localActiveTab;
@@ -83,16 +92,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
   const [poetryHadiths, setPoetryHadiths] = useState<ServiceText[]>([]);
   const [poetryServices, setPoetryServices] = useState<ServiceText[]>([]);
 
-  // Local Hadith Detail modal state
-  const [selectedHadithDetail, setSelectedHadithDetail] = useState<{
-    Title: string;
-    BookName: string;
-    HadithNum: string | number;
-    PartNum?: number;
-    PageNum?: number;
-    CleanContent: string;
-    Annotations: Annotation[] | null;
-  } | null>(null);
+
 
   // Initialize data
   useEffect(() => {
@@ -375,10 +375,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
     }
   };
 
-  // Show detailed content in modal
-  const showDetailModal = (title: string, bookName: string, num: string | number, part: number | undefined, page: number | undefined, content: string, annotations: Annotation[] | null) => {
-    setSelectedHadithDetail({ Title: title, BookName: bookName, HadithNum: num, PartNum: part, PageNum: page, CleanContent: content, Annotations: annotations });
-  };
+
 
   const renderHighlighted = (text: string, query: string) => {
     if (!query) return <span>{text}</span>;
@@ -811,21 +808,20 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
             ) : (
               <div className="space-y-4">
                 {verseHadiths.map((hit) => (
-                  <div
-                    key={hit.MainID}
-                    onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
-                    className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="text-xs font-black text-amber-500">{hit.BookName}</span>
-                      <span className="text-[10px] text-slate-500">حقم: {hit.HadithNum}</span>
-                    </div>
-                    <h5 className="font-extrabold text-slate-200 leading-relaxed mb-3">
-                      {hit.Title}
-                    </h5>
-                    <div className="sciences-hub-text-8">
-                      <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
-                    </div>
+                  <div key={hit.MainID} className="mb-4">
+                    <HadithCard
+                      hadith={hit as any}
+                      onNarratorClick={onNarratorClick}
+                      onLexiconClick={onLexiconClick}
+                      onServiceClick={onServiceClick}
+                      isBookmarked={bookmarkedIds?.has(hit.MainID)}
+                      onToggleBookmark={onToggleBookmark}
+                      extraHeaderContent={
+                        <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                          {hit.Title}
+                        </h5>
+                      }
+                    />
                   </div>
                 ))}
               </div>
@@ -912,24 +908,22 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                   {nameHadiths.length === 0 ? (
                     <div className="sciences-hub-text-5">لا توجد مرويات حديثية مباشرة مسجلة لهذا العلم.</div>
                   ) : (
-                    <div className="atraf-hub-grid-9">
+                    <div className="space-y-4">
                       {nameHadiths.map((hit) => (
-                        <div
+                        <HadithCard
                           key={hit.MainID}
-                          onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
-                          className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                        >
-                          <div className="sciences-hub-wrapper-6">
-                            <span className="atraf-hub-title-20">{hit.BookName}</span>
-                            <span className="text-[10px] text-slate-500">حقم: {hit.HadithNum}</span>
-                          </div>
-                          <h5 className="sciences-hub-text-7">
-                            {hit.Title}
-                          </h5>
-                          <div className="sciences-hub-text-9">
-                            <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
-                          </div>
-                        </div>
+                          hadith={hit as any}
+                          onNarratorClick={onNarratorClick}
+                          onLexiconClick={onLexiconClick}
+                          onServiceClick={onServiceClick}
+                          isBookmarked={bookmarkedIds?.has(hit.MainID)}
+                          onToggleBookmark={onToggleBookmark}
+                          extraHeaderContent={
+                            <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                              {hit.Title}
+                            </h5>
+                          }
+                        />
                       ))}
                     </div>
                   )}
@@ -940,24 +934,22 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                   {nameServices.length === 0 ? (
                     <div className="sciences-hub-text-5">لا توجد شروح سيرة أو إيضاحات إضافية مسجلة لهذا العلم.</div>
                   ) : (
-                    <div className="atraf-hub-grid-9">
+                    <div className="space-y-4">
                       {nameServices.map((hit) => (
-                        <div
+                        <HadithCard
                           key={hit.MainID}
-                          onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
-                          className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                        >
-                          <div className="sciences-hub-wrapper-6">
-                            <span className="text-xs font-black text-amber-500">{hit.BookName}</span>
-                            <span className="text-[10px] text-slate-500">ج {hit.PartNum} ص {hit.PageNum}</span>
-                          </div>
-                          <h5 className="sciences-hub-text-7">
-                            {hit.Title}
-                          </h5>
-                          <div className="sciences-hub-text-9">
-                            <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
-                          </div>
-                        </div>
+                          hadith={hit as any}
+                          onNarratorClick={onNarratorClick}
+                          onLexiconClick={onLexiconClick}
+                          onServiceClick={onServiceClick}
+                          isBookmarked={bookmarkedIds?.has(hit.MainID)}
+                          onToggleBookmark={onToggleBookmark}
+                          extraHeaderContent={
+                            <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                              {hit.Title}
+                            </h5>
+                          }
+                        />
                       ))}
                     </div>
                   )}
@@ -1029,24 +1021,23 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                   {poetryHadiths.length === 0 ? (
                     <div className="sciences-hub-text-5">لا توجد مرويات حديثية مباشرة تستشهد بهذا البيت.</div>
                   ) : (
-                    <div className="atraf-hub-grid-9">
+                    <div className="space-y-4">
                       {poetryHadiths.map((hit) => (
-                        <div
+                        <HadithCard
                           key={hit.MainID}
-                          onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
-                          className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                        >
-                          <div className="sciences-hub-wrapper-6">
-                            <span className="atraf-hub-title-20">{hit.BookName}</span>
-                            <span className="text-[10px] text-slate-500">حقم: {hit.HadithNum}</span>
-                          </div>
-                          <h5 className="sciences-hub-text-7">
-                            {hit.Title}
-                          </h5>
-                          <div className="sciences-hub-text-27">
-                            <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
-                          </div>
-                        </div>
+                          hadith={hit as any}
+                          onNarratorClick={onNarratorClick}
+                          onLexiconClick={onLexiconClick}
+                          onServiceClick={onServiceClick}
+                          isBookmarked={bookmarkedIds?.has(hit.MainID)}
+                          onToggleBookmark={onToggleBookmark}
+
+                          extraHeaderContent={
+                            <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                              {hit.Title}
+                            </h5>
+                          }
+                        />
                       ))}
                     </div>
                   )}
@@ -1057,24 +1048,23 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
                   {poetryServices.length === 0 ? (
                     <div className="sciences-hub-text-5">لا توجد شروح لغوية أو شواهد تفسيرية مسجلة لهذا البيت الشعري.</div>
                   ) : (
-                    <div className="atraf-hub-grid-9">
+                    <div className="space-y-4">
                       {poetryServices.map((hit) => (
-                        <div
+                        <HadithCard
                           key={hit.MainID}
-                          onClick={() => showDetailModal(hit.Title, hit.BookName, hit.HadithNum, hit.PartNum, hit.PageNum, hit.CleanContent, hit.Annotations)}
-                          className="rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                        >
-                          <div className="sciences-hub-wrapper-6">
-                            <span className="text-xs font-black text-amber-500">{hit.BookName}</span>
-                            <span className="text-[10px] text-slate-500">ج {hit.PartNum} ص {hit.PageNum}</span>
-                          </div>
-                          <h5 className="sciences-hub-text-7">
-                            {hit.Title}
-                          </h5>
-                          <div className="sciences-hub-text-9">
-                            <HadithContentRenderer content={hit.CleanContent} annotations={hit.Annotations || undefined} />
-                          </div>
-                        </div>
+                          hadith={hit as any}
+                          onNarratorClick={onNarratorClick}
+                          onLexiconClick={onLexiconClick}
+                          onServiceClick={onServiceClick}
+                          isBookmarked={bookmarkedIds?.has(hit.MainID)}
+                          onToggleBookmark={onToggleBookmark}
+
+                          extraHeaderContent={
+                            <h5 className="font-extrabold text-slate-700 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors leading-relaxed">
+                              {hit.Title}
+                            </h5>
+                          }
+                        />
                       ))}
                     </div>
                   )}
@@ -1085,46 +1075,7 @@ export const SciencesHub: React.FC<SciencesHubProps> = ({
         </div>
       )}
 
-      {/* Local Hadith Detail Modal */}
-      {selectedHadithDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
-          <div className="relative w-full max-w-3xl rounded-2xl border border-slate-800 bg-slate-900 shadow-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950/40">
-              <h3 className="atraf-hub-title-25">
-                تفاصيل موضع الشرح والاستدلال
-              </h3>
-              <button
-                onClick={() => setSelectedHadithDetail(null)}
-                className="text-slate-400 hover:text-slate-200 text-lg font-bold transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
-              <h4 className="sciences-hub-title-28">
-                {selectedHadithDetail.Title}
-              </h4>
-              <div className="atraf-hub-text-27">
-                <span className="font-bold text-slate-300">الكتاب: {selectedHadithDetail.BookName}</span>
-                <span>رقم الفقرة: {selectedHadithDetail.HadithNum}</span>
-                {selectedHadithDetail.PartNum !== undefined && <span>الجزء: {selectedHadithDetail.PartNum}</span>}
-                {selectedHadithDetail.PageNum !== undefined && <span>الصفحة: {selectedHadithDetail.PageNum}</span>}
-              </div>
-              <div className="text-sm text-slate-300 leading-relaxed font-semibold bg-slate-950/40 rounded-xl p-4.5 border border-slate-850">
-                <HadithContentRenderer content={selectedHadithDetail.CleanContent} annotations={selectedHadithDetail.Annotations || undefined} />
-              </div>
-            </div>
-            <div className="atraf-hub-wrapper-29">
-              <button
-                onClick={() => setSelectedHadithDetail(null)}
-                className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 hover:text-slate-100 transition-all"
-              >
-                إغلاق النافذة
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

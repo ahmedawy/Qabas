@@ -90,7 +90,7 @@ export function buildASTFromAnnotations(
   if (!cleanText) {
     return [];
   }
-  if (!annotations || annotations.length === 0) {
+  if (!annotations || !Array.isArray(annotations) || annotations.length === 0) {
     return [{ type: 'text', text: cleanText }];
   }
 

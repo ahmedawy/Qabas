@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { api } from './api/client';
-import type { Book, TocNode, HadithSummary } from './types';
+import type { Book, TocNode, HadithSummary, HadithServiceType } from './types';
 import { BooksGrid } from './features/books/BooksGrid';
 import { TocTree } from './features/books/TocTree';
 import { DisplayMethodPanel } from './features/books/DisplayMethodPanel';
 import { HadithCard, HadithContentRenderer } from './features/hadiths/HadithCard';
-import { HadithDetailModal } from './features/hadiths/HadithDetailModal';
+import { HadithServiceModal } from './features/hadiths/HadithServiceModal';
 import { SearchBar } from './features/search/SearchBar';
 import { SearchResults } from './features/search/SearchResults';
 import { Pagination } from './features/search/Pagination';
@@ -39,7 +39,10 @@ function App() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [activeHadithId, setActiveHadithId] = useState<number | null>(null);
+  const [activeServiceHadithId, setActiveServiceHadithId] = useState<number | null>(null);
+  const [activeServiceType, setActiveServiceType] = useState<HadithServiceType | null>(null);
+  const [activeSubjectId, setActiveSubjectId] = useState<number | null>(null);
+  const [activeSubjectPathIds, setActiveSubjectPathIds] = useState<number[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Subsystems views
@@ -436,21 +439,52 @@ function App() {
             />
           ) : currentView === 'atraf' ? (
             <AtrafHub
-              onSelectHadith={(id) => setActiveHadithId(id)}
+              onSelectHadith={(id) => {
+                setActiveServiceHadithId(id);
+                setActiveServiceType('takhreeg');
+              }}
               onSelectNarrator={handleNarratorClick}
+              onNarratorClick={handleNarratorClick}
+              onLexiconClick={handleLexiconClick}
+              onServiceClick={(hadith, type) => {
+                setActiveServiceHadithId(hadith.MainID || null);
+                setActiveServiceType(type);
+              }}
+              bookmarkedIds={bookmarks.bookmarkedIds}
+              onToggleBookmark={(hadith) => bookmarks.handleToggleBookmark(hadith as any)}
               activeTab={currentTab}
               onTabChange={setCurrentTab}
             />
           ) : currentView === 'thematics' ? (
             <ThematicHub
-              onSelectHadith={(id) => setActiveHadithId(id)}
+              onNarratorClick={handleNarratorClick}
+              onLexiconClick={handleLexiconClick}
+              onServiceClick={(hadith, type) => {
+                setActiveServiceHadithId(hadith.MainID || null);
+                setActiveServiceType(type);
+              }}
+              bookmarkedIds={bookmarks.bookmarkedIds}
+              onToggleBookmark={(hadith) => bookmarks.handleToggleBookmark(hadith as any)}
               activeTab={currentTab}
               onTabChange={setCurrentTab}
+              initialSelectedSubjectId={activeSubjectId}
+              initialSubjectPathIds={activeSubjectPathIds}
             />
           ) : currentView === 'sciences' ? (
             <SciencesHub
-              onSelectHadith={(id) => setActiveHadithId(id)}
+              onSelectHadith={(id) => {
+                setActiveServiceHadithId(id);
+                setActiveServiceType('takhreeg');
+              }}
               onSelectNarrator={handleNarratorClick}
+              onNarratorClick={handleNarratorClick}
+              onLexiconClick={handleLexiconClick}
+              onServiceClick={(hadith: any, type: any) => {
+                setActiveServiceHadithId(hadith.MainID || null);
+                setActiveServiceType(type);
+              }}
+              bookmarkedIds={bookmarks.bookmarkedIds}
+              onToggleBookmark={(hadith: any) => bookmarks.handleToggleBookmark(hadith as any)}
               activeTab={currentTab}
               onTabChange={setCurrentTab}
             />
@@ -491,7 +525,10 @@ function App() {
                     loading={search.searchLoading}
                     onNarratorClick={handleNarratorClick}
                     onLexiconClick={handleLexiconClick}
-                    onDetailClick={(item) => setActiveHadithId(item.MainID)}
+                    onServiceClick={(id, type) => {
+                      setActiveServiceHadithId(id);
+                      setActiveServiceType(type);
+                    }}
                     bookmarkedIds={bookmarks.bookmarkedIds}
                     onToggleBookmark={bookmarks.handleToggleBookmark}
                   />
@@ -548,9 +585,12 @@ function App() {
                             hadith={h}
                             onNarratorClick={handleNarratorClick}
                             onLexiconClick={handleLexiconClick}
-                            onDetailClick={(item) => setActiveHadithId(item.MainID)}
+                            onServiceClick={(hadith, type) => {
+                              setActiveServiceHadithId(hadith.MainID || null);
+                              setActiveServiceType(type);
+                            }}
                             isBookmarked={bookmarks.bookmarkedIds.has(h.MainID)}
-                            onToggleBookmark={bookmarks.handleToggleBookmark}
+                            onToggleBookmark={(hadith) => bookmarks.handleToggleBookmark(hadith as any)}
                           />
                         ))}
 
@@ -601,12 +641,24 @@ function App() {
       </div>
 
       {/* DETAIL MODAL OVERLAY */}
-      {activeHadithId !== null && (
-        <HadithDetailModal
-          hadithId={activeHadithId}
-          onClose={() => setActiveHadithId(null)}
+      {activeServiceHadithId !== null && activeServiceType !== null && (
+        <HadithServiceModal
+          hadithId={activeServiceHadithId}
+          serviceType={activeServiceType}
+          onClose={() => {
+            setActiveServiceHadithId(null);
+            setActiveServiceType(null);
+          }}
           onNarratorClick={handleNarratorClick}
           onLexiconClick={handleLexiconClick}
+          onSelectSubjectNode={(subjectId, pathNodeIds) => {
+            setActiveServiceHadithId(null);
+            setActiveServiceType(null);
+            setActiveSubjectId(subjectId);
+            setActiveSubjectPathIds(pathNodeIds);
+            setCurrentView('thematics');
+            setCurrentTab('subject');
+          }}
         />
       )}
 
@@ -675,7 +727,8 @@ function App() {
         isOpen={auth.isBookmarksOpen}
         onClose={() => auth.setIsBookmarksOpen(false)}
         onSelectHadith={(id) => {
-          setActiveHadithId(id);
+          setActiveServiceHadithId(id);
+          setActiveServiceType('takhreeg');
           auth.setIsBookmarksOpen(false);
         }}
         searchHistory={search.searchHistory}

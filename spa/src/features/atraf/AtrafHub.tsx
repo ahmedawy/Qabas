@@ -3,13 +3,18 @@ import { api } from '../../api/client';
 import type { Book, AtrafResult, AtrafExtraResult, GroupedMtnResult, NarratorSummary, ServiceText, Annotation } from '../../types';
 import { highlightArabicText } from '../../utils/arabicHighlighter';
 import { AlphabetBar } from '../search/AlphabetBar';
-import { HadithContentRenderer } from '../hadiths/HadithCard';
+import { HadithCard, HadithContentRenderer } from '../hadiths/HadithCard';
 
 interface AtrafHubProps {
   onSelectHadith?: (id: number) => void;
   onSelectNarrator?: (id: number) => void;
   activeTab?: string | null;
   onTabChange?: (tab: string) => void;
+  onNarratorClick?: (id: number) => void;
+  onLexiconClick?: (wordId: number) => void;
+  onServiceClick?: (hadith: any, serviceType: any) => void;
+  bookmarkedIds?: Set<number>;
+  onToggleBookmark?: (hadith: any) => void;
 }
 
 type TabType = 'list' | 'comparison' | 'rwah_extra' | 'grouped';
@@ -18,7 +23,12 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
   onSelectHadith, 
   onSelectNarrator,
   activeTab: propActiveTab,
-  onTabChange
+  onTabChange,
+  onNarratorClick,
+  onLexiconClick,
+  onServiceClick,
+  bookmarkedIds,
+  onToggleBookmark,
 }) => {
   const [localActiveTab, setLocalActiveTab] = useState<TabType>('list');
   const activeTab = (propActiveTab as TabType) || localActiveTab;
@@ -55,9 +65,11 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
   const [groupedResults, setGroupedResults] = useState<GroupedMtnResult[]>([]);
   const [selectedGroupHadith, setSelectedGroupHadith] = useState<number | null>(null);
   const [groupedHadiths, setGroupedHadiths] = useState<ServiceText[]>([]);
+  const [groupedVisibleCount, setGroupedVisibleCount] = useState(20);
 
   // Local Hadith Detail modal state
   const [selectedHadithDetail, setSelectedHadithDetail] = useState<{
+    MainID?: number;
     Title: string;
     BookName: string;
     HadithNum: string | number;
@@ -158,6 +170,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
   const handleGroupedMatnClick = async (hadithMainId: number) => {
     setSelectedGroupHadith(hadithMainId);
     setLoading(true);
+    setGroupedVisibleCount(20);
     try {
       const res = await api.getGroupedMtn('', hadithMainId);
       if (res.group_hadiths) {
@@ -171,8 +184,8 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
   };
 
   // Show detailed content in a local overlay modal
-  const showDetailModal = (title: string, bookName: string, num: string | number, part: number | undefined, page: number | undefined, content: string, annotations: Annotation[] | null) => {
-    setSelectedHadithDetail({ Title: title, BookName: bookName, HadithNum: num, PartNum: part, PageNum: page, CleanContent: content, Annotations: annotations });
+  const showDetailModal = (mainId: number | undefined, title: string, bookName: string, num: string | number, part: number | undefined, page: number | undefined, content: string, annotations: Annotation[] | null) => {
+    setSelectedHadithDetail({ MainID: mainId, Title: title, BookName: bookName, HadithNum: num, PartNum: part, PageNum: page, CleanContent: content, Annotations: annotations });
   };
 
   const handleBookToggle = (bookId: number) => {
@@ -349,7 +362,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                   {atrafResults.map((atraf) => (
                     <div
                       key={atraf.MainID}
-                      onClick={() => onSelectHadith ? onSelectHadith(atraf.MainID) : showDetailModal(atraf.Text, atraf.BookName, atraf.HadithNum, atraf.PartNum, atraf.PageNum, 'الرجاء النقر على تفاصيل الكتاب لقراءة المتن الكامل.', null)}
+                      onClick={() => onSelectHadith ? onSelectHadith(atraf.MainID) : showDetailModal(atraf.MainID, atraf.Text, atraf.BookName, atraf.HadithNum, atraf.PartNum, atraf.PageNum, 'الرجاء النقر على تفاصيل الكتاب لقراءة المتن الكامل.', null)}
                       className="group rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
                     >
                       <h5 className="font-extrabold text-slate-200 group-hover:text-emerald-400 transition-colors leading-relaxed">
@@ -613,17 +626,27 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
                       <div className="atraf-hub-text-55">لا توجد نسخ خارجية مسجلة في مجموعات الربط البيني لهذا الحديث.</div>
                     ) : (
                       <div className="space-y-4">
-                        {groupedHadiths.map((h, i) => (
-                          <div key={i} className="atraf-hub-card-56">
-                            <div className="atraf-hub-wrapper-21">
-                              <span className="atraf-hub-text-57">{h.BookName}</span>
-                              <span className="text-slate-500">حديث رقم: {h.HadithNum} (ج {h.PartNum} ص {h.PageNum})</span>
-                            </div>
-                            <div className="atraf-hub-text-58">
-                              <HadithContentRenderer content={h.CleanContent} annotations={h.Annotations || undefined} />
-                            </div>
-                          </div>
+                        {groupedHadiths.slice(0, groupedVisibleCount).map((h, i) => (
+                          <HadithCard
+                            key={i}
+                            hadith={h as any}
+                            onNarratorClick={onNarratorClick}
+                            onLexiconClick={onLexiconClick}
+                            onServiceClick={onServiceClick}
+                            isBookmarked={bookmarkedIds?.has(h.MainID)}
+                            onToggleBookmark={onToggleBookmark}
+                          />
                         ))}
+                        {groupedVisibleCount < groupedHadiths.length && (
+                          <div className="flex justify-center mt-4">
+                            <button
+                              onClick={() => setGroupedVisibleCount(prev => prev + 20)}
+                              className="bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold py-2 px-6 rounded-lg transition-colors border border-slate-700"
+                            >
+                              عرض المزيد من النتائج
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -650,18 +673,30 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
               </button>
             </div>
             <div className="p-6 space-y-4 max-h-[500px] overflow-y-auto">
-              <h4 className="atraf-hub-title-59">
-                {selectedHadithDetail.Title}
-              </h4>
-              <div className="atraf-hub-text-27">
-                <span className="font-bold text-slate-300">الكتاب: {selectedHadithDetail.BookName}</span>
-                <span>رقم الحديث: {selectedHadithDetail.HadithNum}</span>
-                {selectedHadithDetail.PartNum !== undefined && <span>الجزء: {selectedHadithDetail.PartNum}</span>}
-                {selectedHadithDetail.PageNum !== undefined && <span>الصفحة: {selectedHadithDetail.PageNum}</span>}
-              </div>
-              <div className="text-sm text-slate-300 leading-relaxed font-semibold bg-slate-950/40 rounded-xl p-4.5 border border-slate-850">
-                <HadithContentRenderer content={selectedHadithDetail.CleanContent} annotations={selectedHadithDetail.Annotations || undefined} />
-              </div>
+              <HadithCard
+                hadith={{
+                  MainID: selectedHadithDetail.MainID,
+                  CleanContent: selectedHadithDetail.CleanContent,
+                  Annotations: selectedHadithDetail.Annotations,
+                  BookName: selectedHadithDetail.BookName,
+                  HadithNum: selectedHadithDetail.HadithNum,
+                  PartNum: selectedHadithDetail.PartNum,
+                  PageNum: selectedHadithDetail.PageNum,
+                }}
+                onNarratorClick={onNarratorClick}
+                onLexiconClick={onLexiconClick}
+                onServiceClick={(hadith, type) => {
+                  setSelectedHadithDetail(null); // Close detail modal first if they navigate to a service
+                  onServiceClick?.(hadith, type);
+                }}
+                isBookmarked={selectedHadithDetail.MainID ? bookmarkedIds?.has(selectedHadithDetail.MainID) : false}
+                onToggleBookmark={onToggleBookmark}
+                extraHeaderContent={
+                  <h4 className="text-base font-black text-emerald-600 dark:text-emerald-450 leading-relaxed">
+                    {selectedHadithDetail.Title}
+                  </h4>
+                }
+              />
             </div>
             <div className="atraf-hub-wrapper-29">
               <button

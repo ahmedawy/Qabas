@@ -2,7 +2,11 @@ import type {
   Book,
   TocNode,
   HadithSummary,
-  HadithDetailResponse,
+  HadithJudgment,
+  Chain,
+  TakhreejItem,
+  ShawahedData,
+  CombinedMatn,
   NarratorSummary,
   CritiqueTerm,
   ScholarOpinion,
@@ -114,8 +118,14 @@ export const api = {
   getChapterHadiths: (bookId: number, chapterId: number, page: number = 1) =>
     request<{ success: boolean; hadiths: HadithSummary[]; next_page?: number | null }>(`chapter?book_id=${bookId}&chapter_id=${chapterId}&page=${page}`),
 
-  getHadithDetail: (id: number) =>
-    request<HadithDetailResponse>(`hadith?id=${id}`),
+  getHadithJudgments: (id: number) =>
+    request<{ book_name: string; hadith_num: number; judgments: HadithJudgment[] }>(`hadith/judgments?id=${id}`),
+
+  getHadithChains: (id: number) =>
+    request<{ book_name: string; hadith_num: number; chains: Chain[] }>(`hadith/chains?id=${id}`),
+
+  getHadithTakhreej: (id: number) =>
+    request<{ book_name: string; hadith_num: number; book_id: number; takhreej: TakhreejItem[]; shawahed: ShawahedData; combined_matn: CombinedMatn | null }>(`hadith/takhreej?id=${id}`),
 
   getHadithByNum: (bookId: number, num: string | number, tarqeem: string = 'ID') =>
     request<{ success: boolean; hadith: HadithSummary }>(`hadith_by_num?book_id=${bookId}&num=${num}&tarqeem=${tarqeem}`),
@@ -240,6 +250,18 @@ export const api = {
     request<{ success: boolean; word_id: number; descrp_id: number; content: string; annotations?: any }>(
       `lexicon?word_id=${wordId}`
     ),
+
+  getHadithCommentary: (id: number) =>
+    request<{ success: boolean; commentaries: { id: number; book_name: string; content: string }[] }>(`hadith/commentary?id=${id}`),
+
+  getHadithThematicLinks: (id: number) =>
+    request<{ success: boolean; nodes: any[] }>(`hadith/thematic?id=${id}`),
+
+  getHadithAnalysis: (id: number) =>
+    request<{ success: boolean; analysis: any[] }>(`hadith/analysis?id=${id}`),
+
+  getHadithOccasions: (id: number) =>
+    request<{ success: boolean; occasions: any[] }>(`hadith/occasions?id=${id}`),
 
   getAtrafList: (books: string, q: string, letter?: string) => {
     let path = `atraf_list?books=${encodeURIComponent(books)}&q=${encodeURIComponent(q)}`;

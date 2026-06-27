@@ -1,5 +1,5 @@
 import React from 'react';
-import type { HadithSummary } from '../../types';
+import type { HadithSummary, HadithServiceType } from '../../types';
 import { HadithCard } from '../hadiths/HadithCard';
 
 interface SearchResultsProps {
@@ -9,7 +9,7 @@ interface SearchResultsProps {
   loading: boolean;
   onNarratorClick?: (id: number) => void;
   onLexiconClick?: (wordId: number) => void;
-  onDetailClick?: (hadith: HadithSummary) => void;
+  onServiceClick?: (hadithId: number, serviceType: HadithServiceType) => void;
   bookmarkedIds?: Set<number>;
   onToggleBookmark?: (hadith: HadithSummary) => void;
 }
@@ -21,7 +21,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   loading,
   onNarratorClick,
   onLexiconClick,
-  onDetailClick,
+  onServiceClick,
   bookmarkedIds,
   onToggleBookmark,
 }) => {
@@ -67,9 +67,9 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
               hadith={h}
               onNarratorClick={onNarratorClick}
               onLexiconClick={onLexiconClick}
-              onDetailClick={onDetailClick}
+              onServiceClick={(hadithItem, type) => onServiceClick?.(hadithItem.MainID || 0, type)}
               isBookmarked={bookmarkedIds?.has(h.MainID)}
-              onToggleBookmark={onToggleBookmark}
+              onToggleBookmark={(hadith) => onToggleBookmark?.(hadith as any)}
             />
           ))}
         </div>

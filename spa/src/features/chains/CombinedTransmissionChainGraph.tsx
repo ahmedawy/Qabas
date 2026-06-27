@@ -196,6 +196,23 @@ export const CombinedTransmissionChainGraph: React.FC<CombinedTransmissionChainG
     setIsFullscreen(!isFullscreen);
   };
 
+  useEffect(() => {
+    if (!isFullscreen) return;
+    
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        setIsFullscreen(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleEsc, true);
+    return () => {
+      window.removeEventListener('keydown', handleEsc, true);
+    };
+  }, [isFullscreen]);
+
   if (sanadIds.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-800 py-12 text-center text-slate-500 text-sm">
@@ -263,6 +280,15 @@ export const CombinedTransmissionChainGraph: React.FC<CombinedTransmissionChainG
       </div>
 
       <div style={flowContainerStyle}>
+        {isFullscreen && (
+          <button
+            onClick={toggleFullscreen}
+            className="absolute top-4 right-4 z-50 px-4 py-2 bg-slate-900/90 hover:bg-slate-800 text-white rounded-xl border border-slate-700/80 hover:border-emerald-500/80 shadow-2xl transition duration-200 flex items-center gap-1.5 cursor-pointer font-sans"
+            style={{ direction: 'rtl' }}
+          >
+            <span>إغلاق ملء الشاشة ✕</span>
+          </button>
+        )}
         <ReactFlow
           nodes={nodes}
           edges={edges}
