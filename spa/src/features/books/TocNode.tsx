@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { TocNode as TocNodeType } from '../../types';
 
 interface TocNodeProps {
@@ -7,10 +7,33 @@ interface TocNodeProps {
   onSelectNode: (node: TocNodeType) => void;
 }
 
+const hasSelectedChild = (n: TocNodeType, selectedId: number | null): boolean => {
+  if (!selectedId) return false;
+  if (!n.children) return false;
+  return n.children.some(child => child.MainID === selectedId || hasSelectedChild(child, selectedId));
+};
+
 export const TocNode: React.FC<TocNodeProps> = ({ node, selectedNodeId, onSelectNode }) => {
-  const [isOpen, setIsOpen] = useState(true);
   const hasChildren = node.children && node.children.length > 0;
   const isSelected = selectedNodeId === node.MainID;
+  const hasSelectedDescendant = hasSelectedChild(node, selectedNodeId);
+
+  const [isOpen, setIsOpen] = useState(true);
+  const nodeRef = useRef<HTMLDivElement>(null);
+
+  // Automatically expand parent node if a child is selected
+  useEffect(() => {
+    if (hasSelectedDescendant) {
+      setIsOpen(true);
+    }
+  }, [hasSelectedDescendant]);
+
+  // Scroll selected node into view
+  useEffect(() => {
+    if (isSelected && nodeRef.current) {
+      nodeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [isSelected]);
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -26,7 +49,7 @@ export const TocNode: React.FC<TocNodeProps> = ({ node, selectedNodeId, onSelect
   };
 
   return (
-    <div className="toc-node-text-1">
+    <div className="toc-node-text-1" ref={nodeRef}>
       <div
         onClick={handleClick}
         className={`group flex items-center justify-between py-2 px-3 rounded-lg cursor-pointer transition-all duration-200 gap-2 ${

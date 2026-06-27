@@ -7,6 +7,7 @@ interface TocTreeProps {
   bookId: number;
   selectedNodeId: number | null;
   onSelectNode: (node: TocNodeType) => void;
+  onTocLoaded: (nodes: TocNodeType[]) => void;
 }
 
 // Transforms a flat array of nodes into a tree structure
@@ -30,7 +31,7 @@ function buildTocTree(nodes: TocNodeType[]): TocNodeType[] {
   return roots;
 }
 
-export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSelectNode }) => {
+export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSelectNode, onTocLoaded }) => {
   const [nodes, setNodes] = useState<TocNodeType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,6 +48,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
       .then((data) => {
         if (active) {
           setNodes(data.toc);
+          onTocLoaded(data.toc);
           setLoading(false);
         }
       })
@@ -87,7 +89,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
           onClick={() => {
             setLoading(true);
             setError(null);
-            api.getToc(bookId).then(data => { setNodes(data.toc); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
+            api.getToc(bookId).then(data => { setNodes(data.toc); onTocLoaded(data.toc); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
           }}
           className="toc-tree-text-6"
         >

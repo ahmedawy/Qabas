@@ -30,6 +30,7 @@ function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [selectedNode, setSelectedNode] = useState<TocNode | null>(null);
+  const [tocNodes, setTocNodes] = useState<TocNode[]>([]);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
 
   const [hadiths, setHadiths] = useState<HadithSummary[]>([]);
@@ -134,11 +135,27 @@ function App() {
     };
   }, [activeWordId]);
 
+  // Auto-sync selected TOC node when hadiths or tocNodes update
+  useEffect(() => {
+    if (hadiths.length > 0 && tocNodes.length > 0) {
+      const firstHadith = hadiths[0];
+      if (firstHadith && firstHadith.ParentID) {
+        if (!selectedNode || selectedNode.MainID !== firstHadith.ParentID) {
+          const matchingNode = tocNodes.find(node => node.MainID === firstHadith.ParentID);
+          if (matchingNode) {
+            setSelectedNode(matchingNode);
+          }
+        }
+      }
+    }
+  }, [hadiths, tocNodes]);
+
   // 1. Select Book
   const handleSelectBook = (book: Book | null) => {
     setSelectedBook(book);
     setSelectedNode(null);
     setHadiths([]);
+    setTocNodes([]);
     setError(null);
     search.setIsSearching(false); // Stop searching when selecting a book
   };
@@ -183,19 +200,21 @@ function App() {
 
   // 3. Load Hadith by Number
   const handleLoadHadithByNum = (num: string | number, tarqeem: string) => {
-    if (!selectedBook) return;
+    if (!selectedBook) return Promise.resolve(null);
     setLoading(true);
     setError(null);
     setHadiths([]);
 
-    api.getHadithByNum(selectedBook.ID, num, tarqeem)
+    return api.getHadithByNum(selectedBook.ID, num, tarqeem)
       .then((data) => {
         setHadiths([data.hadith]);
         setLoading(false);
+        return data.hadith;
       })
       .catch((err) => {
         setError(err.message || 'لم يتم العثور على الحديث بالرقم المحدد');
         setLoading(false);
+        return null;
       });
   };
 
@@ -400,6 +419,7 @@ function App() {
                   bookId={selectedBook.ID}
                   selectedNodeId={selectedNode?.MainID || null}
                   onSelectNode={handleSelectNode}
+                  onTocLoaded={setTocNodes}
                 />
               </div>
             </div>

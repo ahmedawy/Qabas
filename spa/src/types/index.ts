@@ -34,6 +34,7 @@ export interface HadithSummary {
   Annotations: Annotation[];
   PartNum: number;
   PageNum: number;
+  ParentID?: number | null;
 }
 
 export interface Breadcrumb {

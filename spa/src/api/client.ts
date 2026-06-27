@@ -86,9 +86,27 @@ async function request<T>(path: string, method: string = 'GET', body?: Record<st
   return response.json();
 }
 
+export interface TarqeemBounds {
+  available: boolean;
+  min_hadith?: number;
+  max_hadith?: number;
+  min_part?: number;
+  max_part?: number;
+  min_page?: number;
+  max_page?: number;
+}
+
 export const api = {
   getBooks: () =>
     request<{ success: boolean; books: Book[] }>('books'),
+
+  getBookTarqeems: (bookId: number, part?: number | string) => {
+    let path = `books/${bookId}/tarqeems`;
+    if (part !== undefined && part !== '') {
+      path += `?part=${part}`;
+    }
+    return request<Record<string, TarqeemBounds>>(path);
+  },
 
   getToc: (bookId: number) =>
     request<{ success: boolean; book_id: number; toc: TocNode[] }>(`toc?book_id=${bookId}`),

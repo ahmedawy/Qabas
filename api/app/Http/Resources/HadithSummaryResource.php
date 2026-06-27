@@ -30,6 +30,7 @@ class HadithSummaryResource extends JsonResource
             'Annotations' => $this->resource->Annotations,
             'PartNum' => $this->resource->PartNum,
             'PageNum' => $this->resource->PageNum,
+            'ParentID' => $this->resource->ParentID,
         ];
     }
 }
