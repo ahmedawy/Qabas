@@ -174,6 +174,50 @@ export const api = {
       }>;
     }>(`sanad?sanad_id=${sanadId}`),
 
+  getCombinedTransmissionChain: (sanadIds: number[]) =>
+    request<{
+      success: boolean;
+      nodes: Array<{
+        id: string;
+        ID: number;
+        Name: string;
+        AbbName: string;
+        Kunia: string;
+        Laqab: string;
+        Nasab: string;
+        Tabaqa: string;
+        DeathYear: string;
+        MartabaIbnHajar: string;
+      }>;
+      edges: Array<{
+        id: string;
+        source: string;
+        target: string;
+      }>;
+    }>('combined_sanad', 'POST', { sanad_ids: sanadIds }),
+
+  getCombinedTakhreejChain: (hadithIds: number[]) =>
+    request<{
+      success: boolean;
+      nodes: Array<{
+        id: string;
+        ID: number;
+        Name: string;
+        AbbName: string;
+        Kunia: string;
+        Laqab: string;
+        Nasab: string;
+        Tabaqa: string;
+        DeathYear: string;
+        MartabaIbnHajar: string;
+      }>;
+      edges: Array<{
+        id: string;
+        source: string;
+        target: string;
+      }>;
+    }>('combined_sanad_takhreej', 'POST', { hadith_ids: hadithIds }),
+
   getLexiconWord: (wordId: number) =>
     request<{ success: boolean; word_id: number; descrp_id: number; content: string; annotations?: any }>(
       `lexicon?word_id=${wordId}`

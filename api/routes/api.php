@@ -38,6 +38,8 @@ use App\Http\Controllers\Api\V1\GetStatsRwahBooksController;
 use App\Http\Controllers\Api\V1\GetStatsRwahController;
 use App\Http\Controllers\Api\V1\GetSubjectTreeController;
 use App\Http\Controllers\Api\V1\GetTransmissionChainController;
+use App\Http\Controllers\Api\V1\GetCombinedTransmissionChainController;
+use App\Http\Controllers\Api\V1\GetCombinedTakhreejChainController;
 use App\Http\Controllers\Api\V1\GetUserController;
 use App\Http\Controllers\Api\V1\ListNarratorsController;
 use App\Http\Controllers\Api\V1\LoginController;
@@ -81,6 +83,8 @@ $router->prefix('v1')->group(function (Router $router) {
     $router->get('/rwah_garh', GetCritiqueTermsController::class);
     $router->get('/rwah_opinions', GetScholarOpinionsController::class);
     $router->get('/sanad', GetTransmissionChainController::class);
+    $router->post('/combined_sanad', GetCombinedTransmissionChainController::class);
+    $router->post('/combined_sanad_takhreej', GetCombinedTakhreejChainController::class);
     $router->get('/lexicon', GetLexiconWordController::class);
 
     // Module 8: Atraf & Comparisons

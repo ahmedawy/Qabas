@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import type { HadithDetailResponse } from '../../types';
 import { HadithContentRenderer } from './HadithCard';
-import { TransmissionChainSvg } from '../chains/TransmissionChainSvg';
 import { NarratorDrawer } from '../narrators/NarratorDrawer';
+import { CombinedTransmissionChainGraph } from '../chains/CombinedTransmissionChainGraph';
+import { CombinedTakhreejChainGraph } from '../chains/CombinedTakhreejChainGraph';
 
 
 interface NarratorChainViewerProps {
@@ -111,9 +112,11 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
   const [data, setData] = useState<HadithDetailResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'text' | 'judgments' | 'chains' | 'takhreeg'>('text');
+  const [activeTab, setActiveTab] = useState<'text' | 'judgments' | 'chains' | 'takhreeg' | 'combined'>('text');
   const [selectedSanadId, setSelectedSanadId] = useState<number | null>(null);
   const [selectedNarratorId, setSelectedNarratorId] = useState<number | null>(null);
+  const [selectedCombinedSanadIds, setSelectedCombinedSanadIds] = useState<number[]>([]);
+  const [selectedCombinedHadithIds, setSelectedCombinedHadithIds] = useState<number[]>([]);
 
   const handleLocalNarratorClick = (id: number) => {
     setSelectedNarratorId(id);
@@ -139,6 +142,18 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
       .then((res) => {
         if (active) {
           setData(res);
+          setSelectedCombinedSanadIds(res.chains ? res.chains.map(c => c.SanadID) : []);
+          
+          // Initialize selectedCombinedHadithIds with current hadith and all takhreeg/shawahed hadiths
+          const initialHadithIds = [res.hadith.MainID];
+          if (res.takhreej) {
+            res.takhreej.forEach((t: any) => initialHadithIds.push(t.HadithMainID));
+          }
+          if (res.shawahed?.comparisons) {
+            res.shawahed.comparisons.forEach((c: any) => initialHadithIds.push(c.SlaveMatnID));
+          }
+          setSelectedCombinedHadithIds(Array.from(new Set(initialHadithIds)));
+          
           setLoading(false);
         }
       })
@@ -191,6 +206,22 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
   }
 
   const { hadith, breadcrumbs, judgments, chains } = data;
+
+  const getCombinedHadithOptions = () => {
+    const map = new Map<number, { id: number; label: string }>();
+    map.set(hadith.MainID, { id: hadith.MainID, label: `${hadith.BookName} (حديث رقم ${hadith.HadithNum} - الحالي)` });
+    if (data.takhreej) {
+      data.takhreej.forEach((t: any) => {
+        map.set(t.HadithMainID, { id: t.HadithMainID, label: `${t.BookName} (حديث رقم ${t.HadithNum})` });
+      });
+    }
+    if (data.shawahed?.comparisons) {
+      data.shawahed.comparisons.forEach((c: any) => {
+        map.set(c.SlaveMatnID, { id: c.SlaveMatnID, label: `${c.BookName} (حديث رقم ${c.HadithNum})` });
+      });
+    }
+    return Array.from(map.values());
+  };
 
   return (
     <div className="hadith-detail-modal-element-15">
@@ -281,6 +312,16 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                 {(data.takhreej?.length || 0) + (data.shawahed?.comparisons?.length || 0)}
               </span>
             )}
+          </button>
+          <button
+            onClick={() => setActiveTab('combined')}
+            className={`py-3 px-4 font-semibold text-sm border-b-2 transition-all select-none relative ${
+              activeTab === 'combined'
+                ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400 font-bold'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+            }`}
+          >
+            شجرة التخريج المجمعة
           </button>
         </div>
 
@@ -380,15 +421,46 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                 </div>
               ) : (
                 <div className="space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                    <label className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={selectedCombinedSanadIds.length === chains.length}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCombinedSanadIds(chains.map(c => c.SanadID));
+                          } else {
+                            setSelectedCombinedSanadIds([]);
+                          }
+                        }}
+                        className="rounded border-slate-350 dark:border-slate-700 text-emerald-500 focus:ring-emerald-500 h-4 w-4 bg-transparent"
+                      />
+                      <span>تحديد الكل للشجرة المجمعة</span>
+                    </label>
+                  </div>
                   {chains.map((c) => (
                     <div
                       key={c.SanadID}
                       className="hadith-detail-modal-stack-38"
                     >
                       <div className="flex justify-between items-center text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2">
-                        <span className="hadith-detail-modal-title-40">
-                          معرّف الإسناد: #{c.SanadID}
-                        </span>
+                        <label className="flex items-center gap-2 cursor-pointer select-none font-medium">
+                          <input
+                            type="checkbox"
+                            checked={selectedCombinedSanadIds.includes(c.SanadID)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCombinedSanadIds([...selectedCombinedSanadIds, c.SanadID]);
+                              } else {
+                                setSelectedCombinedSanadIds(selectedCombinedSanadIds.filter(id => id !== c.SanadID));
+                              }
+                            }}
+                            className="rounded border-slate-350 dark:border-slate-700 text-emerald-500 focus:ring-emerald-500 h-3.5 w-3.5 bg-transparent"
+                          />
+                          <span className="hadith-detail-modal-title-40 font-bold">
+                            معرّف الإسناد: #{c.SanadID}
+                          </span>
+                        </label>
                         <span className="font-mono text-slate-500">
                           نوع السند: {c.SanadType || 'متصل'}
                         </span>
@@ -418,8 +490,8 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                       
                       {selectedSanadId === c.SanadID && handleLocalNarratorClick && (
                         <div className="hadith-detail-modal-element-46">
-                          <TransmissionChainSvg
-                            sanadId={c.SanadID}
+                          <CombinedTransmissionChainGraph
+                            sanadIds={[c.SanadID]}
                             onSelectNarrator={handleLocalNarratorClick}
                           />
                         </div>
@@ -429,6 +501,49 @@ export const HadithDetailModal: React.FC<HadithDetailModalProps> = ({
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* TAB 5: Combined Takhreej Graph */}
+          {activeTab === 'combined' && (
+            <div className="space-y-6">
+              <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80 space-y-3">
+                <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400">اختر المصادر والكتب لدمج طرقها وأسانيدها:</h4>
+                <div className="flex flex-wrap gap-2.5">
+                  {getCombinedHadithOptions().map((option) => {
+                    const isChecked = selectedCombinedHadithIds.includes(option.id);
+                    return (
+                      <label
+                        key={option.id}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium cursor-pointer transition-all ${
+                          isChecked
+                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                            : 'bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-750 border-slate-200 dark:border-slate-800 text-slate-650 dark:text-slate-350'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedCombinedHadithIds([...selectedCombinedHadithIds, option.id]);
+                            } else {
+                              setSelectedCombinedHadithIds(selectedCombinedHadithIds.filter(id => id !== option.id));
+                            }
+                          }}
+                          className="rounded border-slate-300 dark:border-slate-700 text-emerald-500 focus:ring-emerald-500 h-3.5 w-3.5 bg-transparent"
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <CombinedTakhreejChainGraph
+                hadithIds={selectedCombinedHadithIds}
+                onSelectNarrator={handleLocalNarratorClick}
+              />
             </div>
           )}
 
