@@ -4,19 +4,31 @@ import { api, type TarqeemBounds } from '../../api/client';
 
 interface DisplayMethodPanelProps {
   selectedBook: Book;
+  hadithNum: string;
+  setHadithNum: (val: string) => void;
+  tarqeem: string;
+  setTarqeem: (val: string) => void;
+  partNum: string;
+  setPartNum: (val: string) => void;
+  pageNum: string;
+  setPageNum: (val: string) => void;
   onLoadHadithByNum: (num: string | number, tarqeem: string) => Promise<any>;
   onLoadHadithByPage: (page: number, part?: number) => void;
 }
 
 export const DisplayMethodPanel: React.FC<DisplayMethodPanelProps> = ({
   selectedBook,
+  hadithNum,
+  setHadithNum,
+  tarqeem,
+  setTarqeem,
+  partNum,
+  setPartNum,
+  pageNum,
+  setPageNum,
   onLoadHadithByNum,
   onLoadHadithByPage,
 }) => {
-  const [hadithNum, setHadithNum] = useState<string>('5');
-  const [tarqeem, setTarqeem] = useState<string>('ID');
-  const [partNum, setPartNum] = useState<string>('1');
-  const [pageNum, setPageNum] = useState<string>('6');
   const [availableTarqeems, setAvailableTarqeems] = useState<Record<string, TarqeemBounds>>({
     ID: { available: true }
   });

@@ -34,6 +34,10 @@ function App() {
   const [allBooks, setAllBooks] = useState<Book[]>([]);
 
   const [hadiths, setHadiths] = useState<HadithSummary[]>([]);
+  const [hadithNum, setHadithNum] = useState<string>('1');
+  const [tarqeem, setTarqeem] = useState<string>('ID');
+  const [partNum, setPartNum] = useState<string>('1');
+  const [pageNum, setPageNum] = useState<string>('1');
   const [loading, setLoading] = useState(false);
   const [nextChapterPage, setNextChapterPage] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -138,11 +142,27 @@ function App() {
     };
   }, [activeWordId]);
 
+  // Helper to check if a node is an ancestor or self of another node in the TOC tree
+  const isAncestorOrSelf = (ancestorId: number, nodeId: number, allNodes: TocNode[]): boolean => {
+    if (nodeId === ancestorId) return true;
+    const node = allNodes.find(n => n.MainID === nodeId);
+    if (node && node.ParentID) {
+      return isAncestorOrSelf(ancestorId, node.ParentID, allNodes);
+    }
+    return false;
+  };
+
   // Auto-sync selected TOC node when hadiths or tocNodes update
   useEffect(() => {
     if (hadiths.length > 0 && tocNodes.length > 0) {
       const firstHadith = hadiths[0];
       if (firstHadith && firstHadith.ParentID) {
+        // Skip auto-syncing if the currently selected node is already the parent or an ancestor of the loaded hadith's parent.
+        // This prevents the selection from jumping/scrolling to a leaf node when a branch node is clicked.
+        if (selectedNode && isAncestorOrSelf(selectedNode.MainID, firstHadith.ParentID, tocNodes)) {
+          return;
+        }
+
         if (!selectedNode || selectedNode.MainID !== firstHadith.ParentID) {
           const matchingNode = tocNodes.find(node => node.MainID === firstHadith.ParentID);
           if (matchingNode) {
@@ -151,7 +171,7 @@ function App() {
         }
       }
     }
-  }, [hadiths, tocNodes]);
+  }, [hadiths, tocNodes, selectedNode]);
 
   // 1. Select Book
   const handleSelectBook = (book: Book | null) => {
@@ -176,6 +196,18 @@ function App() {
           setHadiths(data.hadiths);
           setNextChapterPage(data.next_page || null);
           setLoading(false);
+          if (data.hadiths && data.hadiths.length > 0) {
+            const firstHadith = data.hadiths[0];
+            if (firstHadith.HadithNum !== undefined && firstHadith.HadithNum !== null) {
+              setHadithNum(String(firstHadith.HadithNum));
+            }
+            if (firstHadith.PartNum !== undefined && firstHadith.PartNum !== null) {
+              setPartNum(String(firstHadith.PartNum));
+            }
+            if (firstHadith.PageNum !== undefined && firstHadith.PageNum !== null) {
+              setPageNum(String(firstHadith.PageNum));
+            }
+          }
         })
         .catch((err) => {
           setError(err.message || 'فشل تحميل أحاديث الباب');
@@ -232,6 +264,18 @@ function App() {
       .then((data) => {
         setHadiths(data.hadiths);
         setLoading(false);
+        if (data.hadiths && data.hadiths.length > 0) {
+          const firstHadith = data.hadiths[0];
+          if (firstHadith.HadithNum !== undefined && firstHadith.HadithNum !== null) {
+            setHadithNum(String(firstHadith.HadithNum));
+          }
+          if (firstHadith.PartNum !== undefined && firstHadith.PartNum !== null) {
+            setPartNum(String(firstHadith.PartNum));
+          }
+          if (firstHadith.PageNum !== undefined && firstHadith.PageNum !== null) {
+            setPageNum(String(firstHadith.PageNum));
+          }
+        }
       })
       .catch((err) => {
         setError(err.message || 'لم يتم العثور على أحاديث في الصفحة المحددة');
@@ -557,6 +601,14 @@ function App() {
                   {/* Browse Selector Option panel */}
                   <DisplayMethodPanel
                     selectedBook={selectedBook}
+                    hadithNum={hadithNum}
+                    setHadithNum={setHadithNum}
+                    tarqeem={tarqeem}
+                    setTarqeem={setTarqeem}
+                    partNum={partNum}
+                    setPartNum={setPartNum}
+                    pageNum={pageNum}
+                    setPageNum={setPageNum}
                     onLoadHadithByNum={handleLoadHadithByNum}
                     onLoadHadithByPage={handleLoadHadithByPage}
                   />
@@ -586,8 +638,28 @@ function App() {
                             onNarratorClick={handleNarratorClick}
                             onLexiconClick={handleLexiconClick}
                             onServiceClick={(hadith, type) => {
+                              if (hadith.HadithNum !== undefined && hadith.HadithNum !== null) {
+                                setHadithNum(String(hadith.HadithNum));
+                              }
+                              if (hadith.PartNum !== undefined && hadith.PartNum !== null) {
+                                setPartNum(String(hadith.PartNum));
+                              }
+                              if (hadith.PageNum !== undefined && hadith.PageNum !== null) {
+                                setPageNum(String(hadith.PageNum));
+                              }
                               setActiveServiceHadithId(hadith.MainID || null);
                               setActiveServiceType(type);
+                            }}
+                            onClick={() => {
+                              if (h.HadithNum !== undefined && h.HadithNum !== null) {
+                                setHadithNum(String(h.HadithNum));
+                              }
+                              if (h.PartNum !== undefined && h.PartNum !== null) {
+                                setPartNum(String(h.PartNum));
+                              }
+                              if (h.PageNum !== undefined && h.PageNum !== null) {
+                                setPageNum(String(h.PageNum));
+                              }
                             }}
                             isBookmarked={bookmarks.bookmarkedIds.has(h.MainID)}
                             onToggleBookmark={(hadith) => bookmarks.handleToggleBookmark(hadith as any)}
