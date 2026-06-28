@@ -30,6 +30,7 @@ class GetHadithTakhreejController extends Controller
         }
 
         $hadith = $this->hadithModel->newQuery()
+            ->select(['MainID', 'BookID', 'BookName', 'ID'])
             ->where('MainID', $id)
             ->first();
 

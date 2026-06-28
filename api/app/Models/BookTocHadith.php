@@ -209,18 +209,18 @@ class BookTocHadith extends Model
 
         $sql = "
             WITH RECURSIVE HierarchyCTE AS (
-                SELECT *, 1 AS Level
+                SELECT MainID, BookID, BookName, ID, ParentID, IsLeaf, PartNum, PageNum, ServiceFlags, 1 AS Level
                 FROM booktoc_hadith
                 WHERE MainID = ? AND IsLeaf = 0
                 
                 UNION ALL
                 
-                SELECT parent.*, child.Level + 1 AS Level
+                SELECT parent.MainID, parent.BookID, parent.BookName, parent.ID, parent.ParentID, parent.IsLeaf, parent.PartNum, parent.PageNum, parent.ServiceFlags, child.Level + 1 AS Level
                 FROM booktoc_hadith parent
                 INNER JOIN HierarchyCTE child ON child.ParentID = parent.MainID
                 WHERE parent.IsLeaf = 0
             )
-            SELECT * FROM HierarchyCTE ORDER BY Level DESC
+            SELECT MainID, BookID, BookName, ID, ParentID, IsLeaf, PartNum, PageNum, ServiceFlags FROM HierarchyCTE ORDER BY Level DESC
         ";
 
         $rawBreadcrumbs = \Illuminate\Support\Facades\DB::select($sql, [$hadith->ParentID]);

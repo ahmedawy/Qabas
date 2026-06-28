@@ -32,6 +32,7 @@ class GetHadithChainsController extends Controller
         }
 
         $hadith = $this->hadithModel->newQuery()
+            ->select(['MainID', 'BookName', 'ID'])
             ->where('MainID', $id)
             ->first();
 

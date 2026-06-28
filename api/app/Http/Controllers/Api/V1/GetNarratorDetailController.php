@@ -34,6 +34,11 @@ class GetNarratorDetailController extends Controller
 
         /** @var Narrator|null $narrator */
         $narrator = $this->narratorModel->newQuery()
+            ->select([
+                'ID', 'Name', 'AbbName', 'Kunia', 'Laqab', 'Nasab', 'Tabaqa', 'TabaqaNum',
+                'BirthYear', 'DeathYear', 'DeathYearNum', 'MartabaIbnHajar', 'MartabaZahabi',
+                'LivingCity', 'DeathCity', 'EsmShuhra', 'HadithsCount'
+            ])
             ->where('ID', $id)
             ->first();
 

@@ -44,15 +44,14 @@ class SunnahFeaturesTest extends TestCase
     public function test_hadith_detail_contains_takhreej_and_shawahed(): void
     {
         // Hadith ID 1 is Bukhari Hadith #1 (Innamal a'malu bin niyyat)
-        $response = $this->get('/api/v1/hadith?id=1');
+        $response = $this->get('/api/v1/hadith/takhreej?id=1');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'success',
-            'hadith',
-            'breadcrumbs',
-            'judgments',
-            'chains',
+            'book_name',
+            'hadith_num',
+            'book_id',
             'takhreej',
             'shawahed' => [
                 'has_shawahed',

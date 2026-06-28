@@ -78,6 +78,7 @@ class GetCombinedTransmissionChainController extends Controller
         }
 
         $narrators = $this->narratorModel->newQuery()
+            ->select(['ID', 'Name', 'AbbName', 'Kunia', 'Laqab', 'Nasab', 'Tabaqa', 'DeathYear', 'MartabaIbnHajar'])
             ->whereIn('ID', $uniqueNarratorIds)
             ->get();
 
