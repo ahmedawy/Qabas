@@ -8,6 +8,7 @@ interface TreeProps {
   onSelect: (node: TreeNodeData) => void;
   onLoadChildren?: (id: number) => Promise<void>;
   emptyMessage?: string;
+  className?: string;
 }
 
 export const Tree: React.FC<TreeProps> = ({
@@ -15,7 +16,8 @@ export const Tree: React.FC<TreeProps> = ({
   selectedId,
   onSelect,
   onLoadChildren,
-  emptyMessage = 'لا توجد عناصر لعرضها'
+  emptyMessage = 'لا توجد عناصر لعرضها',
+  className = "space-y-1 pr-1 max-h-96 overflow-y-auto"
 }) => {
   if (roots.length === 0) {
     return (
@@ -26,7 +28,7 @@ export const Tree: React.FC<TreeProps> = ({
   }
 
   return (
-    <div className="space-y-1 pr-1 max-h-96 overflow-y-auto">
+    <div className={className}>
       {roots.map((node) => (
         <TreeNode
           key={node.id}

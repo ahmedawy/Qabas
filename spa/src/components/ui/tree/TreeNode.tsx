@@ -16,13 +16,24 @@ const hasSelectedChild = (n: TreeNodeData, selectedId: number | null): boolean =
 };
 
 export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, onSelect, onLoadChildren, level }) => {
-  const hasChildren = !node.isLeaf;
-  const isSelected = selectedId === node.id;
-  const hasSelectedDescendant = hasSelectedChild(node, selectedId);
-
+  const [loaded, setLoaded] = useState(node.children ? node.children.length > 0 : false);
   const [isOpen, setIsOpen] = useState(level === 0);
   const [loading, setLoading] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
+
+  const hasChildren = onLoadChildren
+    ? (!node.isLeaf && (!loaded || (node.children && node.children.length > 0)))
+    : (node.children && node.children.length > 0);
+
+  const isSelected = selectedId === node.id;
+  const hasSelectedDescendant = hasSelectedChild(node, selectedId);
+
+  // Sync loaded state when children change
+  useEffect(() => {
+    if (node.children && node.children.length > 0) {
+      setLoaded(true);
+    }
+  }, [node.children]);
 
   // Automatically expand parent node if a child is selected
   useEffect(() => {
@@ -31,10 +42,30 @@ export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, onSelect, 
     }
   }, [hasSelectedDescendant]);
 
-  // Scroll selected node into view
+  // Scroll selected node into view of its local container
   useEffect(() => {
     if (isSelected && nodeRef.current) {
-      nodeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      const container = nodeRef.current.closest('.overflow-y-auto') as HTMLElement;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const nodeRect = nodeRef.current.getBoundingClientRect();
+        
+        const isFullyVisible =
+          nodeRect.top >= containerRect.top &&
+          nodeRect.bottom <= containerRect.bottom;
+
+        if (!isFullyVisible) {
+          const relativeTopDiff = nodeRect.top - containerRect.top;
+          const targetScrollTop = container.scrollTop + relativeTopDiff - (containerRect.height / 2) + (nodeRect.height / 2);
+          
+          container.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'auto'
+          });
+        }
+      } else {
+        nodeRef.current.scrollIntoView({ behavior: 'auto', block: 'nearest' });
+      }
     }
   }, [isSelected]);
 
@@ -43,6 +74,9 @@ export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, onSelect, 
     if (isOpen && hasChildren && (!node.children || node.children.length === 0) && onLoadChildren && !loading) {
       setLoading(true);
       onLoadChildren(node.id)
+        .then(() => {
+          setLoaded(true);
+        })
         .catch(err => console.error('Failed to load tree children:', err))
         .finally(() => setLoading(false));
     }

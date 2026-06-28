@@ -190,6 +190,13 @@ function App() {
     setError(null);
     setNextChapterPage(null);
 
+    // Scroll window and main reading panel to the top
+    window.scrollTo(0, 0);
+    const mainPane = document.querySelector('.app-stack-28');
+    if (mainPane) {
+      mainPane.scrollTop = 0;
+    }
+
     if (selectedBook) {
       api.getChapterHadiths(selectedBook.ID, node.MainID, 1)
         .then((data) => {
@@ -441,7 +448,7 @@ function App() {
 
         {/* RIGHT SIDEBAR: TOC and Book Select (Collapsible, only in reading mode) */}
         {currentView === 'library' && selectedBook && isSidebarOpen && !search.isSearching && (
-          <aside className="w-80 shrink-0 hidden md:flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-6 text-right overflow-hidden shadow-sm animate-in slide-in-from-right duration-200">
+          <aside className="w-80 shrink-0 hidden md:flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-6 text-right overflow-hidden shadow-sm animate-in slide-in-from-right duration-200 sticky top-28 self-start h-[calc(100vh-9rem)]">
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">تغيير مصدر الكتاب:</h2>
               <select

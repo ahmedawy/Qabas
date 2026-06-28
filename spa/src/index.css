@@ -1037,6 +1037,7 @@ body {
 
 .app-stack-28 {
   @apply flex-grow overflow-y-auto pr-1 flex flex-col gap-6;
+  min-height: calc(100vh - 9rem);
 }
 
 .app-text-29 {
@@ -1716,7 +1717,7 @@ body {
 }
 
 .toc-tree-element-10 {
-  @apply flex-grow overflow-y-auto space-y-1 pr-1 max-h-[500px];
+  @apply flex-grow flex flex-col min-h-0 overflow-hidden;
 }
 
 .toc-tree-text-11 {
