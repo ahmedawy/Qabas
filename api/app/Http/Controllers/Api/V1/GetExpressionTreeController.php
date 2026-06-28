@@ -31,8 +31,12 @@ class GetExpressionTreeController extends Controller
 
         // Case 1: Search term tree by query
         if ($query !== '') {
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
             $nodes = $this->expressionNodeModel->newQuery()
-                ->whereRaw('normalize_arabic(Text) LIKE normalize_arabic(?)', ['%'.$query.'%'])
+                ->whereRaw('MATCH(Text_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery])
                 ->limit(100)
                 ->get();
 

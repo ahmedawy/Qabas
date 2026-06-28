@@ -99,7 +99,7 @@ class GetNarratorDetailController extends Controller
         if ($tab === 'hadiths') {
             // 7. Narrated Hadiths
             $matchingSanads = \DB::table('asaned')
-                ->where('SandRwah', 'LIKE', "% {$id} %")
+                ->whereRaw('MATCH(SandRwah_Normalized) AGAINST(? IN BOOLEAN MODE)', ["+narrator_{$id}"])
                 ->pluck('ID');
 
             $hadiths = \DB::table('asanedhadiths')
@@ -112,7 +112,8 @@ class GetNarratorDetailController extends Controller
                     'booktoc_hadith.ID as HadithNum',
                     'booktoc_hadith.Tarf',
                     'booktoc_hadith.PartNum',
-                    'booktoc_hadith.PageNum'
+                    'booktoc_hadith.PageNum',
+                    'booktoc_hadith.ServiceFlags'
                 )
                 ->distinct()
                 ->paginate(15);

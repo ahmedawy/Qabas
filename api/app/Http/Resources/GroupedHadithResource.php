@@ -29,6 +29,7 @@ class GroupedHadithResource extends JsonResource
             'Title' => (string) $this->resource->getAttribute('Title'),
             'CleanContent' => (string) $this->resource->getAttribute('CleanContent'),
             'Annotations' => $this->resource->getAttribute('Annotations'),
+            'ServiceFlags' => (int) ($this->resource->getAttribute('ServiceFlags') ?? 0),
         ];
     }
 }

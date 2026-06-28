@@ -118,19 +118,42 @@ class BookTocService extends Model
      */
     public static function getDescendantLeaves(int $chapterId, int $limit = 50, int $offset = 0)
     {
+        // Check if there are any child chapters (IsLeaf = 0) under this node
+        $hasSubChapters = \Illuminate\Support\Facades\DB::selectOne("
+            SELECT 1 FROM booktoc_services WHERE ParentID = ? AND IsLeaf = 0 LIMIT 1
+        ", [$chapterId]);
+
+        if (!$hasSubChapters) {
+            // Direct query (extremely fast, avoids CTE completely)
+            $sql = "
+                SELECT MainID, BookID, BookName, ID, CleanContent, Annotations, ParentID, IsLeaf, PartNum, PageNum
+                FROM booktoc_services
+                WHERE ParentID = ? AND IsLeaf = 1
+                ORDER BY MainID
+                LIMIT ? OFFSET ?
+            ";
+            $rawResults = \Illuminate\Support\Facades\DB::select($sql, [$chapterId, $limit, $offset]);
+            return self::hydrate($rawResults);
+        }
+
+        // Fallback to recursive CTE if there are sub-chapters, but optimized (ordered by MainID, no CONCAT Path)
         $sql = "
             WITH RECURSIVE HierarchyCTE AS (
-                SELECT MainID, BookID, BookName, ID, CleanContent, Annotations, ParentID, IsLeaf, PartNum, PageNum, 1 AS Level, CAST(MainID AS CHAR(1000)) AS Path
+                SELECT MainID, BookID, BookName, ID, CleanContent, Annotations, ParentID, IsLeaf, PartNum, PageNum
                 FROM booktoc_services
                 WHERE MainID = ?
                 
                 UNION ALL
                 
-                SELECT child.MainID, child.BookID, child.BookName, child.ID, child.CleanContent, child.Annotations, child.ParentID, child.IsLeaf, child.PartNum, child.PageNum, parent.Level + 1 AS Level, CONCAT(parent.Path, ',', child.MainID) AS Path
+                SELECT child.MainID, child.BookID, child.BookName, child.ID, child.CleanContent, child.Annotations, child.ParentID, child.IsLeaf, child.PartNum, child.PageNum
                 FROM booktoc_services child
                 INNER JOIN HierarchyCTE parent ON child.ParentID = parent.MainID
             )
-            SELECT MainID, BookID, BookName, ID, CleanContent, Annotations, ParentID, IsLeaf, PartNum, PageNum FROM HierarchyCTE WHERE IsLeaf = 1 ORDER BY Path LIMIT ? OFFSET ?
+            SELECT MainID, BookID, BookName, ID, CleanContent, Annotations, ParentID, IsLeaf, PartNum, PageNum 
+            FROM HierarchyCTE 
+            WHERE IsLeaf = 1 
+            ORDER BY MainID 
+            LIMIT ? OFFSET ?
         ";
 
         $rawResults = \Illuminate\Support\Facades\DB::select($sql, [$chapterId, $limit, $offset]);

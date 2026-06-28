@@ -16,6 +16,19 @@ export interface TocNode {
   children?: TocNode[];
 }
 
+export interface BaseHadithData {
+  MainID?: number;
+  ID?: number;
+  BookName?: string;
+  HadithNum?: number | string;
+  PartNum?: number;
+  PageNum?: number;
+  CleanContent: string;
+  Annotations?: Annotation[] | string | null;
+  Title?: string;
+  ServiceFlags?: number;
+}
+
 export interface Annotation {
   type: string;
   start: number;
@@ -35,6 +48,7 @@ export interface HadithSummary {
   PartNum: number;
   PageNum: number;
   ParentID?: number | null;
+  ServiceFlags?: number;
 }
 
 export interface Breadcrumb {
@@ -240,6 +254,7 @@ export interface ServiceText {
   Title: string;
   CleanContent: string;
   Annotations: Annotation[] | null;
+  ServiceFlags?: number;
 }
 
 export interface ScholarDefinition {

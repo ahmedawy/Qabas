@@ -44,7 +44,11 @@ class GetNarratorsByBookController extends Controller
             });
 
         if ($query !== '') {
-            $queryBuilder->whereRaw('normalize_arabic(Name) LIKE normalize_arabic(?)', ['%'.$query.'%']);
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
+            $queryBuilder->whereRaw('MATCH(Name_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery]);
         }
 
         $results = $queryBuilder

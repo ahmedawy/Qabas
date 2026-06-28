@@ -67,6 +67,7 @@ class GetIndexPoetryController extends Controller
                     'Tarf as Title',
                     'CleanContent as CleanContent',
                     'Annotations as Annotations',
+                    'ServiceFlags as ServiceFlags',
                 ])
                 ->limit(30)
                 ->get();

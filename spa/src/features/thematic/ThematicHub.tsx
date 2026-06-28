@@ -430,6 +430,7 @@ export const ThematicHub: React.FC<ThematicHubProps> = ({
                     <Tree
                       roots={subjectRoots}
                       selectedId={selectedSubjectId}
+                      expandedIds={initialSubjectPathIds}
                       onSelect={(node) => {
                         setSelectedSubjectId(node.id);
                         if (node.isLeaf) {

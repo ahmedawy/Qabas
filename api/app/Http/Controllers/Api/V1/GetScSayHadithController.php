@@ -58,6 +58,7 @@ class GetScSayHadithController extends Controller
                 'h.BookName as BookName',
                 'h.ID as HadithNum',
                 'h.Tarf as Title',
+                'h.ServiceFlags as ServiceFlags',
                 'sc.Name as ScholarName',
                 's.Say as JudgmentText',
             ]);

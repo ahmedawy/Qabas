@@ -61,15 +61,19 @@ class SearchHadithsController extends Controller
         }
 
         // Apply morphological stored procedure filter
+        $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$q])->q;
+        $words = array_filter(explode(' ', $normalizedQuery));
+        $matchQuery = implode('* ', $words) . '*';
+
         $query->whereRaw(
-            'normalize_arabic(CleanContent) LIKE normalize_arabic(?)',
-            ['%'.$q.'%']
+            'MATCH(CleanContent_Normalized) AGAINST(? IN BOOLEAN MODE)',
+            [$matchQuery]
         );
 
         $total = $query->count();
 
         $results = $query->select([
-            'MainID', 'BookID', 'BookName', 'ID', 'PartNum', 'PageNum', 'Tarf', 'CleanContent', 'Annotations'
+            'MainID', 'BookID', 'BookName', 'ID', 'PartNum', 'PageNum', 'Tarf', 'CleanContent', 'Annotations', 'ServiceFlags'
         ])
             ->skip(($page - 1) * $limit)
             ->take($limit)

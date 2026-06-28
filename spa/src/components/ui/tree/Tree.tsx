@@ -5,6 +5,7 @@ import { TreeNode } from './TreeNode';
 interface TreeProps {
   roots: TreeNodeData[];
   selectedId: number | null;
+  expandedIds?: number[];
   onSelect: (node: TreeNodeData) => void;
   onLoadChildren?: (id: number) => Promise<void>;
   emptyMessage?: string;
@@ -14,6 +15,7 @@ interface TreeProps {
 export const Tree: React.FC<TreeProps> = ({
   roots,
   selectedId,
+  expandedIds,
   onSelect,
   onLoadChildren,
   emptyMessage = 'لا توجد عناصر لعرضها',
@@ -34,6 +36,7 @@ export const Tree: React.FC<TreeProps> = ({
           key={node.id}
           node={node}
           selectedId={selectedId}
+          expandedIds={expandedIds}
           onSelect={onSelect}
           onLoadChildren={onLoadChildren}
           level={0}

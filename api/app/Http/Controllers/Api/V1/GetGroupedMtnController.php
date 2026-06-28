@@ -74,6 +74,7 @@ class GetGroupedMtnController extends Controller
                     'booktoc_hadith.Tarf as Title',
                     'booktoc_hadith.CleanContent as CleanContent',
                     'booktoc_hadith.Annotations as Annotations',
+                    'booktoc_hadith.ServiceFlags as ServiceFlags',
                 ])
                 ->distinct()
                 ->get();
@@ -97,7 +98,11 @@ class GetGroupedMtnController extends Controller
             ]);
 
         if ($query !== '') {
-            $queryBuilder->whereRaw('normalize_arabic(hcompoundmatn.CleanMatn) LIKE normalize_arabic(?)', ['%'.$query.'%']);
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
+            $queryBuilder->whereRaw('MATCH(hcompoundmatn.CleanMatn_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery]);
         }
 
         $results = $queryBuilder

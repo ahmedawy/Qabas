@@ -4,6 +4,7 @@ import type { TreeNodeData } from './types';
 interface TreeNodeProps {
   node: TreeNodeData;
   selectedId: number | null;
+  expandedIds?: number[];
   onSelect: (node: TreeNodeData) => void;
   onLoadChildren?: (id: number) => Promise<void>;
   level?: number;
@@ -15,9 +16,9 @@ const hasSelectedChild = (n: TreeNodeData, selectedId: number | null): boolean =
   return n.children.some(child => child.id === selectedId || hasSelectedChild(child, selectedId));
 };
 
-export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, onSelect, onLoadChildren, level }) => {
+export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, expandedIds, onSelect, onLoadChildren, level }) => {
   const [loaded, setLoaded] = useState(node.children ? node.children.length > 0 : false);
-  const [isOpen, setIsOpen] = useState(level === 0);
+  const [isOpen, setIsOpen] = useState(level === 0 || (expandedIds?.includes(node.id) || false));
   const [loading, setLoading] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
 
@@ -37,10 +38,10 @@ export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, onSelect, 
 
   // Automatically expand parent node if a child is selected
   useEffect(() => {
-    if (hasSelectedDescendant) {
+    if (hasSelectedDescendant || (expandedIds && expandedIds.includes(node.id))) {
       setIsOpen(true);
     }
-  }, [hasSelectedDescendant]);
+  }, [hasSelectedDescendant, expandedIds, node.id]);
 
   // Scroll selected node into view of its local container
   useEffect(() => {
@@ -138,6 +139,7 @@ export const TreeNode: React.FC<TreeNodeProps> = ({ node, selectedId, onSelect, 
                 key={child.id}
                 node={child}
                 selectedId={selectedId}
+                expandedIds={expandedIds}
                 onSelect={onSelect}
                 onLoadChildren={onLoadChildren}
                 level={(level ?? 0) + 1}

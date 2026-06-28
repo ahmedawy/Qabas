@@ -55,12 +55,23 @@ class ListNarratorsController extends Controller
             ->where('IsRawy', 1);
 
         $queryBuilder->where(function ($subQuery) use ($validFields, $query) {
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
             foreach ($validFields as $index => $field) {
-                $sql = "normalize_arabic({$field}) LIKE normalize_arabic(?)";
-                if ($index === 0) {
-                    $subQuery->whereRaw($sql, ['%'.$query.'%']);
+                if ($field === 'Name') {
+                    $sql = "MATCH(Name_Normalized) AGAINST(? IN BOOLEAN MODE)";
+                    $binding = $matchQuery;
                 } else {
-                    $subQuery->orWhereRaw($sql, ['%'.$query.'%']);
+                    $sql = "normalize_arabic({$field}) LIKE normalize_arabic(?)";
+                    $binding = '%'.$query.'%';
+                }
+
+                if ($index === 0) {
+                    $subQuery->whereRaw($sql, [$binding]);
+                } else {
+                    $subQuery->orWhereRaw($sql, [$binding]);
                 }
             }
         });

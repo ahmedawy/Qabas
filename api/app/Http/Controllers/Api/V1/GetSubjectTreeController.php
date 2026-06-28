@@ -49,6 +49,7 @@ class GetSubjectTreeController extends Controller
                     'h.Tarf as Title',
                     'h.CleanContent as CleanContent',
                     'h.Annotations as Annotations',
+                    'h.ServiceFlags as ServiceFlags',
                 ])
                 ->orderBy('h.MainID')
                 ->cursorPaginate(50);
@@ -61,8 +62,12 @@ class GetSubjectTreeController extends Controller
 
         // Case 2: Search subjects by keyword
         if ($query !== '') {
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
             $subjects = $this->subjectModel->newQuery()
-                ->whereRaw('normalize_arabic(SubjectTitle) LIKE normalize_arabic(?)', ['%'.$query.'%'])
+                ->whereRaw('MATCH(SubjectTitle_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery])
                 ->limit(100)
                 ->get();
 

@@ -31,6 +31,7 @@ class HadithSummaryResource extends JsonResource
             'PartNum' => $this->resource->PartNum,
             'PageNum' => $this->resource->PageNum,
             'ParentID' => $this->resource->ParentID,
+            'ServiceFlags' => (int) ($this->resource->ServiceFlags ?? 0),
         ];
     }
 }

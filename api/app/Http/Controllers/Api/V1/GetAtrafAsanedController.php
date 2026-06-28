@@ -48,6 +48,7 @@ class GetAtrafAsanedController extends Controller
                 'booktoc_hadith.ID as HadithNum',
                 'booktoc_hadith.PartNum',
                 'booktoc_hadith.PageNum',
+                'booktoc_hadith.ServiceFlags',
             ])
             ->distinct()
             ->where('booktoc_hadith.IsLeaf', 1)
@@ -57,13 +58,22 @@ class GetAtrafAsanedController extends Controller
             $queryBuilder->join('asanedhadiths', 'booktoc_hadith.MainID', '=', 'asanedhadiths.HadithMainID')
                 ->join('asaned', 'asanedhadiths.SanadID', '=', 'asaned.ID')
                 ->where(function ($q) use ($rawy) {
-                    $q->where('asaned.SandRwah', 'like', '%'.$rawy.'%')
-                        ->orWhereRaw('normalize_arabic(booktoc_hadith.Tarf) LIKE normalize_arabic(?)', ['%'.$rawy.'%']);
+                    if (is_numeric($rawy)) {
+                        $q->whereRaw('MATCH(asaned.SandRwah_Normalized) AGAINST(? IN BOOLEAN MODE)', ["+narrator_{$rawy}"]);
+                    } else {
+                        $normalizedRawy = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$rawy])->q;
+                        $words = array_filter(explode(' ', $normalizedRawy));
+                        $matchQuery = implode('* ', $words) . '*';
+                        $q->whereRaw('MATCH(booktoc_hadith.Tarf_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery]);
+                    }
                 });
         }
 
         if ($text !== '') {
-            $queryBuilder->whereRaw('normalize_arabic(booktoc_hadith.Tarf) LIKE normalize_arabic(?)', ['%'.$text.'%']);
+            $normalizedText = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$text])->q;
+            $words = array_filter(explode(' ', $normalizedText));
+            $matchQuery = implode('* ', $words) . '*';
+            $queryBuilder->whereRaw('MATCH(booktoc_hadith.Tarf_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery]);
         }
 
         $results = $queryBuilder

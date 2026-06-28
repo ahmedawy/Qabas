@@ -82,9 +82,13 @@ class GetIndexVersesController extends Controller
 
         // Case 3: Search verses by query
         if ($query !== '') {
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
             $verses = $this->verseModel->newQuery()
                 ->join('quransoar as s', 'quranayat.SoraID', '=', 's.ID')
-                ->whereRaw('normalize_arabic(quranayat.Text) LIKE normalize_arabic(?)', ['%'.$query.'%'])
+                ->whereRaw('MATCH(quranayat.Text_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery])
                 ->select([
                     'quranayat.ID as ID',
                     'quranayat.SoraID as SoraID',

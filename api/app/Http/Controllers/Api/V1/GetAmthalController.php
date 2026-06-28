@@ -32,7 +32,11 @@ class GetAmthalController extends Controller
         $queryBuilder = $this->proverbModel->newQuery();
 
         if ($query !== '') {
-            $queryBuilder->whereRaw('normalize_arabic(Text) LIKE normalize_arabic(?)', ['%'.$query.'%']);
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$query])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            $matchQuery = implode('* ', $words) . '*';
+
+            $queryBuilder->whereRaw('MATCH(Text_Normalized) AGAINST(? IN BOOLEAN MODE)', [$matchQuery]);
         }
 
         $results = $queryBuilder
