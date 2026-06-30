@@ -7,14 +7,25 @@ interface BooksGridProps {
   selectedBook: Book | null;
   onSelectBook: (book: Book) => void;
   filterType?: 'hadith' | 'services' | 'all';
+  activeTab?: 'primary' | 'auxiliary';
+  onTabChange?: (tab: 'primary' | 'auxiliary') => void;
 }
 
-export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook, filterType = 'all' }) => {
+export const BooksGrid: React.FC<BooksGridProps> = ({ 
+  selectedBook, 
+  onSelectBook, 
+  filterType = 'all',
+  activeTab: propActiveTab,
+  onTabChange
+}) => {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'primary' | 'auxiliary'>('primary');
+  const [localActiveTab, setLocalActiveTab] = useState<'primary' | 'auxiliary'>('primary');
+
+  const activeTab = propActiveTab !== undefined ? propActiveTab : localActiveTab;
+  const setActiveTab = onTabChange !== undefined ? onTabChange : setLocalActiveTab;
 
   useEffect(() => {
     let active = true;

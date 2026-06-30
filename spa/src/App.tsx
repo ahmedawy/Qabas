@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { api } from './api/client';
 import type { Book, TocNode, HadithSummary, HadithServiceType } from './types';
 import { BooksGrid } from './features/books/BooksGrid';
@@ -50,7 +50,15 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Subsystems views
-  const [currentView, setCurrentView] = useState<'library' | 'narrators' | 'atraf' | 'thematics' | 'sciences' | 'statistics'>('library');
+  const [currentView, setCurrentViewRaw] = useState<'library' | 'narrators' | 'atraf' | 'thematics' | 'sciences' | 'statistics'>('library');
+  const setCurrentView = useCallback((view: 'library' | 'narrators' | 'atraf' | 'thematics' | 'sciences' | 'statistics') => {
+    if (view === 'library') {
+      setSelectedBook(null);
+      setSelectedNode(null);
+      setHadiths([]);
+    }
+    setCurrentViewRaw(view);
+  }, []);
   const [currentTab, setCurrentTab] = useState<string | null>(null);
   const [activeNarratorId, setActiveNarratorId] = useState<number | null>(null);
   const [activeWordId, setActiveWordId] = useState<number | null>(null);
@@ -712,6 +720,8 @@ function App() {
                     selectedBook={null}
                     onSelectBook={handleSelectBook}
                     filterType="all"
+                    activeTab={(currentTab === 'auxiliary' || currentTab === 'primary') ? currentTab : 'primary'}
+                    onTabChange={(tab) => setCurrentTab(tab)}
                   />
                 </div>
               )}
