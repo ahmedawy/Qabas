@@ -48,7 +48,9 @@ class GetChapterHadithsController extends Controller
         }
         $offset = ($page - 1) * $limit;
 
-        if ($bookId <= 33) {
+        $type = $request->input('type', 'hadith');
+
+        if ($type === 'hadith') {
             $hadiths = \App\Models\BookTocHadith::getDescendantLeaves($chapterId, $limit, $offset);
         } else {
             $hadiths = \App\Models\BookTocService::getDescendantLeaves($chapterId, $limit, $offset);

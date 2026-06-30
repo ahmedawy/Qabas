@@ -101,22 +101,47 @@ export interface TarqeemBounds {
 }
 
 export const api = {
-  getBooks: () =>
-    request<{ success: boolean; books: Book[] }>('books'),
+  getHadithBooks: () =>
+    request<{ success: boolean; books: Book[] }>('hadith-books')
+      .then(res => ({
+        ...res,
+        books: res.books.map(b => ({ ...b, type: 'hadith' as const })),
+      })),
+
+  getServiceBooks: () =>
+    request<{ success: boolean; books: Book[] }>('service-books')
+      .then(res => ({
+        ...res,
+        books: res.books.map(b => ({ ...b, type: 'service' as const })),
+      })),
+
+  getAllBooks: async () => {
+    const [hadithRes, serviceRes] = await Promise.all([
+      request<{ success: boolean; books: Book[] }>('hadith-books'),
+      request<{ success: boolean; books: Book[] }>('service-books'),
+    ]);
+    return {
+      success: true,
+      books: [
+        ...hadithRes.books.map(b => ({ ...b, type: 'hadith' as const })),
+        ...serviceRes.books.map(b => ({ ...b, type: 'service' as const })),
+      ],
+    };
+  },
 
   getBookTarqeems: (bookId: number, part?: number | string) => {
-    let path = `books/${bookId}/tarqeems`;
+    let path = `hadith-books/${bookId}/tarqeems`;
     if (part !== undefined && part !== '') {
       path += `?part=${part}`;
     }
     return request<Record<string, TarqeemBounds>>(path);
   },
 
-  getToc: (bookId: number) =>
-    request<{ success: boolean; book_id: number; toc: TocNode[] }>(`toc?book_id=${bookId}`),
+  getToc: (bookId: number, type: 'hadith' | 'service' = 'hadith') =>
+    request<{ success: boolean; book_id: number; toc: TocNode[] }>(`toc?book_id=${bookId}&type=${type}`),
 
-  getChapterHadiths: (bookId: number, chapterId: number, page: number = 1) =>
-    request<{ success: boolean; hadiths: HadithSummary[]; next_page?: number | null }>(`chapter?book_id=${bookId}&chapter_id=${chapterId}&page=${page}`),
+  getChapterHadiths: (bookId: number, chapterId: number, page: number = 1, type: 'hadith' | 'service' = 'hadith') =>
+    request<{ success: boolean; hadiths: HadithSummary[]; next_page?: number | null }>(`chapter?book_id=${bookId}&chapter_id=${chapterId}&page=${page}&type=${type}`),
 
   getHadithJudgments: (id: number) =>
     request<{ book_name: string; hadith_num: number; judgments: HadithJudgment[] }>(`hadith/judgments?id=${id}`),

@@ -15,14 +15,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $AuthorID
  * @property Author|null $author
  */
-class Book extends Model
+class HadithBook extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'book';
+    protected $table = 'hadith_books';
 
     /**
      * The primary key associated with the table.

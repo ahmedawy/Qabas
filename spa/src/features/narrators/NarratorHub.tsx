@@ -61,8 +61,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
 
   // Load books and scientists initial data
   useEffect(() => {
-    api.getBooks().then((res) => {
-      // Filter for books likely containing narrators (IDs >= 34/Reference)
+    api.getHadithBooks().then((res) => {
       setBooks(res.books);
     }).catch(console.error);
 
@@ -317,7 +316,7 @@ export const NarratorHub: React.FC<NarratorHubProps> = ({
             <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
               <h3 className="atraf-hub-title-2">اختر المصنّفات والكتب</h3>
               <div className="atraf-hub-element-16">
-                {books.filter(b => b.ID <= 33).map((book) => (
+                {books.map((book) => (
                   <label key={book.ID} className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer select-none leading-relaxed">
                     <input
                       type="checkbox"

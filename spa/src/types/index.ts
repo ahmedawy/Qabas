@@ -6,6 +6,7 @@ export interface Book {
   AuthorName: string;
   AuthorDeath: number;
   category: string;
+  type: 'hadith' | 'service';
 }
 
 export interface TocNode {

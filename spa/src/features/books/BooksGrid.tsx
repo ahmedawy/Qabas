@@ -19,7 +19,7 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
   useEffect(() => {
     let active = true;
     setLoading(true);
-    api.getBooks()
+    api.getAllBooks()
       .then((data) => {
         if (active) {
           setBooks(data.books);
@@ -38,12 +38,12 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
   }, []);
 
   const filteredBooks = books.filter((book) => {
-    // Apply type filters
-    if (filterType === 'hadith' && book.ID > 33) return false;
-    if (filterType === 'services' && (book.ID <= 33 || book.ID > 46)) return false;
+    // Apply type filters using the new 'type' field
+    if (filterType === 'hadith' && book.type !== 'hadith') return false;
+    if (filterType === 'services' && book.type !== 'service') return false;
     if (filterType === 'all') {
-      if (activeTab === 'primary' && book.ID > 33) return false;
-      if (activeTab === 'auxiliary' && book.ID <= 33) return false;
+      if (activeTab === 'primary' && book.type !== 'hadith') return false;
+      if (activeTab === 'auxiliary' && book.type !== 'service') return false;
     }
 
     // Apply search query filter
@@ -76,7 +76,7 @@ export const BooksGrid: React.FC<BooksGridProps> = ({ selectedBook, onSelectBook
           onClick={() => {
             setError(null);
             setLoading(true);
-            api.getBooks().then(data => { setBooks(data.books); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
+            api.getAllBooks().then(data => { setBooks(data.books); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
           }}
           className="books-grid-text-6"
         >

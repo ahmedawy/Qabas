@@ -32,13 +32,15 @@ class GetBookTocController extends Controller
     public function __invoke(Request $request): JsonResponse
     {
         $bookId = (int) $request->input('book_id');
+        $type = $request->input('type', 'hadith');
+
         if ($bookId <= 0) {
             return $this->errorResponse('Invalid Book ID', 400);
         }
 
         $selectColumns = ['MainID', 'ParentID', 'IsLeaf', 'Tarf'];
 
-        if ($bookId <= 33) {
+        if ($type === 'hadith') {
             $toc = $this->hadithModel->newQuery()
                 ->select($selectColumns)
                 ->where('BookID', $bookId)

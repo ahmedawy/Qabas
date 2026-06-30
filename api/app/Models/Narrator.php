@@ -109,12 +109,12 @@ class Narrator extends Model
     /**
      * Get the books associated with this narrator.
      *
-     * @return BelongsToMany<Book, $this>
+     * @return BelongsToMany<HadithBook, $this>
      */
     public function books(): BelongsToMany
     {
         return $this->belongsToMany(
-            Book::class,
+            HadithBook::class,
             'nounsbooks',
             'RawyID',     // Narrator ID
             'BookID'      // Book ID

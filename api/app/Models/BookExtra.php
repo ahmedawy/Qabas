@@ -51,11 +51,11 @@ class BookExtra extends Model
     /**
      * Get the book this extra metadata is about.
      *
-     * @return BelongsTo<Book, $this>
+     * @return BelongsTo<HadithBook, $this>
      */
     public function book(): BelongsTo
     {
-        return $this->belongsTo(Book::class, 'BookID', 'ID');
+        return $this->belongsTo(HadithBook::class, 'BookID', 'ID');
     }
 
     /**

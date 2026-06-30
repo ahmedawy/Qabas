@@ -91,4 +91,45 @@ class SunnahFeaturesTest extends TestCase
         $this->assertNotEmpty($ancestors);
         $this->assertEquals(297406, $ancestors->first()->MainID);
     }
+
+    /**
+     * Test the split books endpoints and category ranges.
+     */
+    public function test_split_books_endpoints(): void
+    {
+        // 1. Hadith books
+        $response = $this->get('/api/v1/hadith-books');
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+        $response->assertJsonStructure(['success', 'books']);
+        $books = $response->json('books');
+        foreach ($books as $book) {
+            $this->assertLessThanOrEqual(33, $book['ID']);
+        }
+
+        // 2. Service books
+        $response2 = $this->get('/api/v1/service-books');
+        $response2->assertStatus(200);
+        $response2->assertJsonPath('success', true);
+        $books2 = $response2->json('books');
+        foreach ($books2 as $book) {
+            $this->assertGreaterThan(33, $book['ID']);
+        }
+    }
+
+    /**
+     * Test TOC endpoint with type parameters.
+     */
+    public function test_toc_with_type_parameters(): void
+    {
+        // Hadith book TOC
+        $response = $this->get('/api/v1/toc?book_id=1&type=hadith');
+        $response->assertStatus(200);
+        $response->assertJsonPath('success', true);
+
+        // Service book TOC
+        $response2 = $this->get('/api/v1/toc?book_id=34&type=service');
+        $response2->assertStatus(200);
+        $response2->assertJsonPath('success', true);
+    }
 }

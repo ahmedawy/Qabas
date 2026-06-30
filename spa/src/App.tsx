@@ -67,7 +67,7 @@ function App() {
 
   // Load books for the sidebar dropdown and read URL book parameter
   useEffect(() => {
-    api.getBooks()
+    api.getAllBooks()
       .then((data) => {
         setAllBooks(data.books);
         const params = new URLSearchParams(window.location.search);
@@ -198,7 +198,7 @@ function App() {
     }
 
     if (selectedBook) {
-      api.getChapterHadiths(selectedBook.ID, node.MainID, 1)
+      api.getChapterHadiths(selectedBook.ID, node.MainID, 1, selectedBook.type)
         .then((data) => {
           setHadiths(data.hadiths);
           setNextChapterPage(data.next_page || null);
@@ -227,7 +227,7 @@ function App() {
     if (!selectedBook || !selectedNode || !nextChapterPage || loadingMore) return;
     setLoadingMore(true);
 
-    api.getChapterHadiths(selectedBook.ID, selectedNode.MainID, nextChapterPage)
+    api.getChapterHadiths(selectedBook.ID, selectedNode.MainID, nextChapterPage, selectedBook.type)
       .then((data) => {
         setHadiths(prev => [...prev, ...data.hadiths]);
         setNextChapterPage(data.next_page || null);
@@ -471,6 +471,7 @@ function App() {
               <div className="flex-grow overflow-hidden">
                 <TocTree
                   bookId={selectedBook.ID}
+                  bookType={selectedBook.type}
                   selectedNodeId={selectedNode?.MainID || null}
                   onSelectNode={handleSelectNode}
                   onTocLoaded={setTocNodes}

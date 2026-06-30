@@ -60,7 +60,7 @@ class GetHadithTakhreejController extends Controller
         $hasShawahed = HadithShawahed::where('HadithMainID', $id)->exists();
         $comparisons = [];
         $bookId = $hadith->BookID;
-        if ($hasShawahed && $bookId >= 1 && $bookId <= 33) {
+        if ($hasShawahed && $bookId > 0) {
             $comparisons = DB::table("hmatncomparison{$bookId}")
                 ->where('MasterMatnID', $id)
                 ->join('booktoc_hadith', "hmatncomparison{$bookId}.SlaveMatnID", '=', 'booktoc_hadith.MainID')

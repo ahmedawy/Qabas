@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\BookResource;
-use App\Models\Book;
+use App\Http\Resources\ServiceBookResource;
+use App\Models\ServiceBook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class GetBooksController extends Controller
+class GetServiceBooksController extends Controller
 {
-    private Book $bookModel;
+    private ServiceBook $bookModel;
 
     /**
-     * Inject model constructor dependency (no static facades).
+     * Inject model constructor dependency.
      */
-    public function __construct(Book $bookModel)
+    public function __construct(ServiceBook $bookModel)
     {
         $this->bookModel = $bookModel;
     }
@@ -33,7 +33,7 @@ class GetBooksController extends Controller
             ->get();
 
         return $this->jsonResponse([
-            'books' => BookResource::collection($books),
+            'books' => ServiceBookResource::collection($books),
         ]);
     }
 }

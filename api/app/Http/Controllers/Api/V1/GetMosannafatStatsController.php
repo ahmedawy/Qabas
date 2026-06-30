@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Book;
+use App\Models\HadithBook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -52,8 +52,8 @@ class GetMosannafatStatsController extends Controller
             ];
         }
 
-        $title1 = Book::where('ID', $book1)->value('Title') ?? "كتاب {$book1}";
-        $title2 = Book::where('ID', $book2)->value('Title') ?? "كتاب {$book2}";
+        $title1 = HadithBook::where('ID', $book1)->value('Title') ?? "كتاب {$book1}";
+        $title2 = HadithBook::where('ID', $book2)->value('Title') ?? "كتاب {$book2}";
 
         $agreed = $stats['agreed'];
         $awaid1 = $stats['total1'] - $agreed;

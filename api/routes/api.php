@@ -7,7 +7,8 @@ use App\Http\Controllers\Api\V1\GetAtrafAsanedController;
 use App\Http\Controllers\Api\V1\GetAtrafExtraController;
 use App\Http\Controllers\Api\V1\GetAtrafListController;
 use App\Http\Controllers\Api\V1\GetBookmarksController;
-use App\Http\Controllers\Api\V1\GetBooksController;
+use App\Http\Controllers\Api\V1\GetHadithBooksController;
+use App\Http\Controllers\Api\V1\GetServiceBooksController;
 use App\Http\Controllers\Api\V1\GetBookTarqeemsController;
 use App\Http\Controllers\Api\V1\GetBookTocController;
 use App\Http\Controllers\Api\V1\GetChapterHadithsController;
@@ -72,8 +73,9 @@ $router->prefix('v1')->group(function (Router $router) {
     $router->get('/tag_types', GetTagTypesController::class);
 
     // Module 4: Books & Reading Viewer
-    $router->get('/books', GetBooksController::class);
-    $router->get('/books/{id}/tarqeems', GetBookTarqeemsController::class);
+    $router->get('/hadith-books', GetHadithBooksController::class);
+    $router->get('/hadith-books/{id}/tarqeems', GetBookTarqeemsController::class);
+    $router->get('/service-books', GetServiceBooksController::class);
     $router->get('/toc', GetBookTocController::class);
     $router->get('/hadith/judgments', GetHadithJudgmentsController::class);
     $router->get('/hadith/chains', GetHadithChainsController::class);

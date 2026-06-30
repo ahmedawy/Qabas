@@ -81,7 +81,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
 
   // Load books list
   useEffect(() => {
-    api.getBooks().then((res) => {
+    api.getHadithBooks().then((res) => {
       setBooks(res.books);
       if (res.books.length > 0) {
         setSelectedBookIds([res.books[0].ID]);

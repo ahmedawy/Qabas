@@ -81,11 +81,11 @@ class BookTocService extends Model
     /**
      * Get the book this entry belongs to.
      *
-     * @return BelongsTo<Book, $this>
+     * @return BelongsTo<ServiceBook, $this>
      */
     public function book(): BelongsTo
     {
-        return $this->belongsTo(Book::class, 'BookID', 'ID');
+        return $this->belongsTo(ServiceBook::class, 'BookID', 'ID');
     }
 
     /**

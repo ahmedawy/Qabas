@@ -89,11 +89,11 @@ class BookTocHadith extends Model
     /**
      * Get the book this entry belongs to.
      *
-     * @return BelongsTo<Book, $this>
+     * @return BelongsTo<HadithBook, $this>
      */
     public function book(): BelongsTo
     {
-        return $this->belongsTo(Book::class, 'BookID', 'ID');
+        return $this->belongsTo(HadithBook::class, 'BookID', 'ID');
     }
 
     /**

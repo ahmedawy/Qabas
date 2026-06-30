@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
-use App\Models\Book;
+use App\Models\HadithBook;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property Book $resource
+ * @property HadithBook $resource
  */
-class BookResource extends JsonResource
+class HadithBookResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -27,22 +27,7 @@ class BookResource extends JsonResource
             'AuthorID' => $this->resource->AuthorID,
             'AuthorName' => $this->resource->author?->ShortName,
             'AuthorDeath' => $this->resource->author?->DeathDate,
-            'category' => $this->getCategory(),
+            'category' => 'متون الحديث المسندة (Hadith Texts)',
         ];
-    }
-
-    /**
-     * Dynamic categorization based on Book ID range.
-     */
-    private function getCategory(): string
-    {
-        $id = $this->resource->ID;
-        if ($id <= 33) {
-            return 'متون الحديث المسندة (Hadith Texts)';
-        } elseif ($id <= 46) {
-            return 'شروح الأحاديث النبوية (Commentaries)';
-        }
-
-        return 'كتب التراجم والرجال والتواريخ (Reference & Biographies)';
     }
 }

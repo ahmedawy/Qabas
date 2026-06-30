@@ -5,23 +5,24 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $ID
- * @property string $Name
- * @property string $ShortName
- * @property int $DeathDate
- * @property string $Information
+ * @property string $Title
+ * @property string $Summary
+ * @property int $AuthorID
+ * @property Author|null $author
  */
-class Author extends Model
+class ServiceBook extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'authors';
+    protected $table = 'service_books';
 
     /**
      * The primary key associated with the table.
@@ -51,26 +52,30 @@ class Author extends Model
      */
     protected $casts = [
         'ID' => 'integer',
-        'DeathDate' => 'integer',
+        'AuthorID' => 'integer',
+        'MousanefID' => 'integer',
+        'Strong' => 'integer',
+        'Fame' => 'integer',
+        'Tarteeb' => 'integer',
     ];
 
     /**
-     * Get the hadith books written by this author.
+     * Get the author of the book.
      *
-     * @return HasMany<HadithBook, $this>
+     * @return BelongsTo<Author, $this>
      */
-    public function hadithBooks(): HasMany
+    public function author(): BelongsTo
     {
-        return $this->hasMany(HadithBook::class, 'AuthorID', 'ID');
+        return $this->belongsTo(Author::class, 'AuthorID', 'ID');
     }
 
     /**
-     * Get the service books written by this author.
+     * Get the table of contents and service entries for this book.
      *
-     * @return HasMany<ServiceBook, $this>
+     * @return HasMany<BookTocService, $this>
      */
-    public function serviceBooks(): HasMany
+    public function tocEntries(): HasMany
     {
-        return $this->hasMany(ServiceBook::class, 'AuthorID', 'ID');
+        return $this->hasMany(BookTocService::class, 'BookID', 'ID');
     }
 }

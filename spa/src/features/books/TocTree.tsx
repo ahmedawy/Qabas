@@ -6,12 +6,13 @@ import type { TreeNodeData } from '../../components/ui/tree';
 
 interface TocTreeProps {
   bookId: number;
+  bookType: 'hadith' | 'service';
   selectedNodeId: number | null;
   onSelectNode: (node: TocNodeType) => void;
   onTocLoaded: (nodes: TocNodeType[]) => void;
 }
 
-export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSelectNode, onTocLoaded }) => {
+export const TocTree: React.FC<TocTreeProps> = ({ bookId, bookType, selectedNodeId, onSelectNode, onTocLoaded }) => {
   const [nodes, setNodes] = useState<TocNodeType[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
     setLoading(true);
     setError(null);
 
-    api.getToc(bookId)
+    api.getToc(bookId, bookType)
       .then((data) => {
         if (active) {
           setNodes(data.toc);
@@ -69,7 +70,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, selectedNodeId, onSele
           onClick={() => {
             setLoading(true);
             setError(null);
-            api.getToc(bookId).then(data => { setNodes(data.toc); onTocLoaded(data.toc); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
+            api.getToc(bookId, bookType).then(data => { setNodes(data.toc); onTocLoaded(data.toc); setLoading(false); }).catch(err => { setError(err.message); setLoading(false); });
           }}
           className="toc-tree-text-6"
         >

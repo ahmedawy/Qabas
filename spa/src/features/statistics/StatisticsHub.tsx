@@ -77,9 +77,9 @@ export const StatisticsHub: React.FC = () => {
 
   const loadBooks = async () => {
     try {
-      const res = await api.getBooks();
+      const res = await api.getHadithBooks();
       if (res.success) {
-        setBooks(res.books.filter(b => b.ID <= 33)); // Focus on primary Hadith books
+        setBooks(res.books); // Focus on primary Hadith books
       }
     } catch (err) {
       console.error(err);
