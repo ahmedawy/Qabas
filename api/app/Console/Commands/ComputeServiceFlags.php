@@ -33,6 +33,7 @@ class ComputeServiceFlags extends Command
     private const FLAG_THEMATIC   = 64;  // bit 6 — الموضوعات
     private const FLAG_ANALYSIS   = 128; // bit 7 — التحليل
     private const FLAG_OCCASIONS  = 256; // bit 8 — أسباب الورود
+    private const FLAG_COMPOUND   = 512; // bit 9 — المتن المجمع
 
     public function handle(): int
     {
@@ -126,6 +127,23 @@ class ComputeServiceFlags extends Command
                             AND EXISTS (
                                 SELECT 1 FROM hadithsservices s
                                 WHERE s.HadithMainID = booktoc_hadith.MainID AND s.TypeID = 7
+                            )",
+            ],
+            [
+                'name'  => 'Compound Matn (المتن المجمع)',
+                'flag'  => self::FLAG_COMPOUND,
+                'sql'   => "UPDATE booktoc_hadith
+                            SET ServiceFlags = ServiceFlags | ?
+                            WHERE MainID BETWEEN ? AND ?
+                            AND (
+                                EXISTS (
+                                    SELECT 1 FROM htakhreeg t
+                                    WHERE t.HadithMainID = booktoc_hadith.MainID
+                                    AND t.CompoundMatnID > 0
+                                ) OR EXISTS (
+                                    SELECT 1 FROM hcompoundmatn c
+                                    WHERE c.HadithMainID = booktoc_hadith.MainID
+                                )
                             )",
             ],
         ];

@@ -21,6 +21,21 @@ class HadithSummaryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $flags = (int) ($this->resource->ServiceFlags ?? 0);
+
+        $hasCompound = \Illuminate\Support\Facades\Cache::remember("hadith_has_compound_{$this->resource->MainID}", 3600, function() {
+            return \Illuminate\Support\Facades\DB::table('htakhreeg')
+                ->where('HadithMainID', $this->resource->MainID)
+                ->where('CompoundMatnID', '>', 0)
+                ->exists() || \Illuminate\Support\Facades\DB::table('hcompoundmatn')
+                ->where('HadithMainID', $this->resource->MainID)
+                ->exists();
+        });
+
+        if ($hasCompound) {
+            $flags |= 512;
+        }
+
         return [
             'MainID' => $this->resource->MainID,
             'BookID' => $this->resource->BookID,
@@ -31,7 +46,7 @@ class HadithSummaryResource extends JsonResource
             'PartNum' => $this->resource->PartNum,
             'PageNum' => $this->resource->PageNum,
             'ParentID' => $this->resource->ParentID,
-            'ServiceFlags' => (int) ($this->resource->ServiceFlags ?? 0),
+            'ServiceFlags' => $flags,
         ];
     }
 }

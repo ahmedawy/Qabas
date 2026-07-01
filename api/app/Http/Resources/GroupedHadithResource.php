@@ -20,6 +20,21 @@ class GroupedHadithResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $flags = (int) ($this->resource->getAttribute('ServiceFlags') ?? 0);
+
+        $hasCompound = \Illuminate\Support\Facades\Cache::remember("hadith_has_compound_{$this->resource->getAttribute('MainID')}", 3600, function() {
+            return \Illuminate\Support\Facades\DB::table('htakhreeg')
+                ->where('HadithMainID', $this->resource->getAttribute('MainID'))
+                ->where('CompoundMatnID', '>', 0)
+                ->exists() || \Illuminate\Support\Facades\DB::table('hcompoundmatn')
+                ->where('HadithMainID', $this->resource->getAttribute('MainID'))
+                ->exists();
+        });
+
+        if ($hasCompound) {
+            $flags |= 512;
+        }
+
         return [
             'MainID' => (int) $this->resource->getAttribute('MainID'),
             'BookName' => (string) $this->resource->getAttribute('BookName'),
@@ -29,7 +44,7 @@ class GroupedHadithResource extends JsonResource
             'Title' => (string) $this->resource->getAttribute('Title'),
             'CleanContent' => (string) $this->resource->getAttribute('CleanContent'),
             'Annotations' => $this->resource->getAttribute('Annotations'),
-            'ServiceFlags' => (int) ($this->resource->getAttribute('ServiceFlags') ?? 0),
+            'ServiceFlags' => $flags,
         ];
     }
 }

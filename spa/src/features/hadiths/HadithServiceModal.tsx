@@ -174,7 +174,7 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
             setHadithNum(res.hadith_num);
             setLoading(false);
           }
-        } else if (serviceType === 'takhreeg' || serviceType === 'combined') {
+        } else if (serviceType === 'takhreeg' || serviceType === 'combined' || serviceType === 'compound') {
           const [takhreejRes, shawahedRes, serviceBooksRes] = await Promise.all([
             api.getHadithTakhreej(hadithId),
             api.getHadithShawahedList(hadithId).catch(() => ({ status: 'error', data: [] })),
@@ -256,6 +256,7 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
       case 'thematic': return 'الربط الموضوعي للحديث';
       case 'analysis': return 'تحليل الحديث وعلوم الحديث';
       case 'occasions': return 'أسباب ورود الحديث وتواريخه';
+      case 'compound': return 'المتن المجمع وفوائد الروايات البديلة';
       default: return 'تفاصيل الخدمة';
     }
   };
@@ -506,6 +507,46 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
               </div>
             )}
 
+            {/* Compound Matn View */}
+            {serviceType === 'compound' && (
+              <div className="space-y-4 animate-in fade-in duration-200">
+                {!combinedMatn ? (
+                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                    لا يوجد متن مجمع مسجل لهذا الحديث حالياً.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-100 dark:border-slate-800/80">
+                      <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">المتن المجمع وفوائد الروايات البديلة:</h4>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-relaxed">
+                        يتم تجميع كافة الروايات والطرق لهذا الحديث وعرض الاختلافات والزيادات اللفظية الواردة فيها بين معقوفتين [وفي رواية: ...] بشكل يسهل مقارنتها.
+                      </p>
+                    </div>
+                    
+                    <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm leading-relaxed text-slate-800 dark:text-slate-200">
+                      <HadithContentRenderer
+                        content={combinedMatn.clean_matn}
+                        annotations={combinedMatn.matn_annotations}
+                        onNarratorClick={handleLocalNarratorClick}
+                        onLexiconClick={onLexiconClick}
+                      />
+                    </div>
+
+                    {combinedMatn.asaned_comp && (
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                          مقارنة الأسانيد والشواهد:
+                        </h4>
+                        <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 text-xs text-slate-650 dark:text-slate-350 leading-relaxed">
+                          {combinedMatn.asaned_comp}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Takhreeg View */}
             {serviceType === 'takhreeg' && (
               <div className="space-y-6">
@@ -545,22 +586,6 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
 
                 {takhreegTab === 'matn' && (
                   <div className="space-y-6 animate-in fade-in duration-200">
-                    {combinedMatn && (
-                      <div className="space-y-3">
-                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                          المتن المجمع وفوائد الروايات البديلة (Combined Matn XML)
-                        </h4>
-                        <div className="hadith-detail-modal-card-48">
-                          <HadithContentRenderer
-                            content={combinedMatn.clean_matn}
-                            annotations={combinedMatn.matn_annotations}
-                            onNarratorClick={handleLocalNarratorClick}
-                            onLexiconClick={onLexiconClick}
-                          />
-                        </div>
-                      </div>
-                    )}
-
                     <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-sans">مستوى عرض التخريج:</span>

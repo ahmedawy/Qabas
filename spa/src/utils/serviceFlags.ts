@@ -12,6 +12,7 @@ export const SERVICE_FLAGS = {
   thematic:   64,  // bit 6 — الموضوعات
   analysis:   128, // bit 7 — التحليل
   occasions:  256, // bit 8 — أسباب الورود
+  compound:   512, // bit 9 — المتن المجمع
 } as const;
 
 import type { HadithServiceType } from '../types';

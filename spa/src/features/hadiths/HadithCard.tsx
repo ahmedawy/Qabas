@@ -342,6 +342,22 @@ export const HadithCard: React.FC<HadithCardProps> = ({
               </button>
             )}
 
+            {isServiceAvailable(hadith.ServiceFlags, 'compound') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onServiceClick(hadith, 'compound');
+                }}
+                className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                title="المتن المجمع وفوائد الروايات"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="hidden sm:inline">المتن المجمع</span>
+              </button>
+            )}
+
             {isServiceAvailable(hadith.ServiceFlags, 'combined') && (
               <button
                 onClick={(e) => {

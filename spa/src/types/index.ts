@@ -338,6 +338,6 @@ export interface IndexItemNode {
   IndexID: number;
 }
 
-export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions';
+export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions' | 'compound';
 
 

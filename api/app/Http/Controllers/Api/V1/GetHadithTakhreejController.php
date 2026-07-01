@@ -154,7 +154,13 @@ class GetHadithTakhreejController extends Controller
         }
 
         // 3. Fetch Combined Matn (المتون المجمعة)
-        $compoundMatn = CompoundMatn::where('HadithMainID', $id)->first();
+        $compoundMatn = null;
+        if ($takhreegRow && $takhreegRow->CompoundMatnID) {
+            $compoundMatn = CompoundMatn::where('ID', $takhreegRow->CompoundMatnID)->first();
+        }
+        if (! $compoundMatn) {
+            $compoundMatn = CompoundMatn::where('HadithMainID', $id)->first();
+        }
 
         return $this->jsonResponse([
             'book_name' => $hadith->BookName,

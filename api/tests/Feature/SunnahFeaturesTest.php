@@ -43,8 +43,8 @@ class SunnahFeaturesTest extends TestCase
      */
     public function test_hadith_detail_contains_takhreej_and_shawahed(): void
     {
-        // Hadith ID 1 is Bukhari Hadith #1 (Innamal a'malu bin niyyat)
-        $response = $this->get('/api/v1/hadith/takhreej?id=1');
+        // Hadith ID 5 is Bukhari Hadith #1 (Innamal a'malu bin niyyat)
+        $response = $this->get('/api/v1/hadith/takhreej?id=5');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -57,9 +57,15 @@ class SunnahFeaturesTest extends TestCase
                 'has_shawahed',
                 'comparisons',
             ],
-            'combined_matn',
+            'combined_matn' => [
+                'id',
+                'clean_matn',
+                'matn_annotations',
+                'asaned_comp',
+            ],
         ]);
         $response->assertJsonPath('success', true);
+        $this->assertNotNull($response->json('combined_matn'));
     }
 
     /**
