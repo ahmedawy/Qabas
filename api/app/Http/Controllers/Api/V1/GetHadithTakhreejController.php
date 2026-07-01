@@ -45,7 +45,13 @@ class GetHadithTakhreejController extends Controller
             $relatedIds = $relatedTakhreej->pluck('HadithMainID')->toArray();
             
             // Bulk fetch metadata
-            $allHadithData = DB::table('booktoc_hadith')->whereIn('MainID', $relatedIds)->get()->keyBy('MainID');
+            $allHadithData = DB::table('booktoc_hadith')
+                ->join('hadith_books', 'booktoc_hadith.BookID', '=', 'hadith_books.ID')
+                ->whereIn('booktoc_hadith.MainID', $relatedIds)
+                ->select('booktoc_hadith.*', 'hadith_books.TakhreejAuthor', 'hadith_books.TakhreejBook', 'hadith_books.Tarteeb')
+                ->orderBy('hadith_books.Tarteeb', 'asc')
+                ->get()
+                ->keyBy('MainID');
             
             // Group by BookID to bulk fetch wording comparisons
             $bookGroups = [];
@@ -107,6 +113,9 @@ class GetHadithTakhreejController extends Controller
                     $tempResults[$bookName] = [
                         'book_name' => $bookName,
                         'book_id' => $bookId,
+                        'takhreej_author' => trim((string)$hadithData->TakhreejAuthor),
+                        'takhreej_book' => trim((string)$hadithData->TakhreejBook),
+                        'tarteeb' => $hadithData->Tarteeb,
                         'hadiths' => []
                     ];
                 }

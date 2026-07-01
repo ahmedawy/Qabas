@@ -35,8 +35,18 @@ class GetHadithShawahedController extends Controller
 
         // Bulk fetch hadiths metadata
         $hadiths = DB::table('booktoc_hadith')
-            ->whereIn('MainID', $shawahedIds)
-            ->select('MainID', 'BookID', 'BookName', 'PartNum', 'PageNum', 'TarqeemMatboa1')
+            ->join('hadith_books', 'booktoc_hadith.BookID', '=', 'hadith_books.ID')
+            ->whereIn('booktoc_hadith.MainID', $shawahedIds)
+            ->select(
+                'booktoc_hadith.MainID', 
+                'booktoc_hadith.BookID', 
+                'booktoc_hadith.BookName', 
+                'booktoc_hadith.PartNum', 
+                'booktoc_hadith.PageNum', 
+                'booktoc_hadith.TarqeemMatboa1',
+                'hadith_books.TakhreejAuthor',
+                'hadith_books.TakhreejBook'
+            )
             ->get();
 
         // Fetch companions mapping via asaned
@@ -83,6 +93,8 @@ class GetHadithShawahedController extends Controller
             $results[] = [
                 'book_id' => $h->BookID,
                 'book_name' => $h->BookName,
+                'takhreej_author' => $h->TakhreejAuthor,
+                'takhreej_book' => $h->TakhreejBook,
                 'companion_name' => $companionName,
                 'part' => $h->PartNum,
                 'page' => $h->PageNum,

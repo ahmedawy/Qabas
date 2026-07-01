@@ -46,7 +46,7 @@ export const DisplayMethodPanel: React.FC<DisplayMethodPanelProps> = ({
     let isMounted = true;
     
     const timer = setTimeout(() => {
-      api.getBookTarqeems(selectedBook.ID, partNum)
+      api.getBookTarqeems(selectedBook.ID, partNum, selectedBook.type)
         .then(data => {
           if (isMounted) {
             setAvailableTarqeems(data);

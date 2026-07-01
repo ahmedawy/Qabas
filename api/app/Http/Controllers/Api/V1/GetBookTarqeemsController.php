@@ -6,15 +6,18 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\BookTocHadith;
+use App\Models\BookTocService;
 use Illuminate\Http\JsonResponse;
 
 class GetBookTarqeemsController extends Controller
 {
     private BookTocHadith $bookTocHadithModel;
+    private BookTocService $bookTocServiceModel;
 
-    public function __construct(BookTocHadith $bookTocHadithModel)
+    public function __construct(BookTocHadith $bookTocHadithModel, BookTocService $bookTocServiceModel)
     {
         $this->bookTocHadithModel = $bookTocHadithModel;
+        $this->bookTocServiceModel = $bookTocServiceModel;
     }
 
     public function __invoke(int $id): JsonResponse
@@ -22,11 +25,14 @@ class GetBookTarqeemsController extends Controller
         $tarqeems = ['ID', 'TarqeemHarf', 'TarqeemMatboa1', 'TarqeemMatboa2'];
         $response = [];
         $part = request()->query('part');
+        $type = request()->query('type', 'hadith');
+
+        $model = $type === 'hadith' ? $this->bookTocHadithModel : $this->bookTocServiceModel;
 
         foreach ($tarqeems as $t) {
             if ($t === 'ID') {
                 // Book-wide stats
-                $statsBook = $this->bookTocHadithModel->newQuery()
+                $statsBook = $model->newQuery()
                     ->where('BookID', $id)
                     ->selectRaw('MIN(ID) as min_h, MAX(ID) as max_h, MIN(PartNum) as min_part, MAX(PartNum) as max_part, MIN(PageNum) as min_page, MAX(PageNum) as max_page')
                     ->first();
@@ -35,7 +41,7 @@ class GetBookTarqeemsController extends Controller
                 $maxPage = $statsBook->max_page !== null ? (int) $statsBook->max_page : null;
                 
                 if ($part !== null && $part !== '') {
-                    $statsPart = $this->bookTocHadithModel->newQuery()
+                    $statsPart = $model->newQuery()
                         ->where('BookID', $id)
                         ->where('PartNum', $part)
                         ->selectRaw('MIN(PageNum) as min_page, MAX(PageNum) as max_page')
@@ -57,7 +63,7 @@ class GetBookTarqeemsController extends Controller
                 ];
             } else {
                 // Book-wide stats
-                $statsBook = $this->bookTocHadithModel->newQuery()
+                $statsBook = $model->newQuery()
                     ->where('BookID', $id)
                     ->whereNotNull($t)
                     ->where($t, '!=', '')
@@ -69,7 +75,7 @@ class GetBookTarqeemsController extends Controller
                     $maxPage = $statsBook->max_page !== null ? (int) $statsBook->max_page : null;
                     
                     if ($part !== null && $part !== '') {
-                        $statsPart = $this->bookTocHadithModel->newQuery()
+                        $statsPart = $model->newQuery()
                             ->where('BookID', $id)
                             ->whereNotNull($t)
                             ->where($t, '!=', '')

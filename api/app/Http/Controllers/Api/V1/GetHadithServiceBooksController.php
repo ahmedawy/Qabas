@@ -19,7 +19,7 @@ class GetHadithServiceBooksController extends Controller
                 'bts.BookName',
                 'bts.PartNum',
                 'bts.PageNum',
-                'bts.MainID as service_id'
+                'bts.BookID as service_id'
             )
             ->get();
 

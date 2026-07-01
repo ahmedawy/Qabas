@@ -5,6 +5,7 @@ import { HadithContentRenderer } from './HadithCard';
 import { NarratorDrawer } from '../narrators/NarratorDrawer';
 import { CombinedTransmissionChainGraph } from '../chains/CombinedTransmissionChainGraph';
 import { CombinedTakhreejChainGraph } from '../chains/CombinedTakhreejChainGraph';
+import { generateLegacyTakhreejText } from '../../utils/takhreejFormatter';
 
 interface NarratorChainViewerProps {
   sanadId: number;
@@ -138,6 +139,7 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
   const [selectedNarratorId, setSelectedNarratorId] = useState<number | null>(null);
   const [selectedCombinedHadithIds, setSelectedCombinedHadithIds] = useState<number[]>([]);
   const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
 
   const handleLocalNarratorClick = (id: number) => {
     setSelectedNarratorId(id);
@@ -517,7 +519,7 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                         : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                     }`}
                   >
-                    1. تخريج من كتب المتون
+                    تخريج من كتب المتون
                   </button>
                   <button
                     onClick={() => setTakhreegTab('shawahed')}
@@ -527,7 +529,7 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                         : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                     }`}
                   >
-                    2. شواهد ومتابعات
+                    شواهد ومتابعات
                   </button>
                   <button
                     onClick={() => setTakhreegTab('services')}
@@ -537,14 +539,12 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                         : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                     }`}
                   >
-                    3. تخريج من كتب أخرى (الكتب الخدمية)
+                    تخريج من كتب أخرى (الكتب الخدمية)
                   </button>
                 </div>
 
-                {/* Tab Content */}
                 {takhreegTab === 'matn' && (
                   <div className="space-y-6 animate-in fade-in duration-200">
-                    {/* Combined Matn Section */}
                     {combinedMatn && (
                       <div className="space-y-3">
                         <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
@@ -561,24 +561,38 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                       </div>
                     )}
 
-                    {/* Mode Selector */}
                     <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
-                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">مستوى عرض التخريج:</span>
-                      <div className="flex gap-1">
-                        {(['general', 'medium', 'detailed'] as const).map((m) => (
-                          <button
-                            key={m}
-                            onClick={() => setTakhreegMode(m)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                              takhreegMode === m
-                                ? 'bg-emerald-500 text-white shadow'
-                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400'
-                            }`}
-                          >
-                            {m === 'general' ? 'إجمالي' : m === 'medium' ? 'متوسط' : 'تفصيلي'}
-                          </button>
-                        ))}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 font-sans">مستوى عرض التخريج:</span>
+                        <div className="flex gap-1">
+                          {(['general', 'medium', 'detailed'] as const).map((m) => (
+                            <button
+                              key={m}
+                              onClick={() => setTakhreegMode(m)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                takhreegMode === m
+                                  ? 'bg-emerald-500 text-white shadow'
+                                  : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 font-sans'
+                              }`}
+                            >
+                              {m === 'general' ? 'إجمالي' : m === 'medium' ? 'متوسط' : 'تفصيلي'}
+                            </button>
+                          ))}
+                        </div>
                       </div>
+                      <button
+                        onClick={() => {
+                          const text = generateLegacyTakhreejText(takhreegMode, takhreej, shawahedList, serviceBooksList);
+                          navigator.clipboard.writeText(text).then(() => {
+                            setCopySuccess(true);
+                            setTimeout(() => setCopySuccess(false), 2000);
+                          });
+                        }}
+                        title={copySuccess ? 'تم النسخ' : 'نسخ التخريج بالنسق المرجعي'}
+                        className="p-2 rounded-lg text-sm bg-emerald-100 hover:bg-emerald-250 text-emerald-800 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 dark:text-emerald-300 transition-all select-none cursor-pointer flex items-center justify-center min-w-[32px] min-h-[32px]"
+                      >
+                        {copySuccess ? '✔' : '📋'}
+                      </button>
                     </div>
 
                     {/* Takhreej References */}
@@ -595,20 +609,18 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                             </h4>
                             <div className="grid grid-cols-1 gap-3">
                               {bookGroup.hadiths && bookGroup.hadiths.map((h: any, hIdx: number) => (
-                                <div
+                                <a
                                   key={hIdx}
-                                  className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 flex flex-col gap-2"
+                                  href={h.number ? `?view=library&book=${bookGroup.book_id}&hadith=${h.number}&tarqeem=TarqeemMatboa1` : `?view=library&book=${bookGroup.book_id}&page=${h.page || 1}&part=${h.volume || 1}`}
+                                  className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all flex flex-col gap-2 text-inherit decoration-none cursor-pointer"
                                 >
                                   <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
                                     <span>
                                       جزء {h.volume || 1}، صفحة {h.page || 1}
                                     </span>
-                                    <a
-                                      href={h.number ? `?view=library&book=${bookGroup.book_id}&hadith=${h.number}&tarqeem=TarqeemMatboa1` : `?view=library&book=${bookGroup.book_id}&page=${h.page || 1}&part=${h.volume || 1}`}
-                                      className="text-xs text-emerald-600 hover:underline flex items-center gap-1 font-bold"
-                                    >
-                                      حديث رقم: {h.number} 🔗
-                                    </a>
+                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-bold">
+                                      حديث رقم: {h.number}
+                                    </span>
                                   </div>
                                   
                                   {/* Chapter Path (Medium / Detailed) */}
@@ -630,8 +642,8 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                                       <span className="font-semibold">لفظ الحديث مقارنة بالأصل:</span> {h.comparison_comment}
                                     </div>
                                   )}
-                                </div>
-                              ))}
+                                  </a>
+                                ))}
                             </div>
                           </div>
                         ))
@@ -649,25 +661,21 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {shawahedList.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 flex flex-col gap-2"
-                          >
-                            <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
-                              وله شاهد من حديث {item.companion_name || 'صحابي غير محدد'}
-                            </div>
-                            <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
-                              أخرجه {item.book_name} ({item.part} / {item.page}) برقم: ({item.tarqeem})
-                            </div>
-                            <a
-                              href={item.tarqeem ? `?view=library&book=${item.book_id}&hadith=${item.tarqeem}&tarqeem=TarqeemMatboa1` : `?view=library&book=${item.book_id}&page=${item.page || 1}&part=${item.part || 1}`}
-                              className="text-xs text-emerald-600 hover:underline self-start flex items-center gap-1 mt-1 font-semibold"
-                            >
-                              عرض الكتاب في المكتبة 🔗
-                            </a>
-                          </div>
-                        ))}
+                         {shawahedList.map((item, idx) => (
+                           <a
+                             key={idx}
+                             href={item.tarqeem ? `?view=library&book=${item.book_id}&hadith=${item.tarqeem}&tarqeem=TarqeemMatboa1` : `?view=library&book=${item.book_id}&page=${item.page || 1}&part=${item.part || 1}`}
+                             className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all flex flex-col gap-2 text-inherit decoration-none cursor-pointer"
+                           >
+                             <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                               وله شاهد من حديث {item.companion_name || 'صحابي غير محدد'}
+                             </div>
+                             <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
+                               أخرجه {item.book_name} ({item.part} / {item.page}) برقم: ({item.tarqeem})
+                             </div>
+
+                           </a>
+                         ))}
                       </div>
                     )}
                   </div>
@@ -687,23 +695,18 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                             {typeGroup}
                           </h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {books.map((b, idx) => (
-                              <div
-                                key={idx}
-                                className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 flex justify-between items-center gap-2"
-                              >
-                                <div className="text-xs text-slate-600 dark:text-slate-400">
-                                  <span className="font-semibold block text-slate-800 dark:text-slate-200 mb-1">{b.book_name}</span>
-                                  ({b.part} / {b.page})
-                                </div>
-                                <a
-                                  href={`?view=library&book=${b.service_id}&page=${b.page || 1}&part=${b.part || 1}`}
-                                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded text-[11px] font-semibold transition-all flex items-center gap-1"
-                                >
-                                  تصفح 🔗
-                                </a>
-                              </div>
-                            ))}
+                             {books.map((b, idx) => (
+                               <a
+                                 key={idx}
+                                 href={`?view=library&book=${b.service_id}&page=${b.page || 1}&part=${b.part || 1}`}
+                                 className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all flex justify-between items-center gap-2 text-inherit decoration-none cursor-pointer w-full"
+                               >
+                                 <div className="text-xs text-slate-650 dark:text-slate-400">
+                                   <span className="font-semibold block text-slate-800 dark:text-slate-200 mb-1">{b.book_name}</span>
+                                   ({b.part} / {b.page})
+                                 </div>
+                               </a>
+                             ))}
                           </div>
                         </div>
                       ))
@@ -849,9 +852,6 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
 
           {/* Modal Footer */}
           <div className="hadith-detail-modal-card-60">
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">
-              تنبيه: انقر على أسماء الرواة الملونين داخل النص للوصول السريع إلى معاجم التراجم.
-            </span>
             <button
               onClick={onClose}
               className="hadith-detail-modal-title-62"

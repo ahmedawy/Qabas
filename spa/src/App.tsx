@@ -329,7 +329,7 @@ function App() {
     setHadiths([]);
     setActiveDeepLink({ page: String(page), part: String(part || 1) });
 
-    api.getHadithByPage(selectedBook.ID, page, part)
+    api.getHadithByPage(selectedBook.ID, page, part, selectedBook.type)
       .then((data) => {
         setHadiths(data.hadiths);
         setLoading(false);

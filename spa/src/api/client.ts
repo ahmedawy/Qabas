@@ -131,10 +131,10 @@ export const api = {
     };
   },
 
-  getBookTarqeems: (bookId: number, part?: number | string) => {
-    let path = `hadith-books/${bookId}/tarqeems`;
+  getBookTarqeems: (bookId: number, part?: number | string, type: 'hadith' | 'service' = 'hadith') => {
+    let path = `hadith-books/${bookId}/tarqeems?type=${type}`;
     if (part !== undefined && part !== '') {
-      path += `?part=${part}`;
+      path += `&part=${part}`;
     }
     return request<Record<string, TarqeemBounds>>(path);
   },
@@ -163,8 +163,8 @@ export const api = {
   getHadithByNum: (bookId: number, num: string | number, tarqeem: string = 'ID') =>
     request<{ success: boolean; hadith: HadithSummary }>(`hadith_by_num?book_id=${bookId}&num=${num}&tarqeem=${tarqeem}`),
 
-  getHadithByPage: (bookId: number, page: number, part?: number) => {
-    let path = `hadith_by_page?book_id=${bookId}&page=${page}`;
+  getHadithByPage: (bookId: number, page: number, part?: number, type: 'hadith' | 'service' = 'hadith') => {
+    let path = `hadith_by_page?book_id=${bookId}&page=${page}&type=${type}`;
     if (part !== undefined && part > 0) {
       path += `&part=${part}`;
     }
