@@ -78,7 +78,7 @@ class GetCombinedTransmissionChainController extends Controller
         }
 
         $narrators = $this->narratorModel->newQuery()
-            ->select(['ID', 'Name', 'AbbName', 'Kunia', 'Laqab', 'Nasab', 'Tabaqa', 'DeathYear', 'MartabaIbnHajar'])
+            ->select(['ID', 'Name', 'AbbName', 'EsmShuhra', 'Kunia', 'Laqab', 'Nasab', 'Tabaqa', 'DeathYear', 'MartabaIbnHajar'])
             ->whereIn('ID', $uniqueNarratorIds)
             ->get();
 
@@ -94,6 +94,7 @@ class GetCombinedTransmissionChainController extends Controller
                     'ID' => $n->ID,
                     'Name' => $n->Name,
                     'AbbName' => $n->AbbName ?? '',
+                    'EsmShuhra' => $n->EsmShuhra ?? '',
                     'Kunia' => $n->Kunia ?? '',
                     'Laqab' => $n->Laqab ?? '',
                     'Nasab' => $n->Nasab ?? '',
@@ -107,6 +108,7 @@ class GetCombinedTransmissionChainController extends Controller
                     'ID' => $nid,
                     'Name' => '[راوٍ غير معرف في قاعدة البيانات]',
                     'AbbName' => '',
+                    'EsmShuhra' => '',
                     'Kunia' => '',
                     'Laqab' => '',
                     'Nasab' => '',

@@ -226,6 +226,7 @@ export const api = {
         ID: number;
         Name: string;
         AbbName: string;
+        EsmShuhra: string;
         Kunia: string;
         Laqab: string;
         Nasab: string;
@@ -243,6 +244,7 @@ export const api = {
         ID: number;
         Name: string;
         AbbName: string;
+        EsmShuhra: string;
         Kunia: string;
         Laqab: string;
         Nasab: string;
@@ -265,6 +267,7 @@ export const api = {
         ID: number;
         Name: string;
         AbbName: string;
+        EsmShuhra: string;
         Kunia: string;
         Laqab: string;
         Nasab: string;

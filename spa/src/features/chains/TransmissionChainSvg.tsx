@@ -5,6 +5,7 @@ interface NarratorNode {
   ID: number;
   Name: string;
   AbbName: string;
+  EsmShuhra: string;
   Kunia: string;
   Laqab: string;
   Nasab: string;
@@ -218,13 +219,13 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
                     </div>
 
                     {/* Text content in the middle (wraps naturally) */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center" title={n.Name}>
                       <div 
                         className={`text-xs font-extrabold leading-snug group-hover:text-emerald-400 transition-colors duration-300 line-clamp-2 ${
                           isUnknown ? 'text-slate-500' : 'text-slate-100'
                         }`}
                       >
-                        {n.Name}
+                        {n.EsmShuhra || n.AbbName || n.Name}
                       </div>
                       <div className="text-[10px] font-semibold text-slate-500 mt-1">
                         {isUnknown 

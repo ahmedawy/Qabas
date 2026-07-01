@@ -19,6 +19,7 @@ interface NarratorNodeData extends Record<string, unknown> {
   ID: number;
   Name: string;
   AbbName: string;
+  EsmShuhra: string;
   Kunia: string;
   Laqab: string;
   Nasab: string;
@@ -55,9 +56,9 @@ const NarratorCustomNode = ({ data }: NodeProps<Node<NarratorNodeData>>) => {
         >
           {data.ID}
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0" title={data.Name}>
           <div className="text-sm font-semibold text-slate-100 truncate">
-            {data.Name}
+            {data.EsmShuhra || data.AbbName || data.Name}
           </div>
           {data.Tabaqa && (
             <div className="text-[10px] text-slate-400 truncate mt-0.5">

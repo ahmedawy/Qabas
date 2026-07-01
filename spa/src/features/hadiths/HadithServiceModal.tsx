@@ -86,7 +86,7 @@ const NarratorChainViewer: React.FC<NarratorChainViewerProps> = ({
             title={`${n.Name} (توفي سنة ${n.DeathYear || 'غير محددة'}) - الطبقة: ${n.Tabaqa || 'غير محددة'}`}
             className="inline-flex items-center px-3 py-1.5 text-xs font-semibold bg-white hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 dark:bg-slate-800 dark:hover:bg-emerald-950/40 dark:text-slate-200 dark:hover:text-emerald-300 rounded-xl transition-all border border-slate-200 dark:border-slate-800 shadow-sm hover:border-emerald-200 dark:hover:border-emerald-900/60 cursor-pointer"
           >
-            {n.Name || n.AbbName || `راوٍ #${n.ID}`}
+            {n.EsmShuhra || n.AbbName || n.Name || `راوٍ #${n.ID}`}
           </button>
         </React.Fragment>
       ))}
