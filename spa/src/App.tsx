@@ -33,6 +33,18 @@ function App() {
   const [tocNodes, setTocNodes] = useState<TocNode[]>([]);
   const [allBooks, setAllBooks] = useState<Book[]>([]);
 
+  // Deep linking states
+  const [activeDeepLink, setActiveDeepLink] = useState<{ hadith?: string; tarqeem?: string; page?: string; part?: string }>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hadith = params.get('hadith') || undefined;
+    const tarqeem = params.get('tarqeem') || undefined;
+    const page = params.get('page') || undefined;
+    const part = params.get('part') || undefined;
+    return { hadith, tarqeem, page, part };
+  });
+  const [isUrlInitialized, setIsUrlInitialized] = useState(false);
+  const [pendingInitialLoad, setPendingInitialLoad] = useState<{ hadith?: string; tarqeem?: string; page?: string; part?: string } | null>(null);
+
   const [hadiths, setHadiths] = useState<HadithSummary[]>([]);
   const [hadithNum, setHadithNum] = useState<string>('1');
   const [tarqeem, setTarqeem] = useState<string>('ID');
@@ -71,7 +83,7 @@ function App() {
   const bookmarks = useBookmarks(auth.user, () => auth.setIsAuthModalOpen(true));
   const search = useSearch(allBooks);
 
-  useUrlSync(currentView, setCurrentView, currentTab, setCurrentTab, selectedBook);
+  useUrlSync(currentView, setCurrentView, currentTab, setCurrentTab, selectedBook, activeDeepLink, isUrlInitialized);
 
   // Load books for the sidebar dropdown and read URL book parameter
   useEffect(() => {
@@ -80,16 +92,54 @@ function App() {
         setAllBooks(data.books);
         const params = new URLSearchParams(window.location.search);
         const bookIdStr = params.get('book');
+        console.log('[Qabas Debug] Mount - bookIdStr:', bookIdStr, 'Search params:', params.toString());
         if (bookIdStr) {
           const bookId = parseInt(bookIdStr, 10);
-          const book = data.books.find(b => b.ID === bookId);
+          const book = data.books.find(b => Number(b.ID) === bookId);
+          console.log('[Qabas Debug] Mount - Resolved book:', book, 'Available book IDs:', data.books.map(b => b.ID));
           if (book) {
             setSelectedBook(book);
+
+            // Read hadith/page deep link parameters
+            const hadithParam = params.get('hadith');
+            const tarqeemParam = params.get('tarqeem') || 'ID';
+            const pageParam = params.get('page');
+            const partParam = params.get('part') || '1';
+            console.log('[Qabas Debug] Mount - Deep link parameters:', { hadithParam, tarqeemParam, pageParam, partParam });
+
+            if (hadithParam) {
+              setPendingInitialLoad({ hadith: hadithParam, tarqeem: tarqeemParam });
+            } else if (pageParam) {
+              setPendingInitialLoad({ page: pageParam, part: partParam });
+            }
           }
         }
+        setIsUrlInitialized(true);
       })
-      .catch((err) => console.error('Error loading dropdown books', err));
+      .catch((err) => {
+        console.error('Error loading dropdown books', err);
+        setIsUrlInitialized(true);
+      });
   }, []);
+
+  // Effect to trigger deep link loads once the book is fully selected
+  useEffect(() => {
+    if (selectedBook && pendingInitialLoad) {
+      if (pendingInitialLoad.hadith) {
+        setHadithNum(pendingInitialLoad.hadith);
+        setTarqeem(pendingInitialLoad.tarqeem || 'ID');
+        handleLoadHadithByNum(pendingInitialLoad.hadith, pendingInitialLoad.tarqeem || 'ID');
+        setActiveDeepLink({ hadith: pendingInitialLoad.hadith, tarqeem: pendingInitialLoad.tarqeem });
+      } else if (pendingInitialLoad.page) {
+        setPageNum(pendingInitialLoad.page);
+        setPartNum(pendingInitialLoad.part || '1');
+        handleLoadHadithByPage(parseInt(pendingInitialLoad.page, 10), parseInt(pendingInitialLoad.part || '1', 10));
+        setActiveDeepLink({ page: pendingInitialLoad.page, part: pendingInitialLoad.part });
+      }
+      setPendingInitialLoad(null); // Clear after executing once
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBook, pendingInitialLoad]);
 
   // Wrap logout to also clear bookmark lists
   const handleLogoutClick = () => {
@@ -189,6 +239,7 @@ function App() {
     setTocNodes([]);
     setError(null);
     search.setIsSearching(false); // Stop searching when selecting a book
+    setActiveDeepLink({}); // Clear deep link parameters
   };
 
   // 2. Select Chapter from TOC tree
@@ -197,6 +248,7 @@ function App() {
     setLoading(true);
     setError(null);
     setNextChapterPage(null);
+    setActiveDeepLink({}); // Clear hadith/page deep link parameters since we are browsing by TOC node
 
     // Scroll window and main reading panel to the top
     window.scrollTo(0, 0);
@@ -254,6 +306,7 @@ function App() {
     setLoading(true);
     setError(null);
     setHadiths([]);
+    setActiveDeepLink({ hadith: String(num), tarqeem: tarqeem });
 
     return api.getHadithByNum(selectedBook.ID, num, tarqeem)
       .then((data) => {
@@ -274,6 +327,7 @@ function App() {
     setLoading(true);
     setError(null);
     setHadiths([]);
+    setActiveDeepLink({ page: String(page), part: String(part || 1) });
 
     api.getHadithByPage(selectedBook.ID, page, part)
       .then((data) => {
@@ -306,6 +360,7 @@ function App() {
     setError(null);
     search.setIsSearching(false);
     search.setSearchQuery('');
+    setActiveDeepLink({}); // Clear deep link parameters
   };
 
   // Interactive handles for inside Hadith texts

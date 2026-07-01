@@ -24,7 +24,9 @@ import type {
   SurahIndex,
   VerseIndex,
   IndexCategoryNode,
-  IndexItemNode
+  IndexItemNode,
+  ShawahedItem,
+  ServiceBookItem
 } from '../types';
 
 /**
@@ -151,6 +153,12 @@ export const api = {
 
   getHadithTakhreej: (id: number) =>
     request<{ book_name: string; hadith_num: number; book_id: number; takhreej: TakhreejItem[]; shawahed: ShawahedData; combined_matn: CombinedMatn | null }>(`hadith/takhreej?id=${id}`),
+
+  getHadithShawahedList: (id: number) =>
+    request<{ status: string; data: ShawahedItem[] }>(`hadith/${id}/shawahed`),
+
+  getHadithServiceBooksList: (id: number) =>
+    request<{ status: string; data: Record<string, ServiceBookItem[]> }>(`hadith/${id}/service-books`),
 
   getHadithByNum: (bookId: number, num: string | number, tarqeem: string = 'ID') =>
     request<{ success: boolean; hadith: HadithSummary }>(`hadith_by_num?book_id=${bookId}&num=${num}&tarqeem=${tarqeem}`),

@@ -37,23 +37,91 @@ class GetHadithTakhreejController extends Controller
         if (! $hadith) {
             return $this->errorResponse('Hadith not found', 404);
         }
-
         // 1. Fetch Takhreej cross-references
         $takhreejList = [];
         $takhreegRow = HadithTakhreej::where('HadithMainID', $id)->first();
         if ($takhreegRow && $takhreegRow->GroupID) {
-            $takhreejList = HadithTakhreej::where('GroupID', $takhreegRow->GroupID)
-                ->join('booktoc_hadith', 'htakhreeg.HadithMainID', '=', 'booktoc_hadith.MainID')
-                ->select(
-                    'htakhreeg.HadithMainID',
-                    'htakhreeg.BookID',
-                    'booktoc_hadith.BookName',
-                    'booktoc_hadith.ID as HadithNum',
-                    'booktoc_hadith.Tarf',
-                    'booktoc_hadith.PartNum',
-                    'booktoc_hadith.PageNum'
-                )
-                ->get();
+            $relatedTakhreej = HadithTakhreej::where('GroupID', $takhreegRow->GroupID)->get();
+            $relatedIds = $relatedTakhreej->pluck('HadithMainID')->toArray();
+            
+            // Bulk fetch metadata
+            $allHadithData = DB::table('booktoc_hadith')->whereIn('MainID', $relatedIds)->get()->keyBy('MainID');
+            
+            // Group by BookID to bulk fetch wording comparisons
+            $bookGroups = [];
+            foreach ($allHadithData as $hData) {
+                $bookGroups[$hData->BookID][] = $hData->MainID;
+            }
+            
+            // Bulk fetch comments
+            $comparisonsByRelatedId = [];
+            foreach ($bookGroups as $bookId => $bookRelatedIds) {
+                try {
+                    $comparisonTable = "hmatncomparison{$bookId}";
+                    $comps = DB::table($comparisonTable)
+                        ->where(function($q) use ($id, $bookRelatedIds) {
+                            $q->where('MasterMatnID', $id)->whereIn('SlaveMatnID', $bookRelatedIds);
+                        })
+                        ->orWhere(function($q) use ($id, $bookRelatedIds) {
+                            $q->where('SlaveMatnID', $id)->whereIn('MasterMatnID', $bookRelatedIds);
+                        })
+                        ->get();
+                    
+                    foreach ($comps as $comp) {
+                        $slaveId = ($comp->SlaveMatnID == $id) ? $comp->MasterMatnID : $comp->SlaveMatnID;
+                        $comparisonsByRelatedId[$slaveId] = trim((string)$comp->Comment);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore missing tables
+                }
+            }
+
+            $tempResults = [];
+            foreach ($allHadithData as $relatedId => $hadithData) {
+                $bookId = $hadithData->BookID;
+                $bookName = trim((string)$hadithData->BookName);
+                $volume = $hadithData->PartNum;
+                $page = $hadithData->PageNum;
+                $number = trim((string)$hadithData->TarqeemMatboa1);
+                
+                // Fetch chapter path (Medium Mode)
+                $ancestors = DB::select("
+                    WITH RECURSIVE HierarchyCTE AS (
+                        SELECT MainID, ParentID, CleanContent, 1 AS Level
+                        FROM booktoc_hadith
+                        WHERE MainID = ? AND IsLeaf = 0
+                        UNION ALL
+                        SELECT parent.MainID, parent.ParentID, parent.CleanContent, child.Level + 1 AS Level
+                        FROM booktoc_hadith parent
+                        INNER JOIN HierarchyCTE child ON child.ParentID = parent.MainID
+                        WHERE parent.IsLeaf = 0
+                    )
+                    SELECT CleanContent FROM HierarchyCTE ORDER BY Level DESC
+                ", [$hadithData->ParentID]);
+                
+                $chapterPath = array_map(function($a) { return trim((string)$a->CleanContent); }, $ancestors);
+                
+                $comment = $comparisonsByRelatedId[$relatedId] ?? null;
+                
+                if (!isset($tempResults[$bookName])) {
+                    $tempResults[$bookName] = [
+                        'book_name' => $bookName,
+                        'book_id' => $bookId,
+                        'hadiths' => []
+                    ];
+                }
+                
+                $tempResults[$bookName]['hadiths'][] = [
+                    'main_id' => $relatedId,
+                    'volume' => $volume,
+                    'page' => $page,
+                    'number' => $number,
+                    'chapter_path' => $chapterPath,
+                    'comparison_comment' => $comment ?: null
+                ];
+            }
+            
+            $takhreejList = array_values($tempResults);
         }
 
         // 2. Fetch Motaba'at (Corroborating Chains)

@@ -108,6 +108,22 @@ export interface ShawahedData {
   comparisons: ShawahedComparison[];
 }
 
+export interface ShawahedItem {
+  book_id: number;
+  book_name: string;
+  companion_name: string | null;
+  part: number;
+  page: number;
+  tarqeem: string;
+}
+
+export interface ServiceBookItem {
+  book_name: string;
+  part: number;
+  page: number;
+  service_id: number;
+}
+
 export interface CombinedMatn {
   id: number;
   clean_matn: string;

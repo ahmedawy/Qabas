@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client';
-import type { HadithJudgment, Chain, TakhreejItem, ShawahedData, CombinedMatn, HadithServiceType, HadithThematicLink } from '../../types';
+import type { HadithJudgment, Chain, TakhreejItem, ShawahedData, CombinedMatn, HadithServiceType, HadithThematicLink, ShawahedItem, ServiceBookItem } from '../../types';
 import { HadithContentRenderer } from './HadithCard';
 import { NarratorDrawer } from '../narrators/NarratorDrawer';
 import { CombinedTransmissionChainGraph } from '../chains/CombinedTransmissionChainGraph';
@@ -130,6 +130,10 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
   const [thematicNodes, setThematicNodes] = useState<HadithThematicLink[]>([]);
   const [analysisData, setAnalysisData] = useState<any[]>([]);
   const [occasionsData, setOccasionsData] = useState<any[]>([]);
+  const [shawahedList, setShawahedList] = useState<ShawahedItem[]>([]);
+  const [serviceBooksList, setServiceBooksList] = useState<Record<string, ServiceBookItem[]>>({});
+  const [takhreegTab, setTakhreegTab] = useState<'matn' | 'shawahed' | 'services'>('matn');
+  const [takhreegMode, setTakhreegMode] = useState<'general' | 'medium' | 'detailed'>('general');
 
   const [selectedNarratorId, setSelectedNarratorId] = useState<number | null>(null);
   const [selectedCombinedHadithIds, setSelectedCombinedHadithIds] = useState<number[]>([]);
@@ -169,21 +173,31 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
             setLoading(false);
           }
         } else if (serviceType === 'takhreeg' || serviceType === 'combined') {
-          const res = await api.getHadithTakhreej(hadithId);
+          const [takhreejRes, shawahedRes, serviceBooksRes] = await Promise.all([
+            api.getHadithTakhreej(hadithId),
+            api.getHadithShawahedList(hadithId).catch(() => ({ status: 'error', data: [] })),
+            api.getHadithServiceBooksList(hadithId).catch(() => ({ status: 'error', data: {} as any }))
+          ]);
           if (active) {
-            setTakhreej(res.takhreej || []);
-            setShawahed(res.shawahed || null);
-            setCombinedMatn(res.combined_matn || null);
-            setBookName(res.book_name);
-            setHadithNum(res.hadith_num);
+            setTakhreej(takhreejRes.takhreej || []);
+            setShawahed(takhreejRes.shawahed || null);
+            setCombinedMatn(takhreejRes.combined_matn || null);
+            setBookName(takhreejRes.book_name);
+            setHadithNum(takhreejRes.hadith_num);
+            setShawahedList(shawahedRes.data || []);
+            setServiceBooksList(serviceBooksRes.data || {});
 
             // Initialize selectedCombinedHadithIds
             const initialHadithIds = [hadithId];
-            if (res.takhreej) {
-              res.takhreej.forEach((t: any) => initialHadithIds.push(t.HadithMainID));
+            if (takhreejRes.takhreej) {
+              takhreejRes.takhreej.forEach((bookGroup: any) => {
+                if (bookGroup.hadiths) {
+                  bookGroup.hadiths.forEach((h: any) => initialHadithIds.push(h.main_id));
+                }
+              });
             }
-            if (res.shawahed?.comparisons) {
-              res.shawahed.comparisons.forEach((c: any) => initialHadithIds.push(c.SlaveMatnID));
+            if (takhreejRes.shawahed?.comparisons) {
+              takhreejRes.shawahed.comparisons.forEach((c: any) => initialHadithIds.push(c.SlaveMatnID));
             }
             setSelectedCombinedHadithIds(Array.from(new Set(initialHadithIds)));
             setLoading(false);
@@ -283,8 +297,12 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
     const map = new Map<number, { id: number; label: string }>();
     map.set(hadithId, { id: hadithId, label: `${bookName} (حديث رقم ${hadithNum} - الحالي)` });
     if (takhreej) {
-      takhreej.forEach((t: any) => {
-        map.set(t.HadithMainID, { id: t.HadithMainID, label: `${t.BookName} (حديث رقم ${t.HadithNum})` });
+      takhreej.forEach((bookGroup: any) => {
+        if (bookGroup.hadiths) {
+          bookGroup.hadiths.forEach((h: any) => {
+            map.set(h.main_id, { id: h.main_id, label: `${bookGroup.book_name} (حديث رقم ${h.number})` });
+          });
+        }
       });
     }
     if (shawahed?.comparisons) {
@@ -488,88 +506,210 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
 
             {/* Takhreeg View */}
             {serviceType === 'takhreeg' && (
-              <div className="space-y-8">
-                {/* Combined Matn Section */}
-                {combinedMatn && (
-                  <div className="space-y-3">
-                    <h3 className="hadith-detail-modal-title-47">
-                      المتن المجمع وفوائد الروايات البديلة (Combined Matn XML)
-                    </h3>
-                    <div className="hadith-detail-modal-card-48">
-                      <HadithContentRenderer
-                        content={combinedMatn.clean_matn}
-                        annotations={combinedMatn.matn_annotations}
-                        onNarratorClick={handleLocalNarratorClick}
-                        onLexiconClick={onLexiconClick}
-                      />
+              <div className="space-y-6">
+                {/* 3 Main Tabs */}
+                <div className="flex border-b border-slate-200 dark:border-slate-800">
+                  <button
+                    onClick={() => setTakhreegTab('matn')}
+                    className={`flex-1 py-3 text-center text-sm font-semibold transition-all border-b-2 ${
+                      takhreegTab === 'matn'
+                        ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                        : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    1. تخريج من كتب المتون
+                  </button>
+                  <button
+                    onClick={() => setTakhreegTab('shawahed')}
+                    className={`flex-1 py-3 text-center text-sm font-semibold transition-all border-b-2 ${
+                      takhreegTab === 'shawahed'
+                        ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                        : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    2. شواهد ومتابعات
+                  </button>
+                  <button
+                    onClick={() => setTakhreegTab('services')}
+                    className={`flex-1 py-3 text-center text-sm font-semibold transition-all border-b-2 ${
+                      takhreegTab === 'services'
+                        ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400'
+                        : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    3. تخريج من كتب أخرى (الكتب الخدمية)
+                  </button>
+                </div>
+
+                {/* Tab Content */}
+                {takhreegTab === 'matn' && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Combined Matn Section */}
+                    {combinedMatn && (
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                          المتن المجمع وفوائد الروايات البديلة (Combined Matn XML)
+                        </h4>
+                        <div className="hadith-detail-modal-card-48">
+                          <HadithContentRenderer
+                            content={combinedMatn.clean_matn}
+                            annotations={combinedMatn.matn_annotations}
+                            onNarratorClick={handleLocalNarratorClick}
+                            onLexiconClick={onLexiconClick}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mode Selector */}
+                    <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 p-2 rounded-xl border border-slate-100 dark:border-slate-800">
+                      <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">مستوى عرض التخريج:</span>
+                      <div className="flex gap-1">
+                        {(['general', 'medium', 'detailed'] as const).map((m) => (
+                          <button
+                            key={m}
+                            onClick={() => setTakhreegMode(m)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                              takhreegMode === m
+                                ? 'bg-emerald-500 text-white shadow'
+                                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400'
+                            }`}
+                          >
+                            {m === 'general' ? 'إجمالي' : m === 'medium' ? 'متوسط' : 'تفصيلي'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Takhreej References */}
+                    <div className="space-y-6">
+                      {(!takhreej || takhreej.length === 0) ? (
+                        <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
+                          لا توجد مواضع تخريج مسجلة لهذا الحديث.
+                        </div>
+                      ) : (
+                        takhreej.map((bookGroup: any, bIdx: number) => (
+                          <div key={bIdx} className="space-y-3">
+                            <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 border-r-4 border-emerald-500 pr-2">
+                              أخرجه في {bookGroup.book_name}
+                            </h4>
+                            <div className="grid grid-cols-1 gap-3">
+                              {bookGroup.hadiths && bookGroup.hadiths.map((h: any, hIdx: number) => (
+                                <div
+                                  key={hIdx}
+                                  className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 flex flex-col gap-2"
+                                >
+                                  <div className="flex justify-between items-center text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                    <span>
+                                      جزء {h.volume || 1}، صفحة {h.page || 1}
+                                    </span>
+                                    <a
+                                      href={h.number ? `?view=library&book=${bookGroup.book_id}&hadith=${h.number}&tarqeem=TarqeemMatboa1` : `?view=library&book=${bookGroup.book_id}&page=${h.page || 1}&part=${h.volume || 1}`}
+                                      className="text-xs text-emerald-600 hover:underline flex items-center gap-1 font-bold"
+                                    >
+                                      حديث رقم: {h.number} 🔗
+                                    </a>
+                                  </div>
+                                  
+                                  {/* Chapter Path (Medium / Detailed) */}
+                                  {takhreegMode !== 'general' && h.chapter_path && h.chapter_path.length > 0 && (
+                                    <div className="text-xs text-emerald-600/90 dark:text-emerald-400/90 bg-emerald-50/50 dark:bg-emerald-950/20 p-2 rounded-lg border border-emerald-500/10 flex flex-wrap gap-1 items-center">
+                                      <span className="font-semibold text-[10px] text-emerald-500">الباب:</span>
+                                      {h.chapter_path.map((ch: string, idx: number) => (
+                                        <React.Fragment key={idx}>
+                                          {idx > 0 && <span className="text-[10px] text-slate-400">◀</span>}
+                                          <span>{ch}</span>
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Comparison Wording (Detailed) */}
+                                  {takhreegMode === 'detailed' && h.comparison_comment && (
+                                    <div className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50/50 dark:bg-amber-950/20 p-2 rounded-lg border border-amber-500/10">
+                                      <span className="font-semibold">لفظ الحديث مقارنة بالأصل:</span> {h.comparison_comment}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* Takhreej Cross references grid */}
-                <div className="space-y-3">
-                  <h3 className="hadith-detail-modal-title-6">
-                    مواضع تخريج الحديث في دواوين السنة (Takhreej References)
-                  </h3>
-                  {(!takhreej || takhreej.length === 0) ? (
-                    <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
-                      لا توجد مواضع تخريج مسجلة لهذا الحديث.
-                    </div>
-                  ) : (
-                    <div className="hadith-detail-modal-grid-49">
-                      {takhreej.map((t) => (
-                        <div
-                          key={t.HadithMainID}
-                          className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 flex flex-col gap-1.5"
-                        >
-                          <div className="hadith-detail-modal-wrapper-50">
-                            <span>{t.BookName}</span>
-                            <span className="hadith-detail-modal-text-51">
-                              حديث {t.HadithNum}
-                            </span>
+                {/* Tab 2: Shawahed */}
+                {takhreegTab === 'shawahed' && (
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    {shawahedList.length === 0 ? (
+                      <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
+                        لا توجد شواهد أو متابعات مسجلة لهذا الحديث.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {shawahedList.map((item, idx) => (
+                          <div
+                            key={idx}
+                            className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 flex flex-col gap-2"
+                          >
+                            <div className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                              وله شاهد من حديث {item.companion_name || 'صحابي غير محدد'}
+                            </div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-sans">
+                              أخرجه {item.book_name} ({item.part} / {item.page}) برقم: ({item.tarqeem})
+                            </div>
+                            <a
+                              href={item.tarqeem ? `?view=library&book=${item.book_id}&hadith=${item.tarqeem}&tarqeem=TarqeemMatboa1` : `?view=library&book=${item.book_id}&page=${item.page || 1}&part=${item.part || 1}`}
+                              className="text-xs text-emerald-600 hover:underline self-start flex items-center gap-1 mt-1 font-semibold"
+                            >
+                              عرض الكتاب في المكتبة 🔗
+                            </a>
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 leading-relaxed">
-                            {t.Tarf}
-                          </p>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-1">
-                            جزء {t.PartNum}، صفحة {t.PageNum}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-                {/* Shawahed Motaba'at Comparison */}
-                <div className="space-y-3">
-                  <h3 className="hadith-detail-modal-title-6">
-                    المتابعات والشواهد ومقارنة المتون (Motaba'at Comparisons)
-                  </h3>
-                  {(!shawahed || !shawahed.comparisons || shawahed.comparisons.length === 0) ? (
-                    <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
-                      لا توجد مقارنات متون أو شواهد مسجلة في هذه الطبعة.
-                    </div>
-                  ) : (
-                    <div className="hadith-detail-modal-grid-54">
-                      {shawahed.comparisons.map((c, idx) => (
-                        <div
-                          key={idx}
-                          className="hadith-detail-modal-stack-55"
-                        >
-                          <div className="hadith-detail-modal-wrapper-56">
-                            <span className="text-slate-700 dark:text-slate-300">{c.BookName} (حديث {c.HadithNum})</span>
-                            <span className="hadith-detail-modal-text-58">
-                              {c.Comment} (تطابق {c.MatchSort}%)
-                            </span>
+                {/* Tab 3: Service Books */}
+                {takhreegTab === 'services' && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    {Object.keys(serviceBooksList).length === 0 ? (
+                      <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
+                        لا توجد تخاريج من كتب الخدمة لهذا الحديث.
+                      </div>
+                    ) : (
+                      Object.entries(serviceBooksList).map(([typeGroup, books]) => (
+                        <div key={typeGroup} className="space-y-3">
+                          <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 border-r-4 border-emerald-500 pr-2">
+                            {typeGroup}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {books.map((b, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 flex justify-between items-center gap-2"
+                              >
+                                <div className="text-xs text-slate-600 dark:text-slate-400">
+                                  <span className="font-semibold block text-slate-800 dark:text-slate-200 mb-1">{b.book_name}</span>
+                                  ({b.part} / {b.page})
+                                </div>
+                                <a
+                                  href={`?view=library&book=${b.service_id}&page=${b.page || 1}&part=${b.part || 1}`}
+                                  className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-400 rounded text-[11px] font-semibold transition-all flex items-center gap-1"
+                                >
+                                  تصفح 🔗
+                                </a>
+                              </div>
+                            ))}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 italic leading-relaxed">
-                            {c.Tarf}
-                          </p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
