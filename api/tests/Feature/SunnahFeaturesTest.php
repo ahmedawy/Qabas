@@ -162,4 +162,35 @@ class SunnahFeaturesTest extends TestCase
         ]);
         $response->assertJsonPath('success', true);
     }
+
+    /**
+     * Test the Shawahed endpoint returns companion-filtered data.
+     */
+    public function test_shawahed_endpoint_returns_filtered_data(): void
+    {
+        $response = $this->get('/api/v1/hadith/5/shawahed');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'status',
+            'data' => [
+                '*' => [
+                    'book_id',
+                    'book_name',
+                    'takhreej_author',
+                    'takhreej_book',
+                    'companion_name',
+                    'part',
+                    'page',
+                    'tarqeem',
+                ]
+            ]
+        ]);
+        $response->assertJsonPath('status', 'success');
+        
+        // Assert we got exactly 1 item for Hadith 5 matching legacy system
+        $data = $response->json('data');
+        $this->assertCount(1, $data);
+        $this->assertEquals('عبد الله بن مسعود', $data[0]['companion_name']);
+    }
 }

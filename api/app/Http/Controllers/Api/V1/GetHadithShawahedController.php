@@ -16,17 +16,70 @@ class GetHadithShawahedController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Hadith not found or BookID is missing'], 404);
         }
 
-        $bookId = $hadith->BookID;
-        $comparisonTable = "hmatncomparison{$bookId}";
-        
-        try {
-            $shawahedIds = DB::table($comparisonTable)
-                ->where('MasterMatnID', $hadithId)
-                ->pluck('SlaveMatnID')
-                ->toArray();
-        } catch (\Exception $e) {
-            // Table doesn't exist or other DB error
-            $shawahedIds = [];
+                // 1. Get master companion ID (first narrator in SandRwah)
+        $masterCompanionId = null;
+        $masterSanad = DB::table('asanedhadiths as ah')
+            ->join('asaned as a', 'ah.SanadID', '=', 'a.ID')
+            ->where('ah.HadithMainID', $hadithId)
+            ->first();
+        if ($masterSanad) {
+            $narrators = explode(' ', trim($masterSanad->SandRwah));
+            foreach ($narrators as $n) {
+                if (!empty($n)) {
+                    $masterCompanionId = (int)$n;
+                    break;
+                }
+            }
+        }
+
+        // 2. Get combined matn GroupID
+        $combinedGroup = DB::table('hgamhalmatn')
+            ->where('HadithMainID', $hadithId)
+            ->value('GroupID');
+
+        if (!$combinedGroup) {
+            return response()->json(['status' => 'success', 'data' => []]);
+        }
+
+        // 3. Get all members in the combined group
+        $memberIds = DB::table('hgamhalmatn')
+            ->where('GroupID', $combinedGroup)
+            ->where('HadithMainID', '!=', $hadithId)
+            ->pluck('HadithMainID')
+            ->toArray();
+
+        if (empty($memberIds)) {
+            return response()->json(['status' => 'success', 'data' => []]);
+        }
+
+        // 4. Fetch companions mapping for members
+        $asanedData = DB::table('asanedhadiths as ah')
+            ->join('asaned as a', 'ah.SanadID', '=', 'a.ID')
+            ->whereIn('ah.HadithMainID', $memberIds)
+            ->select('ah.HadithMainID', 'a.SandRwah')
+            ->get();
+
+        $hadithToCompanionId = [];
+        foreach ($asanedData as $chain) {
+            $narrators = explode(' ', trim($chain->SandRwah));
+            $firstNarrator = null;
+            foreach ($narrators as $n) {
+                if (!empty($n)) {
+                    $firstNarrator = (int)$n;
+                    break;
+                }
+            }
+            if ($firstNarrator) {
+                $hadithToCompanionId[$chain->HadithMainID] = $firstNarrator;
+            }
+        }
+
+        $shawahedIds = [];
+        foreach ($memberIds as $mid) {
+            $compId = $hadithToCompanionId[$mid] ?? null;
+            if ($compId !== null && $compId !== $masterCompanionId) {
+                $shawahedIds[] = $mid;
+            }
         }
 
         if (empty($shawahedIds)) {
@@ -49,37 +102,12 @@ class GetHadithShawahedController extends Controller
             )
             ->get();
 
-        // Fetch companions mapping via asaned
-        $asanedData = DB::table('asanedhadiths as ah')
-            ->join('asaned as a', 'ah.SanadID', '=', 'a.ID')
-            ->whereIn('ah.HadithMainID', $shawahedIds)
-            ->select('ah.HadithMainID', 'a.SandRwah')
-            ->get();
-
-        $companionIds = [];
-        $hadithToCompanionId = [];
-        
-        foreach ($asanedData as $chain) {
-            $narrators = explode(' ', trim($chain->SandRwah));
-            // First non-empty ID is the companion (or last, depending on direction, but usually first in DB representation)
-            $firstNarrator = null;
-            foreach ($narrators as $n) {
-                if (!empty($n)) {
-                    $firstNarrator = (int)$n;
-                    break;
-                }
-            }
-            if ($firstNarrator) {
-                $companionIds[] = $firstNarrator;
-                $hadithToCompanionId[$chain->HadithMainID] = $firstNarrator;
-            }
-        }
-
+        $companionIds = array_filter(array_unique(array_values($hadithToCompanionId)));
         $companions = [];
         if (!empty($companionIds)) {
             $companions = DB::table('nouns')
-                ->whereIn('ID', array_unique($companionIds))
-                ->pluck('Name', 'ID');
+                ->whereIn('ID', $companionIds)
+                ->pluck(DB::raw('COALESCE(NULLIF(AbbName, ""), Name)'), 'ID');
         }
 
         $results = [];
