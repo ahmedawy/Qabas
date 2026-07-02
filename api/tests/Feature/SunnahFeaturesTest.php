@@ -141,4 +141,25 @@ class SunnahFeaturesTest extends TestCase
         $response2->assertStatus(200);
         $response2->assertJsonPath('success', true);
     }
+
+    /**
+     * Test the Matn Comparison endpoint returns master and slave hadiths.
+     */
+    public function test_matn_comparison_endpoint_returns_data(): void
+    {
+        $response = $this->get('/api/v1/hadith/matn-comparison?id=5');
+
+        $response->assertStatus(200);
+        $response->assertJsonStructure([
+            'success',
+            'master' => [
+                'main_id',
+                'book_name',
+                'hadith_num',
+                'clean_content',
+            ],
+            'slaves',
+        ]);
+        $response->assertJsonPath('success', true);
+    }
 }

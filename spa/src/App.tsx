@@ -6,6 +6,7 @@ import { TocTree } from './features/books/TocTree';
 import { DisplayMethodPanel } from './features/books/DisplayMethodPanel';
 import { HadithCard, HadithContentRenderer } from './features/hadiths/HadithCard';
 import { HadithServiceModal } from './features/hadiths/HadithServiceModal';
+import { MatnComparisonModal } from './features/hadiths/MatnComparisonModal';
 import { SearchBar } from './features/search/SearchBar';
 import { SearchResults } from './features/search/SearchResults';
 import { Pagination } from './features/search/Pagination';
@@ -786,7 +787,7 @@ function App() {
       </div>
 
       {/* DETAIL MODAL OVERLAY */}
-      {activeServiceHadithId !== null && activeServiceType !== null && (
+      {activeServiceHadithId !== null && activeServiceType !== null && activeServiceType !== 'matn_comparison' && (
         <HadithServiceModal
           hadithId={activeServiceHadithId}
           serviceType={activeServiceType}
@@ -803,6 +804,16 @@ function App() {
             setActiveSubjectPathIds(pathNodeIds);
             setCurrentView('thematics');
             setCurrentTab('subject');
+          }}
+        />
+      )}
+
+      {activeServiceHadithId !== null && activeServiceType === 'matn_comparison' && (
+        <MatnComparisonModal
+          hadithId={activeServiceHadithId}
+          onClose={() => {
+            setActiveServiceHadithId(null);
+            setActiveServiceType(null);
           }}
         />
       )}

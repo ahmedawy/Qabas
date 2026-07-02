@@ -26,7 +26,8 @@ import type {
   IndexCategoryNode,
   IndexItemNode,
   ShawahedItem,
-  ServiceBookItem
+  ServiceBookItem,
+  MatnComparisonResponse
 } from '../types';
 
 /**
@@ -487,7 +488,10 @@ export const api = {
   toggleBookmark: (hadithMainId: number) =>
     request<{ success: boolean; bookmarked: boolean; message: string }>('bookmarks/toggle', 'POST', {
       hadith_main_id: hadithMainId,
-    })
+    }),
+
+  getMatnComparison: (id: number) =>
+    request<MatnComparisonResponse>(`hadith/matn-comparison?id=${id}`)
 };
 
 

@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\GetHadithJudgmentsController;
 use App\Http\Controllers\Api\V1\GetHadithChainsController;
 use App\Http\Controllers\Api\V1\GetHadithTakhreejController;
 use App\Http\Controllers\Api\V1\GetHadithShawahedController;
+use App\Http\Controllers\Api\V1\GetMatnComparisonController;
 use App\Http\Controllers\Api\V1\GetHadithServiceBooksController;
 use App\Http\Controllers\Api\V1\GetHadithCommentaryController;
 use App\Http\Controllers\Api\V1\GetHadithThematicController;
@@ -82,6 +83,7 @@ $router->prefix('v1')->group(function (Router $router) {
     $router->get('/hadith/judgments', GetHadithJudgmentsController::class);
     $router->get('/hadith/chains', GetHadithChainsController::class);
     $router->get('/hadith/takhreej', GetHadithTakhreejController::class);
+    $router->get('/hadith/matn-comparison', GetMatnComparisonController::class);
     $router->get('/hadith/{id}/shawahed', GetHadithShawahedController::class);
     $router->get('/hadith/{id}/service-books', GetHadithServiceBooksController::class);
     $router->get('/hadith/commentary', GetHadithCommentaryController::class);

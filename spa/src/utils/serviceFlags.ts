@@ -28,7 +28,10 @@ export function isServiceAvailable(
   service: HadithServiceType
 ): boolean {
   if (flags === undefined || flags === null) return false;
-  const mask = SERVICE_FLAGS[service];
+  if (service === 'matn_comparison') {
+    return (flags & SERVICE_FLAGS.takhreeg) !== 0;
+  }
+  const mask = (SERVICE_FLAGS as any)[service];
   if (mask === undefined) return false;
   return (flags & mask) !== 0;
 }

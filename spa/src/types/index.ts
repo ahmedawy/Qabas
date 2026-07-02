@@ -350,6 +350,28 @@ export interface IndexItemNode {
   IndexID: number;
 }
 
-export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions' | 'compound';
+export interface SlaveHadithComparison {
+  main_id: number;
+  book_name: string;
+  hadith_num: string;
+  clean_content: string;
+  content_length: number;
+  tarteeb: number;
+  match_sort: number;
+  comparison_comment: string | null;
+}
+
+export interface MatnComparisonResponse {
+  master: {
+    main_id: number;
+    book_name: string;
+    hadith_num: string;
+    clean_content: string;
+  };
+  slaves: SlaveHadithComparison[];
+}
+
+export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions' | 'compound' | 'matn_comparison';
+
 
 
