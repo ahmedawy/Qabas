@@ -86,9 +86,7 @@ export const HadithContentRenderer: React.FC<{
         return (
           <span
             key={index}
-            onClick={() => !isNaN(cleanId) && onNarratorClick?.(cleanId)}
-            className={`text-pink-600 dark:text-pink-400 font-semibold text-[0.95em] ${!isNaN(cleanId) && onNarratorClick ? 'cursor-pointer hover:underline' : ''}`}
-            title={!isNaN(cleanId) ? 'انقر لعرض الترجمة' : undefined}
+            className="text-pink-600 dark:text-pink-400 font-semibold text-[0.95em]"
           >
             {reactChildren}
           </span>
@@ -103,9 +101,7 @@ export const HadithContentRenderer: React.FC<{
         return (
           <span
             key={index}
-            onClick={() => !isNaN(cleanId) && onNarratorClick?.(cleanId)}
-            className={`text-teal-600 dark:text-teal-400 font-semibold text-[0.95em] ${!isNaN(cleanId) && onNarratorClick ? 'cursor-pointer hover:underline' : ''}`}
-            title={!isNaN(cleanId) ? 'انقر لعرض الترجمة' : undefined}
+            className="text-teal-600 dark:text-teal-400 font-semibold text-[0.95em]"
           >
             {reactChildren}
           </span>
