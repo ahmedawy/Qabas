@@ -171,12 +171,219 @@ class GetHadithTakhreejController extends Controller
                 'has_shawahed' => $hasShawahed,
                 'comparisons' => $comparisons,
             ],
-            'combined_matn' => $compoundMatn ? [
+            'combined_matn' => $compoundMatn ? array_merge([
                 'id' => $compoundMatn->ID,
                 'clean_matn' => $compoundMatn->CleanMatn,
                 'matn_annotations' => $compoundMatn->MatnAnnotations,
                 'asaned_comp' => $compoundMatn->AsanedComp,
-            ] : null,
+            ], $this->formatScholarlyCombinedMatn($compoundMatn)) : null,
         ]);
+    }
+
+    /**
+     * Formats the combined matn into a scholarly version with bracketed additions and reference numbers,
+     * and compiles the full original wording + variant sources reference block.
+     */
+    private function formatScholarlyCombinedMatn(CompoundMatn $compoundMatn): array
+    {
+        $cleanMatn = $compoundMatn->CleanMatn;
+        $ann = $compoundMatn->MatnAnnotations;
+        if (!is_array($ann)) {
+            $ann = [];
+        }
+
+        // 1. Build scholarly_matn
+        $hits = array_filter($ann, function($a) {
+            return isset($a['type']) && $a['type'] === 'MMHit';
+        });
+
+        // Sort hits descending by start position to replace from end to beginning
+        usort($hits, function($a, $b) {
+            return $b['start'] <=> $a['start'];
+        });
+
+        $formattedMatn = $cleanMatn;
+        foreach ($hits as $hit) {
+            $start = (int)$hit['start'];
+            $len = (int)$hit['length'];
+            $mmid = (int)($hit['attrs']['MMID'] ?? 0);
+            
+            $sub = mb_substr($cleanMatn, $start, $len);
+            
+            // Preserve original leading and trailing spaces outside of the brackets
+            $leadSpace = preg_match('/^\s+/', $sub, $m) ? $m[0] : '';
+            $trailSpace = preg_match('/\s+$/', $sub, $m) ? $m[0] : '';
+            $trimmedSub = trim($sub);
+            $num = $mmid + 1;
+            $replacement = "{$leadSpace}[{$trimmedSub} ({$num})]{$trailSpace}";
+            
+            $left = mb_substr($formattedMatn, 0, $start);
+            $right = mb_substr($formattedMatn, $start + $len);
+            
+            $formattedMatn = $left . $replacement . $right;
+        }
+
+        // 2. Build parent-child mapping for sources
+        $children = [];
+        foreach ($ann as $idx => $a) {
+            $parent = $a['parentIndex'] ?? null;
+            if ($parent !== null) {
+                $children[$parent][] = array_merge(['_index' => $idx], $a);
+            }
+        }
+
+        // Find MMMainHadith (Original Wording)
+        $originalWording = '';
+        $mainHadithNode = null;
+        foreach ($ann as $idx => $a) {
+            if (isset($a['type']) && $a['type'] === 'MMMainHadith') {
+                $mainHadithNode = array_merge(['_index' => $idx], $a);
+                break;
+            }
+        }
+
+        if ($mainHadithNode) {
+            $mIdx = $mainHadithNode['_index'];
+            $originalWordingParts = [];
+            if (isset($children[$mIdx])) {
+                foreach ($children[$mIdx] as $book) {
+                    if ($book['type'] === 'MutonBook') {
+                        $bookName = trim($book['attrs']['BookName'] ?? '');
+                        $docs = [];
+                        if (isset($children[$book['_index']])) {
+                            foreach ($children[$book['_index']] as $doc) {
+                                if ($doc['type'] === 'Document') {
+                                    $hadithNum = trim($doc['attrs']['HadithNum'] ?? '');
+                                    $part = trim($doc['attrs']['PartNum'] ?? '');
+                                    $page = trim($doc['attrs']['PageNum'] ?? '');
+                                    $docs[] = "{$bookName}: ({$part} / {$page}) برقم: ({$hadithNum})";
+                                }
+                            }
+                        }
+                        if (!empty($docs)) {
+                            $originalWordingParts[] = implode("\n", $docs);
+                        }
+                    }
+                }
+            }
+            $originalWording = implode("\n", $originalWordingParts);
+        }
+
+        // Find MMPortionSources (Additions/Variants)
+        $variantsList = [];
+        $variantSourcesMap = [];
+        foreach ($ann as $idx => $a) {
+            if (isset($a['type']) && $a['type'] === 'MMPortionSources') {
+                $mmid = (int)($a['attrs']['ID'] ?? 0);
+                $num = $mmid + 1;
+                
+                $variantSources = [];
+                if (isset($children[$idx])) {
+                    foreach ($children[$idx] as $muton) {
+                        if ($muton['type'] === 'Muton') {
+                            $mIdx = $muton['_index'];
+                            if (isset($children[$mIdx])) {
+                                foreach ($children[$mIdx] as $book) {
+                                    if ($book['type'] === 'MutonBook') {
+                                        $bookName = trim($book['attrs']['BookName'] ?? '');
+                                        if (isset($children[$book['_index']])) {
+                                            foreach ($children[$book['_index']] as $doc) {
+                                                if ($doc['type'] === 'Document') {
+                                                    $hadithNum = trim($doc['attrs']['HadithNum'] ?? '');
+                                                    $part = trim($doc['attrs']['PartNum'] ?? '');
+                                                    $page = trim($doc['attrs']['PageNum'] ?? '');
+                                                    $variantSources[] = "{$bookName}: ({$part} / {$page}) برقم: ({$hadithNum})";
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (!empty($variantSources)) {
+                    $variantSourcesMap[$mmid] = implode("\n", $variantSources);
+                    
+                    $first = true;
+                    $formattedVariant = '';
+                    foreach ($variantSources as $vs) {
+                        if ($first) {
+                            $formattedVariant .= "({$num}) {$vs}";
+                            $first = false;
+                        } else {
+                            $formattedVariant .= "\n{$vs}";
+                        }
+                    }
+                    $variantsList[$num] = $formattedVariant;
+                }
+            }
+        }
+
+        // Sort variants by 1-based index key
+        ksort($variantsList);
+
+        // Construct full scholarly_sources block
+        $sourcesBlock = "--------------------------------------------------------------------------------\n";
+        $sourcesBlock .= " الرواية الأصلية : \n";
+        $sourcesBlock .= $originalWording . "\n\n\n";
+        $sourcesBlock .= "الزوائد:\n";
+        $sourcesBlock .= implode("\n\n", $variantsList);
+
+        // 3. Build structured segments for interactive web tooltips
+        $hitsAsc = array_filter($ann, function($a) {
+            return isset($a['type']) && $a['type'] === 'MMHit';
+        });
+        usort($hitsAsc, function($a, $b) {
+            return (int)$a['start'] <=> (int)$b['start'];
+        });
+
+        $segments = [];
+        $currentOffset = 0;
+        foreach ($hitsAsc as $hit) {
+            $start = (int)$hit['start'];
+            $len = (int)$hit['length'];
+            $mmid = (int)($hit['attrs']['MMID'] ?? 0);
+
+            // Plain text segment before this hit
+            if ($start > $currentOffset) {
+                $segments[] = [
+                    'type' => 'text',
+                    'text' => mb_substr($cleanMatn, $currentOffset, $start - $currentOffset),
+                ];
+            }
+
+            // Variant segment
+            $sub = mb_substr($cleanMatn, $start, $len);
+            $leadSpace = preg_match('/^\s+/', $sub, $m) ? $m[0] : '';
+            $trailSpace = preg_match('/\s+$/', $sub, $m) ? $m[0] : '';
+            $trimmedSub = trim($sub);
+
+            $segments[] = [
+                'type' => 'variant',
+                'id' => $mmid + 1,
+                'text' => $trimmedSub,
+                'leadSpace' => $leadSpace,
+                'trailSpace' => $trailSpace,
+                'sources' => $variantSourcesMap[$mmid] ?? '',
+            ];
+
+            $currentOffset = $start + $len;
+        }
+
+        // Remaining text
+        if ($currentOffset < mb_strlen($cleanMatn)) {
+            $segments[] = [
+                'type' => 'text',
+                'text' => mb_substr($cleanMatn, $currentOffset),
+            ];
+        }
+
+        return [
+            'scholarly_matn' => $formattedMatn,
+            'scholarly_sources' => $sourcesBlock,
+            'scholarly_segments' => $segments,
+        ];
     }
 }

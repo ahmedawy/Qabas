@@ -62,6 +62,9 @@ class SunnahFeaturesTest extends TestCase
                 'clean_matn',
                 'matn_annotations',
                 'asaned_comp',
+                'scholarly_matn',
+                'scholarly_sources',
+                'scholarly_segments',
             ],
         ]);
         $response->assertJsonPath('success', true);

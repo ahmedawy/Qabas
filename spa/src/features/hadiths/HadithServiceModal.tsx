@@ -145,6 +145,15 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
     setSelectedNarratorId(id);
   };
 
+  const handleCopyScholarlyText = () => {
+    if (!combinedMatn) return;
+    const fullTextToCopy = `${combinedMatn.scholarly_matn}\n\n${combinedMatn.scholarly_sources}`;
+    navigator.clipboard.writeText(fullTextToCopy).then(() => {
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    });
+  };
+
   useEffect(() => {
     // Listen for ESC key to close modal
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -523,13 +532,57 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                       </p>
                     </div>
                     
-                    <div className="p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm leading-relaxed text-slate-800 dark:text-slate-200">
-                      <HadithContentRenderer
-                        content={combinedMatn.clean_matn}
-                        annotations={combinedMatn.matn_annotations}
-                        onNarratorClick={handleLocalNarratorClick}
-                        onLexiconClick={onLexiconClick}
-                      />
+                    <div className="relative p-6 rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm leading-relaxed text-slate-800 dark:text-slate-200 select-text">
+                      {/* Floating Copy Button (Icon-Only) */}
+                      <button
+                        onClick={handleCopyScholarlyText}
+                        className="absolute top-4 left-4 p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-emerald-600 dark:bg-slate-900/60 dark:hover:bg-emerald-950/40 dark:text-slate-400 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-800 transition-all duration-200 flex items-center justify-center w-9 h-9 cursor-pointer shadow-sm"
+                        title="نسخ النص المجمع الأكاديمي مع قائمة المصادر"
+                      >
+                        {copySuccess ? (
+                          <svg className="w-4.5 h-4.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Interactive Matn Segments */}
+                      <div className="text-slate-850 dark:text-slate-100 font-arabic text-xl leading-[2.2] text-right font-medium whitespace-pre-wrap pl-12 dir-rtl">
+                        {combinedMatn.scholarly_segments && combinedMatn.scholarly_segments.length > 0 ? (
+                          combinedMatn.scholarly_segments.map((seg, idx) => {
+                            if (seg.type === 'text') {
+                              return <span key={idx}>{seg.text}</span>;
+                            }
+                            return (
+                              <span key={idx} className="relative group inline cursor-help">
+                                {seg.leadSpace}
+                                <span className="border-b-2 border-dotted border-emerald-500/80 hover:bg-emerald-500/10 dark:hover:bg-emerald-500/20 px-0.5 rounded transition-all duration-200 text-emerald-700 dark:text-emerald-400 font-bold">
+                                  [{seg.text}]
+                                </span>
+                                {seg.trailSpace}
+                                
+                                {/* Hover Tooltip */}
+                                <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2.5 invisible opacity-0 scale-95 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 flex flex-col w-72 bg-slate-900/95 dark:bg-slate-950/95 backdrop-blur-md text-white text-xs rounded-xl p-3.5 shadow-xl border border-slate-700/40 dark:border-slate-800/80 z-50 pointer-events-none dir-rtl text-right font-sans font-normal normal-case">
+                                  <span className="font-bold text-emerald-400 mb-1 text-[11px] block">
+                                    مصادر اللفظ البديل:
+                                  </span>
+                                  <span className="whitespace-pre-line leading-relaxed text-slate-200 text-[11px]">
+                                    {seg.sources}
+                                  </span>
+                                  {/* Arrow */}
+                                  <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900/95 dark:border-t-slate-950/95"></span>
+                                </span>
+                              </span>
+                            );
+                          })
+                        ) : (
+                          combinedMatn.scholarly_matn || combinedMatn.clean_matn
+                        )}
+                      </div>
                     </div>
 
                     {combinedMatn.asaned_comp && (

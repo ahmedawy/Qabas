@@ -124,11 +124,23 @@ export interface ServiceBookItem {
   service_id: number;
 }
 
+export interface ScholarlySegment {
+  type: 'text' | 'variant';
+  text: string;
+  id?: number;
+  leadSpace?: string;
+  trailSpace?: string;
+  sources?: string;
+}
+
 export interface CombinedMatn {
   id: number;
   clean_matn: string;
   matn_annotations: Annotation[];
   asaned_comp: string;
+  scholarly_matn: string;
+  scholarly_sources: string;
+  scholarly_segments: ScholarlySegment[];
 }
 
 export interface HadithDetailResponse {
