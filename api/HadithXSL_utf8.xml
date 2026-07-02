@@ -1,0 +1,1169 @@
+﻿<?xml version="1.0" encoding="UTF-16"?>
+<xsl:stylesheet  version="1.0"
+xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+xmlns:msxsl="urn:schemas-microsoft-com:xslt"
+xmlns:user="http://mycompany.com/mynamespace"
+xmlns:HTML="http://www.w3.org/Profiles/XHTML-transitional" >
+	 <xsl:template match="/">
+		 
+		 <html dir="rtl">
+			 <head>			
+		     </head>
+			 <title>
+			 </title>
+		     <body>			  
+				 <xsl:apply-templates/>
+				 <font size="3px">
+					<xsl:value-of select="user:GetFootNotes()" disable-output-escaping="yes"/>
+				 </font>
+			 </body>
+	   	 </html>	
+		 
+     </xsl:template>
+	 
+	 
+	 
+	 
+	 <xsl:template match="MainID">
+		<span ID="HadithMainID_{@Value}" >
+		<xsl:if test="@Identifier='الصفحات'">		
+			<a onclick="document.getElementById('HadithMainID_{@Value}').style.border='thick solid #0000FF'; location.href='HadithActivation_{@Value}'" style="cursor:hand;" Title="إضغط هنا لعرض الفقرة" class="noPrint">
+			<img src="Hadith.png"/>
+			</a>
+			<xsl:text disable-output-escaping="yes">&amp;nbsp;</xsl:text>
+		</xsl:if>
+
+		<xsl:apply-templates/>
+		 </span>		
+			
+		
+     </xsl:template>
+	 
+	 
+
+	<xsl:template match="الصفحات"><span ID="PageSpan" class="Page" Title="رقم الجزء/رقم الصفحة">[<xsl:value-of select="@جزء"/>/<xsl:value-of select="@صفحة"/>] </span></xsl:template>	 
+	
+
+	<xsl:template match="متن">
+		<span class="Matn">	
+		<xsl:choose>		
+			<xsl:when test="@Highlight='True'">
+				<span class="Highlight">
+					<xsl:apply-templates/>
+				</span>
+			</xsl:when>
+			<xsl:otherwise>				
+				<xsl:apply-templates/>
+			</xsl:otherwise>
+			</xsl:choose>
+		</span>	
+	</xsl:template>
+	
+	<xsl:template match="إضافي">
+	</xsl:template>
+	
+	<xsl:template match="متن_مخفي"> 
+     </xsl:template>
+	 
+	 <xsl:template match="سند_مخفي">
+     </xsl:template>
+	 
+	 <xsl:template match="تعليق_مخفي">
+     </xsl:template>	
+	 
+	 <xsl:template match="ترقيم_حرف">
+     </xsl:template>	
+	 
+	 <xsl:template match="نص">
+		 <xsl:if test="@نوع='مخفي'">
+		 </xsl:if>		 
+     </xsl:template>
+	 
+	  <xsl:template match="رقم_حديث_للعرض">
+		<xsl:if test="@نوع='مطبوع'">
+			<xsl:choose>
+			<xsl:when test="@Highlight='True'">
+				<span ID="HadithNum" class="Highlight">
+					<xsl:apply-templates/>
+				</span>
+			</xsl:when>
+			<xsl:otherwise>
+				<span ID="HadithNum" class="HadithNum">
+						<xsl:apply-templates/>					
+				</span>					
+			</xsl:otherwise>
+			</xsl:choose>
+		 </xsl:if>
+     </xsl:template>
+	 
+	 <xsl:template match="رقم_حديث">
+		<xsl:if test="@نوع='مطبوع'">
+			<xsl:choose>
+			<xsl:when test="@Highlight='True'">
+				<span ID="HadithNum" class="Highlight">
+					<xsl:apply-templates/>
+				</span>
+			</xsl:when>
+			<xsl:otherwise>
+				<span ID="HadithNum" class="HadithNum">
+					<xsl:apply-templates/>
+				</span>
+			</xsl:otherwise>
+			</xsl:choose>
+		 </xsl:if>
+     </xsl:template>	
+
+	 
+	<xsl:template match="نه">
+		<br/>		 
+	</xsl:template>
+
+	<xsl:template match="Enter"><xsl:text>.</xsl:text><br/></xsl:template>  
+	<xsl:template match="Paragraph"><xsl:text>.</xsl:text><br/></xsl:template>  
+	<xsl:template match="NewLine"><br/></xsl:template>
+	<xsl:template match="Rawy">
+		<a href="AsaneedReportRawyID:{@ID}" class="AsaneedReportRawy" ><xsl:apply-templates/></a>
+	</xsl:template>
+	
+	 <xsl:template match="path0">
+		 <div id="title" class="Header">
+			 <xsl:for-each select="pathItem">
+				 <xsl:choose>
+					 <xsl:when test="position()!=last()">
+						 <xsl:value-of select="pathItem"/>
+						   <xsl:apply-templates/>
+						   <xsl:text> -<!--&gt;--> </xsl:text>
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <xsl:value-of select="pathItem"/>
+						   <xsl:apply-templates/>
+					 </xsl:otherwise>
+				 </xsl:choose>	
+			 </xsl:for-each>
+		 </div>		 
+		 <hr width="75%" align="center"/><br/>
+     </xsl:template>
+     
+      <xsl:template match="path1">
+	  <div style="display: none" class="Header">
+			 <xsl:for-each select="pathItem">
+				 <xsl:choose>
+					 <xsl:when test="position()!=last()">
+						 <xsl:value-of select="pathItem"/>						   
+						   <xsl:text> جزء: </xsl:text>
+						   <span ID="PartNum">
+								<xsl:apply-templates/>
+							</span>
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <xsl:value-of select="pathItem"/>
+						   <xsl:text> صفحة: </xsl:text>
+						   <span ID="PageNum">
+								<xsl:apply-templates/>
+							</span>
+					 </xsl:otherwise>
+				 </xsl:choose>	
+			 </xsl:for-each>
+		 </div>
+     </xsl:template>
+     
+     <xsl:template match="path2">
+	 
+     </xsl:template>
+	 
+	  <xsl:template match="CompounMatnSame">
+	  <br/>
+	  <HR/>
+		<xsl:apply-templates/>
+     </xsl:template>
+	 
+	 <xsl:template match="MMHit">
+		[<xsl:choose>
+			<xsl:when test="@Active='True'">
+				<span class="ActiveNoScroll">
+					<xsl:apply-templates/>
+				</span>
+			</xsl:when>
+			<xsl:otherwise>				
+				<a onclick="location.href='MMHits_MMID_{@MMID}' " title="إضغط هنا لعرض الأحاديث" > 	   
+				<div style="display:none" ID="MMID_{@MMID}" title="MMHits_HIDs{@HIDs}_MMID{@MMID}"/>
+				<font color="blue">
+					<xsl:apply-templates/>
+				</font>
+				</a> 
+										
+			</xsl:otherwise>			
+		</xsl:choose>
+		<span style="vertical-align:super; font-size: 1pt;" dir="ltr">
+			<font><a href="#Foot_{@MMID}" name="S_Foot_{@MMID}" class="FootNoteLink">(<xsl:value-of select="@MMID+1"/>)</a></font>
+		</span>]		
+	</xsl:template>	 
+	 
+	<xsl:template match="MMMainHadith">
+		<HR/>
+		
+		<font color="blue">
+			<xsl:text>الرواية الأصلية :  </xsl:text>		
+		</font>
+		<br/>
+		<xsl:apply-templates/>
+		<br/>
+		<!--<input type="hidden" ID="MMHadithIDs" value=""/>-->
+		<div id="MMHadithIDs"></div>
+	</xsl:template>
+	
+	<xsl:template match="MMPortionsFootNote">
+		<font color="blue">
+			<xsl:text>الزوائد:</xsl:text>
+		</font>	
+		<BR/>
+		<xsl:apply-templates/>
+	</xsl:template>
+	
+	<xsl:template match="MMPortionSources">
+	
+		<font size="3px">
+			<a name="Foot_{@ID}" href="#S_Foot_{@ID}" class="FootNoteLink">
+			(<xsl:value-of select="@ID+1"/>)
+			</a>
+		</font>
+		
+			<span>
+			<xsl:apply-templates/>
+			</span>
+		
+		<br/>
+	</xsl:template>
+	
+	
+	 
+	 <xsl:template match="CMHighlight">
+	 <font color="blue">
+		<xsl:apply-templates/>
+	</font>
+	 </xsl:template>
+	 
+	 <xsl:template match="Shwahed">
+		<xsl:apply-templates/>	
+	</xsl:template>
+	
+	<xsl:template match="ShwahedBegin">
+		<xsl:choose>
+			 <xsl:when  test="(count(./ShwahedHighestRawi)) != 1">
+				<xsl:text>وله شواهد من حديث </xsl:text>	
+				<xsl:for-each select="ShwahedHighestRawi">
+					<xsl:if test="position()!=1">
+						<xsl:text>، وحديث </xsl:text>
+					</xsl:if>
+					<xsl:value-of select="@NameAdd3"/>				
+				</xsl:for-each>	
+				<br/>
+				<xsl:text> فأما حديث </xsl:text>				
+			 </xsl:when>				 
+			 <xsl:otherwise>
+				<xsl:text>وله شاهد من حديث </xsl:text>	
+			 </xsl:otherwise>
+		 </xsl:choose>	
+		 
+	</xsl:template>
+	
+	<xsl:template match="ShwahedText">
+			
+		<xsl:apply-templates/>	
+	</xsl:template>
+	
+	
+	<xsl:template match="ShwahedHighestRawi">
+		<xsl:if test="position()!=1">
+			<br/>
+			<xsl:text> وأما حديث </xsl:text>
+		</xsl:if>
+		<xsl:value-of select="@NameAdd3"/><xsl:text>، </xsl:text>	
+		<xsl:apply-templates/>
+	</xsl:template>
+	 
+	
+	<xsl:template match="MutonBook">
+		<xsl:choose>
+		<xsl:when test="@BookName">	
+			<xsl:value-of select="@BookName"/>		
+			<xsl:text>:</xsl:text>
+		</xsl:when>		
+		</xsl:choose>						
+		<xsl:apply-templates/>
+		<br/>
+	</xsl:template>	
+	  
+	<xsl:template match="Book">
+		<xsl:if test="position() != 1">			
+			<xsl:text> ، </xsl:text>
+		</xsl:if>
+		<xsl:value-of select="@BookName"/>		
+		<xsl:text>:</xsl:text>				
+		<xsl:apply-templates/>
+	</xsl:template>
+	
+	<xsl:template match="ServiceBookParag">	
+		<xsl:if test="position() != 1">			
+				<xsl:text> ، </xsl:text>
+		</xsl:if>
+				<xsl:choose>
+					 <xsl:when  test="@MainID!=''">
+						 	<a href="ServiceBookNewChild-({@MainID}) ({@BookID}) ({@BookName}) ({@HadithNum}) ({@SayID})" class="HighlightWithLink" title="إضغط هنا لعرض الفقرة" > 
+							<xsl:if  test="@PartNum">
+								(<xsl:value-of select="@PartNum"/> / <xsl:value-of select="@PageNum"/>)
+							</xsl:if>
+							</a> 
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <xsl:if  test="@PartNum">
+								(<xsl:value-of select="@PartNum"/> / <xsl:value-of select="@PageNum"/>)
+						</xsl:if>
+					 </xsl:otherwise>
+				 </xsl:choose>
+				 
+				 
+	
+	</xsl:template>
+	 
+	
+	<xsl:template match="Document">
+		<xsl:if test="position() != 1">
+			<xsl:if test="@HadithNum">
+				<xsl:text> ، </xsl:text>
+			</xsl:if>
+		</xsl:if>
+				
+		<xsl:if  test="@PartNum">
+		(<xsl:value-of select="@PartNum"/> / <xsl:value-of select="@PageNum"/>)
+		<xsl:text> </xsl:text>
+		</xsl:if>
+
+		<xsl:if  test="@HadithNum">
+						
+			<xsl:choose>
+			 <xsl:when test="@HadithNum!=''">
+				 <xsl:text> برقم: (</xsl:text>	
+		
+				 <xsl:choose>
+					 <xsl:when  test="@SayID">
+						 <a href="HadithNewChild-({@MainID}) ({@SayID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:value-of select="@HadithNum"/>
+						</a> 
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <a href="HadithNewChild-({@MainID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:value-of select="@HadithNum"/>
+						</a> 
+					 </xsl:otherwise>
+				 </xsl:choose>
+				<xsl:text>)</xsl:text>
+			 </xsl:when>				 
+			 <xsl:otherwise>
+			  <xsl:choose>
+					 <xsl:when  test="@SayID">
+						 <a href="HadithNewChild-({@MainID}) ({@SayID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:text>(بدون ترقيم)</xsl:text>
+						</a> 
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <a href="HadithNewChild-({@MainID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:text>(بدون ترقيم)</xsl:text>
+						</a> 
+					 </xsl:otherwise>
+				 </xsl:choose>
+				 
+			 					  
+			 </xsl:otherwise>
+		 </xsl:choose>
+		 
+			
+		
+		</xsl:if>
+
+		<xsl:if  test="@SectionText">
+			(
+			<xsl:value-of select="@SectionText"/>
+			<xsl:if   test="@ChapterText!=''">
+				، <xsl:value-of select="@ChapterText"/>
+			</xsl:if>		
+			)
+		</xsl:if>	
+			
+		
+		<xsl:if  test="@Sanad">	
+			<xsl:if  test="@Sanad!=''">
+				<font color="rgb(124,64,174)">		
+				(<xsl:value-of select="@Sanad"/>)	
+				</font>
+			</xsl:if>
+		</xsl:if>
+		
+		<xsl:if  test="@Comment">
+			<xsl:if  test="@Comment!=''">
+				<font color="green">
+				(<xsl:value-of select="@Comment"/>)
+				</font>
+			</xsl:if>
+		</xsl:if>
+		
+	</xsl:template>
+	
+	
+	<xsl:template match="DocumentCompare">
+		<xsl:if test="position() != 1">
+			<xsl:if test="@HadithNum">
+				<xsl:text> ، </xsl:text>
+			</xsl:if>
+		</xsl:if>
+				
+		<xsl:if  test="@PartNum">
+		(<xsl:value-of select="@PartNum"/> / <xsl:value-of select="@PageNum"/>)
+		<xsl:text> </xsl:text>
+		</xsl:if>
+
+		<xsl:if  test="@HadithNum">
+		
+			<xsl:choose>
+			 <xsl:when test="@HadithNum!=''">
+				 <xsl:text> برقم: (</xsl:text>	
+		
+				 <xsl:choose>
+					 <xsl:when  test="@SayID">
+						 <a href="HadithNewCompare-({@MainID}) ({@SayID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:value-of select="@HadithNum"/>
+						</a> 
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <a href="HadithNewCompare-({@MainID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:value-of select="@HadithNum"/>
+						</a> 
+					 </xsl:otherwise>
+				 </xsl:choose>	
+						 
+						 
+						 
+				<xsl:text>)</xsl:text>
+			 </xsl:when>				 
+			 <xsl:otherwise>
+			 				 <xsl:choose>
+					 <xsl:when  test="@SayID">
+						 <a href="HadithNewCompare-({@MainID}) ({@SayID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:text>(بدون ترقيم)</xsl:text>
+						</a> 
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <a href="HadithNewCompare-({@MainID})" class="HighlightWithLink" title="إضغط هنا لعرض الحديث" >
+							<xsl:text>(بدون ترقيم)</xsl:text>
+						</a> 
+					 </xsl:otherwise>
+				 </xsl:choose>	
+
+			 					  
+			 </xsl:otherwise>
+			 </xsl:choose>
+		
+		</xsl:if>
+
+		<xsl:if  test="@SectionText">
+			(
+			<xsl:value-of select="@SectionText"/>
+			<xsl:if   test="@ChapterText!=''">
+				، <xsl:value-of select="@ChapterText"/>
+			</xsl:if>		
+			)
+		</xsl:if>	
+			
+		
+		<xsl:if  test="@Sanad">	
+			<xsl:if  test="@Sanad!=''">
+				<font color="rgb(124,64,174)">		
+				(<xsl:value-of select="@Sanad"/>)	
+				</font>
+			</xsl:if>
+		</xsl:if>
+		
+		<xsl:if  test="@Comment">
+			<xsl:if  test="@Comment!=''">
+				<font color="green">
+				(<xsl:value-of select="@Comment"/>)
+				</font>
+			</xsl:if>
+		</xsl:if>
+		
+		<xsl:if  test="@MainHadith">
+		<xsl:if test="@MainHadith='1'">
+			<font color="green">
+				<xsl:text> (بهذا اللفظ)</xsl:text>
+			</font>
+		</xsl:if>	
+		</xsl:if>	
+		
+	</xsl:template>
+
+	<xsl:template match="TakhreegSimple">
+	  <xsl:apply-templates/>
+	</xsl:template>
+	
+	 
+	<xsl:template match="TakhreegMuton">
+	  <xsl:apply-templates/>
+	</xsl:template>
+	
+	<xsl:template match="WA">
+		<xsl:text> ، و</xsl:text>
+	</xsl:template>
+	
+	<xsl:template match="TakhreegMainBook">
+				<!--<xsl:choose>
+					 <xsl:when test="@BookID[.='26']">
+						 <xsl:text> أورده المصنف أيضا </xsl:text>	
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <xsl:text> أخرجه المصنف أيضا </xsl:text>	
+					 </xsl:otherwise>
+				 </xsl:choose>-->
+				 
+			
+		<xsl:apply-templates/>		
+	</xsl:template>
+	
+	<xsl:template match="TakhreegMutonWithoutMatn">
+		<br/>
+		<xsl:text> بدون متن </xsl:text>				
+		<xsl:apply-templates/>		
+	</xsl:template>
+	
+	
+	<xsl:template match="TakhreegDetailedEmpty">
+		<xsl:text>تحث الإنشاء لعدم وجود مقارنة متون لهذا الحديث في هذه النسخة</xsl:text>			
+	</xsl:template>
+	
+	<xsl:template match="TakhreegMediumEmpty">
+		<xsl:text>تحث الإنشاء لعدم وجود مقارنة متون لهذا الحديث في هذه النسخة</xsl:text>		
+	</xsl:template>
+	
+	<xsl:template match="TakreegFromServiceBookEmp">
+		<xsl:text>لا يوجد تخريج لهذا الحديث فى كتب التخريج.</xsl:text>		
+	</xsl:template>
+
+	
+	
+	<xsl:template match="TakreegMutonBook">
+	<xsl:variable name="ParentName"><xsl:value-of select="local-name(parent::*)" /></xsl:variable>
+	<!--<xsl:if test="$ParentName!='TakhreegMainBook'">-->	
+		<xsl:choose>
+		<xsl:when test="@BookName">	
+			<!-- if the cur book not the first one there is no need to add the begining word أخرجه or أورده  but add و-->		
+			<xsl:if test="position()!=1">	
+				<xsl:choose>
+				<xsl:when test="@WithoutAnd">
+					
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:text> و</xsl:text>	
+				</xsl:otherwise>
+				</xsl:choose>
+						
+			</xsl:if>	
+			<!--test done on book -->
+			<xsl:choose>
+				<!-- if the cur book is المطالب العالية then we have to begin by أورده -->
+				<xsl:when test="@BookID[.='26']">
+					<xsl:text>أورده  </xsl:text>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:choose>
+					<!-- if the cur book is the first book then begin by أخرجه-->
+					<xsl:when test="position()=1">
+						<xsl:text>أخرجه  </xsl:text>
+					</xsl:when>
+					<!-- if the preceding book was المطالب العالية then rewrite أخرجه-->
+					<xsl:when test="preceding-sibling::TakreegMutonBook/@BookID=26">
+						<xsl:text>أخرجه  </xsl:text>
+					</xsl:when>
+					<xsl:otherwise>
+					
+					</xsl:otherwise>
+					</xsl:choose>
+				</xsl:otherwise>		
+			</xsl:choose>
+
+			<!-- test on the author -->
+			<xsl:choose>
+				<!--if Mosanef of the hadith not the author of the book then we have to add the following statment -->
+				<xsl:when test="@Mosanef">
+					<xsl:value-of select="@Mosanef"/>
+					<xsl:text> في زوائده على "</xsl:text>
+					<xsl:value-of select="@BookTitle"/>	
+				</xsl:when>	
+				<!--if the content in the introduction -->
+				<xsl:when test="@Introduction">
+					<xsl:value-of select="@Author"/>
+					<xsl:text> في "مقدمة صحيحه</xsl:text>
+				</xsl:when>	
+				<!-- the normal case Mosanef is the author-->
+				<xsl:otherwise>
+					<xsl:value-of select="@Author"/>
+					<xsl:if test="@WithoutAnd='1'">	
+						<xsl:text> وهو</xsl:text>
+					</xsl:if>
+					<xsl:text> في "</xsl:text>
+					<xsl:value-of select="@BookName"/>	
+				</xsl:otherwise>
+			</xsl:choose>				
+				
+			<xsl:text>"</xsl:text>
+		</xsl:when>
+		<xsl:otherwise>
+			<br/>
+		</xsl:otherwise>
+		</xsl:choose>	
+	<!--</xsl:if>-->					
+		<xsl:apply-templates/>					
+
+	</xsl:template>
+	
+	
+	<xsl:template match="Break">
+		<br/>
+	</xsl:template>
+	 
+	<xsl:template match="Tareek">	 
+		<font color="red">
+		<xsl:if  test="@Title != '0'">	
+				
+			<xsl:choose>
+			<xsl:when  test="@Count ='multiple'">				
+				<xsl:text> كلهم عن </xsl:text>
+			</xsl:when>
+			<xsl:otherwise>	
+				<xsl:text> عن </xsl:text>
+			</xsl:otherwise>
+			</xsl:choose>
+			(<xsl:value-of select="@Title"/>) 
+			<br/>
+		</xsl:if>
+		</font>	
+	</xsl:template> 
+	
+	<xsl:template match="Motabaa">
+		
+		<xsl:apply-templates/>
+		<font color="rgb(124,64,174)">
+		<xsl:choose>
+		<!-- if Motabaa Rawi is the Mosanef then don't add any thing -->
+		<xsl:when test="@Title = 'Mosanef'">
+			<br/>
+		</xsl:when>
+		<xsl:when test="@Title = 'Prev'">
+			<br/> <xsl:text> عن </xsl:text>			
+		</xsl:when>
+		<xsl:when test="@Title = 'MainWithNext'">
+			<br/> <xsl:text> و من طريقه </xsl:text>
+		</xsl:when>
+		<xsl:when test="@Title = 'Main'">
+			<br/><br/>
+		</xsl:when>
+		<xsl:when test="@Title = 'Next'">
+			<br/><br/>
+		</xsl:when>
+		<xsl:when test="@Title != ''">	
+			<!-- test on Motabaa Rawi-->
+			<xsl:choose>
+			<!--  if the Rawi is the author Shykh-->
+			<xsl:when test="@Shykh">	
+				<xsl:text> عن </xsl:text>				
+			</xsl:when>
+			<xsl:otherwise>	
+				<xsl:text> من طريق: </xsl:text>
+			</xsl:otherwise>
+			</xsl:choose>
+			(<xsl:value-of select="@Title"/>) 
+			<br/>
+		</xsl:when>
+		<xsl:otherwise>
+			<xsl:text> ، </xsl:text>
+			<br/>
+		</xsl:otherwise>
+		</xsl:choose>
+		</font>	
+	</xsl:template> 
+	
+	<xsl:template match="Motabaa_High">	 
+		<font color="rgb(124,64,50)">
+		<xsl:if  test="@Title != ''">
+			<xsl:if  test="@Title != '0'">	
+					
+				<xsl:choose>
+				<xsl:when  test="@Count ='1'">	
+					<xsl:text> عن </xsl:text>
+					
+				</xsl:when>
+				<xsl:when  test="@Count ='2'">	
+					<xsl:text> كلاهما عن </xsl:text>				
+				</xsl:when>
+				<xsl:otherwise>	
+					<xsl:text> كلهم عن </xsl:text>
+				</xsl:otherwise>
+				</xsl:choose>
+				(<xsl:value-of select="@Title"/>) 
+				<br/>
+				<br/>
+			</xsl:if>
+		</xsl:if>
+		</font>	
+	</xsl:template> 
+	
+	<xsl:template match="NoMotabaa">	 
+		<xsl:text> لا توجد متابعات من هذا الطريق </xsl:text>
+	</xsl:template> 
+	
+	<xsl:template match="TakhreegEsnadReport"> 
+		<br/>
+		<xsl:text>ف</xsl:text><xsl:apply-templates/>
+	</xsl:template>
+		
+	<xsl:template match="Esnad"> 
+		<xsl:apply-templates/>
+		<br/>
+	</xsl:template>
+	  
+ 
+	  
+	 <xsl:template match="TakreegServiceType"> 
+		
+		<xsl:for-each select="TakreegServiceBook">
+			<xsl:value-of select="@BookName"/>	
+			<xsl:for-each select="Document">
+				<xsl:text>  </xsl:text>
+				
+				<xsl:choose>
+					 <xsl:when  test="@MainID!=''">
+						 	<a href="ServiceBookNewChild-({@MainID}) ({@BookID}) ({@BookName}) ({@HadithNum})" class="Hadith" title="إضغط هنا لعرض الفقرة" > 
+							<xsl:if  test="@PartNum">
+								(<xsl:value-of select="@PartNum"/> / <xsl:value-of select="@PageNum"/>)
+							</xsl:if>
+							</a> 		
+					 </xsl:when>				 
+					 <xsl:otherwise>
+						 <xsl:if  test="@PartNum">
+								(<xsl:value-of select="@PartNum"/> / <xsl:value-of select="@PageNum"/>)
+						</xsl:if>
+					 </xsl:otherwise>
+				 </xsl:choose>
+				 
+				 
+				
+			</xsl:for-each>
+			<br/>
+		</xsl:for-each>
+		<br/>
+	 </xsl:template> 
+	 
+	 
+	  <xsl:template match="AutoDegreeSays">
+		 
+		 <xsl:for-each select="AutoDegreeSay">
+			<xsl:if test="position() != 1">
+			<xsl:text> و </xsl:text>
+			</xsl:if>
+			<xsl:text> قال </xsl:text>
+			<xsl:if  test="@Re !=''">				
+				<xsl:value-of select="@Re"/>
+				<xsl:text> عن </xsl:text>
+			</xsl:if>
+			
+			<xsl:value-of select="@Sc"/>
+			<xsl:text> أن </xsl:text>
+			<xsl:value-of select="@Rawi"/>		
+			<xsl:text> </xsl:text>
+			<xsl:value-of select="@Say"/>
+			
+			<xsl:text> (</xsl:text>
+			<xsl:for-each select="SayLink">
+				<a href="ServiceBookNewChild- DDDD{@MainID}SSSS [{@BookID}] ({@BookName})" class="Hadith" title="إضغط هنا لعرض الفقرة" > 
+					<xsl:value-of select="@BookName"/> 				
+				</a> 		
+				
+				
+			 </xsl:for-each>
+			 <xsl:text>) </xsl:text>
+		 
+		 
+			<br/>
+			
+		 </xsl:for-each>
+     </xsl:template>
+
+
+	<xsl:template match="ناقد">
+		<font color="red">
+		<b>
+		<xsl:apply-templates/>
+		</b>
+		</font>
+	</xsl:template>	 
+	
+	
+	<xsl:template match="RawiAutoDegree">
+			<img src="Hadith.png"/>
+			<xsl:text disable-output-escaping="yes">&amp;nbsp;</xsl:text>
+		<xsl:apply-templates/>
+	</xsl:template>	 
+	
+	<xsl:template match="Relation">
+		<font color="darkgreen">
+		<b>
+		<xsl:value-of select="@Name"/>	
+		</b>
+		</font>
+		<br/>
+		<xsl:apply-templates/>
+	</xsl:template>	 
+	
+	<xsl:template match="حاكي">
+		<font color="green">
+		<xsl:apply-templates/>
+		</font>
+	</xsl:template>	 
+	
+	<xsl:template match="قول">
+		<font color="black">
+			<xsl:apply-templates/>
+		</font>
+	</xsl:template>	 	
+	
+	<xsl:template match="RawiDegreeSayLinks">
+		<br/>
+		<xsl:apply-templates/>		
+	  </xsl:template>
+	  
+	<xsl:template match="RawiDegree">
+		<xsl:if test="position() != 1">			
+			<xsl:text>، </xsl:text>
+		</xsl:if><!--<xsl:text> في إسناده </xsl:text>-->
+		<xsl:value-of select="@RawiName"/>
+		<xsl:apply-templates/>	
+		<br/>	
+	</xsl:template>
+	
+	<xsl:template match="RawiDegreeSayUnit">		
+		<xsl:apply-templates/>	
+		<br/>	
+	</xsl:template>
+	
+	 <xsl:template match="HadithDegreeLinks">
+		<br/>
+		<xsl:apply-templates/>		
+	  </xsl:template>
+	  
+	<xsl:template match="HadithDegree">		
+		<xsl:apply-templates/>	
+		<br/>		
+		<br/>	
+	</xsl:template>
+
+ 
+	 
+	<xsl:template match="Space" xml:space="preserve">	
+		<xsl:text disable-output-escaping="yes">&amp;nbsp;</xsl:text>
+	</xsl:template>
+ 
+	 
+	<xsl:template match="TABLE">
+		<Table width="100%" border="1" cellpadding="5"  cellspacing="0" style="border-style:solid;">
+			<xsl:apply-templates/>
+		</Table>
+	</xsl:template>
+	<xsl:template match="TR">
+		<TR  width="100%" style="border-style:solid;">
+			<xsl:apply-templates/>
+		</TR>
+	</xsl:template>
+	
+	<xsl:template match="TDSPEC">
+		<TD width="100" valign="top" style="border-style:solid;">
+		<font color="blue">
+		<b>
+			<xsl:apply-templates/>
+		</b>
+		</font>
+		</TD>
+	</xsl:template>
+	
+	<xsl:template match="TDDATA">
+		<TD style="border-style:solid;">		
+			<xsl:apply-templates/>
+		</TD>
+	</xsl:template>
+	
+	<xsl:template match="MutonCompare">
+		<b><font size="4" color="red">
+		<xsl:text>وصف (التطابق/ الاختلاف) بين المتون : </xsl:text>	
+		</font></b><br/>
+		<TD >
+			<xsl:apply-templates/>
+		</TD>
+	</xsl:template>
+	
+	 <xsl:template match="قرآن">
+		<span class="Quran" >
+			{
+		</span>
+		
+			<xsl:for-each select="آية">
+				<span title="{@السورة}: {@الآية}">
+				
+				<xsl:choose>
+				<xsl:when test="@HighlightWithLink='True'">
+					<xsl:choose>
+					<xsl:when test="@Active='True'">
+						<xsl:attribute name="class">Active</xsl:attribute> 					 
+						<xsl:apply-templates/>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:attribute name="id"><xsl:value-of select="@ربط"/></xsl:attribute> 			
+						<a href="Linking-{@ربط}" class="HighlightWithLink"> 
+						<xsl:apply-templates/>
+						</a> 							
+					</xsl:otherwise>
+					</xsl:choose>				 
+				</xsl:when>
+				<xsl:when test="@Highlight='True'">
+					<xsl:choose>
+					<xsl:when test="@Active='True'">
+						<xsl:attribute name="class">Active</xsl:attribute> 					 
+						<xsl:apply-templates/>
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:attribute name="class">Highlight</xsl:attribute> 					 
+						<xsl:apply-templates/>						
+					</xsl:otherwise>
+					</xsl:choose>
+				</xsl:when>
+
+				<xsl:otherwise>
+					<xsl:attribute name="class">Quran</xsl:attribute>				  
+					<xsl:apply-templates/>
+				</xsl:otherwise>
+				</xsl:choose>
+				</span>
+
+
+
+				<xsl:if test="position() != last()">
+					<span class="Quran" >
+					*
+					</span>
+				</xsl:if>          
+			</xsl:for-each>  
+		<span class="Quran" >
+			}
+		</span>
+	</xsl:template>	
+	
+     
+   	 
+	 
+	 <xsl:template match="عنوان_رئيسي">
+		 <span class="MainTitle">
+			 <xsl:apply-templates/>
+		 </span> <br/>
+     </xsl:template>
+	 
+	 <xsl:template match="عنوان_فرعي">
+		 <span class="SubTitle">
+			 <xsl:apply-templates/>
+		 </span>
+     </xsl:template>
+	 
+	 <xsl:template match="*">
+		<span>
+		 <xsl:choose>
+			 <xsl:when test="@HighlightWithLink='True'">
+					<xsl:choose>
+						<xsl:when test="@Active='True'">
+							<xsl:attribute name="class">Active</xsl:attribute> 					 
+							 <xsl:apply-templates/>
+						</xsl:when>
+						 <xsl:otherwise>
+							<xsl:attribute name="id"><xsl:value-of select="@ربط"/></xsl:attribute> 			
+							<a href="Linking-{@ربط}" class="HighlightWithLink"> 
+								 <xsl:apply-templates/>
+							</a> 							
+						 </xsl:otherwise>
+					</xsl:choose>				 
+			 </xsl:when>
+			<xsl:when test="@Highlight='True'">
+			<xsl:choose>
+				<xsl:when test="@Active='True'">
+					<xsl:attribute name="class">Active</xsl:attribute> 					 
+					<xsl:apply-templates/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:attribute name="class">Highlight</xsl:attribute> 					 
+					<xsl:apply-templates/>						
+				</xsl:otherwise>
+			</xsl:choose>
+			 
+			</xsl:when>
+			 
+			 <xsl:otherwise>
+				 <xsl:apply-templates/>
+			 </xsl:otherwise>
+		 </xsl:choose>
+		</span>	
+     </xsl:template>
+	 
+	 	
+	<xsl:template match="هامش">
+		<span style="vertical-align:super; font-size: 1pt;">
+			<xsl:attribute name="title"><xsl:value-of select="." disable-output-escaping="yes"/></xsl:attribute>
+			<font><a href="#Foot_{@ID}" name="S_Foot_{@ID}" class="FootNoteLink">(<xsl:value-of select="@ID"/>)</a></font>
+		</span>
+	</xsl:template>
+	
+	<xsl:template match="Margin">	
+		<HR/>
+		<xsl:apply-templates/>
+	</xsl:template>
+	
+	
+	<xsl:template match="FootNote">			
+		<font style="vertical-align: baseline; font-size: smaller;">
+			<a name="Foot_{@ID}" href="#S_Foot_{@ID}" class="FootNoteLink">
+			(<xsl:value-of select="@ID"/>)
+			</a>
+		
+			<span class="FootNote">
+			<xsl:apply-templates/>
+			</span>
+			<br/>
+		</font>
+	</xsl:template>
+
+	<xsl:template match="Note">			
+		<xsl:apply-templates/>
+	</xsl:template>
+	
+	<xsl:template match="شعر">  
+
+	<table border='0' width='' align='center'>
+	<xsl:choose>
+		<xsl:when  test="user:testnod(0,count(./شطر_بيت))=3">
+			 <xsl:attribute name="width">40%</xsl:attribute> 
+		 </xsl:when>				 
+		 <xsl:otherwise>
+			  <xsl:attribute name="width">80%</xsl:attribute> 
+		 </xsl:otherwise>
+	</xsl:choose>
+   
+  
+          <xsl:for-each select="شطر_بيت">
+            
+             <xsl:if test="user:testnod(position(),last())=3">
+              <tr>
+                <td valign='top' class="Poetry" >                  
+                        <xsl:apply-templates/>
+                </td>
+              </tr>
+            </xsl:if>
+            <xsl:if test="user:testnod(position(),last())=1">
+              <xsl:text disable-output-escaping="yes">
+                &lt;tr&gt;
+               
+              </xsl:text>   
+				<td valign='top' class='Poetry' width="45%">
+                          <xsl:apply-templates/>  
+				</td>
+				<td valign='top' class='Poetry' width="10%">
+				</td>
+            </xsl:if>
+            <xsl:if test="user:testnod(position(),last())=0">
+              <td align='left' class="Poetry" >
+                        <xsl:apply-templates/>                      
+               </td>
+              <xsl:text disable-output-escaping="yes">
+                &lt;/tr&gt;
+              </xsl:text>
+            </xsl:if>
+          </xsl:for-each>
+      
+    </table>
+  </xsl:template>
+
+<xsl:template match="Hit">
+		 <span class="SearchHighlight">
+			 <xsl:apply-templates/>
+		 </span>
+     </xsl:template> 
+	
+	<msxsl:script language="JScript" implements-prefix="user">
+		function testnod(ss,zz)
+		{
+		  var testpos
+		  var testval
+		  var flagg
+		  testpos=zz/2
+		  testval=testpos-(parseInt(testpos))
+		  if(testval>0)
+			return 3
+		  
+		  testpos=ss/2
+		  testval=testpos-(parseInt(testpos))
+		  if(testpos>=1)
+		  {
+			  if (testval>0)
+				flagg=1
+			  else if(testval==0)
+				flagg=0
+		  }
+		  else
+		  {
+			  if(zz==1)
+				flagg=3
+			  else
+				flagg=1
+		  }
+		  return flagg
+		}
+		
+		var nFootNote =0
+		var sFootNote = ""
+
+		function GetFootNote()
+		{
+			return nFootNote;
+		}
+		function GetNextFootNote()
+		{
+			nFootNote = nFootNote + 1
+			return nFootNote
+		}
+		function AddFootNote(Name)
+		{
+			var ID = GetNextFootNote();
+			
+			sFootNote +=  "&lt;a href=\"#S_Foot_"+ID+"\" name=\"Foot_"+ID+"\" class=\"FootNoteLink\"&gt;(" +ID+ ")&lt;/a&gt; &lt;span class=\"FootNote\"&gt;" + Name + "&lt;/span&gt; &lt;br/&gt;";
+			return ID;
+		}
+		
+		function GetFootNotes()
+		{
+			if(nFootNote != 0 )
+			{
+				sFootNote = "&lt;br/&gt;&lt;HR/&gt;"+sFootNote
+			}
+			return sFootNote;
+		}
+		function GetNodeInnerText(node)
+		{           	
+
+			return node;
+		}
+
+  
+	</msxsl:script>
+	     
+</xsl:stylesheet>

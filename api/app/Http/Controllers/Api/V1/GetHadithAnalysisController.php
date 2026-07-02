@@ -25,21 +25,52 @@ class GetHadithAnalysisController extends Controller
             return $this->errorResponse('Invalid Hadith ID', 400);
         }
 
+        $hadithIds = \Illuminate\Support\Facades\DB::table('htakhreeg as t1')
+            ->join('htakhreeg as t2', 't1.GroupID', '=', 't2.GroupID')
+            ->where('t1.HadithMainID', $id)
+            ->pluck('t2.HadithMainID')
+            ->push($id)
+            ->unique()
+            ->values()
+            ->toArray();
+
         // Fetch all sciences/analyses that are not commentaries (6) or occasions (7)
         $analyses = $this->serviceModel->newQuery()
             ->join('hadithsservices as hs', 'booktoc_services.MainID', '=', 'hs.ServiceMainID')
             ->join('hadithsservicestypes as t', 'hs.TypeID', '=', 't.ID')
-            ->where('hs.HadithMainID', $id)
+            ->whereIn('hs.HadithMainID', $hadithIds)
             ->whereNotIn('hs.TypeID', [6, 7])
             ->select([
                 't.Name as Title',
                 'booktoc_services.CleanContent as Content',
+                'booktoc_services.BookName as BookName',
+                'booktoc_services.Annotations as Annotations',
+                'hs.HadithMainID'
             ])
             ->get();
 
+        $grouped = $analyses->groupBy(function ($item) {
+            return $item->Title . '_' . $item->BookName;
+        })->map(function ($items) use ($id) {
+            $exactMatch = $items->firstWhere('HadithMainID', $id);
+            if ($exactMatch) {
+                return $exactMatch;
+            }
+            return $items->first();
+        })->values();
+
+        $results = [];
+        foreach ($grouped as $item) {
+            $results[] = [
+                'Title' => $item->Title,
+                'Content' => $item->Content,
+                'Annotations' => $item->Annotations,
+            ];
+        }
+
         return $this->jsonResponse([
             'success' => true,
-            'analysis' => $analyses->toArray(),
+            'analysis' => $results,
         ]);
     }
 }

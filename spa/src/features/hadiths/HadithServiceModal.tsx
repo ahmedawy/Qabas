@@ -94,6 +94,18 @@ const NarratorChainViewer: React.FC<NarratorChainViewerProps> = ({
   );
 };
 
+const SANAD_TYPES: Record<string | number, string> = {
+  0: 'متصل',
+  1: 'معلق',
+  2: 'مرسل',
+  3: 'معلق ، مرسل',
+  4: 'منقطع',
+  5: 'معلق منقطع',
+  6: 'مرسل ، منقطع',
+  7: 'معلق ، مرسل ، منقطع',
+  10: 'معضل'
+};
+
 interface HadithServiceModalProps {
   hadithId: number;
   serviceType: HadithServiceType;
@@ -405,11 +417,8 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                         className="hadith-detail-modal-stack-38"
                       >
                         <div className="flex justify-between items-center text-xs text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-slate-800 pb-2">
-                          <span className="hadith-detail-modal-title-40 font-bold">
-                            معرّف الإسناد: #{c.SanadID}
-                          </span>
                           <span className="font-mono text-slate-500">
-                            نوع السند: {c.SanadType || 'متصل'}
+                            نوع السند: {c.SanadType !== undefined ? (SANAD_TYPES[c.SanadType] || c.SanadType) : 'متصل'}
                           </span>
                         </div>
                         
@@ -420,10 +429,6 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                             fallbackIds={c.SandRwah}
                             onNarratorClick={handleLocalNarratorClick}
                           />
-                        </div>
-
-                        <div className="flex justify-between items-center text-xs text-slate-400 dark:text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800/60 mt-1 pb-1">
-                          <span>مرويات السند المماثلة: {c.HadithsCount} أطراف</span>
                         </div>
                       </div>
                     ))}
@@ -633,7 +638,7 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                         : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                     }`}
                   >
-                    تخريج من كتب أخرى (الكتب الخدمية)
+                    كتب العلل
                   </button>
                 </div>
 
@@ -764,30 +769,23 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                   <div className="space-y-6 animate-in fade-in duration-200">
                     {Object.keys(serviceBooksList).length === 0 ? (
                       <div className="text-sm text-slate-400 dark:text-slate-500 text-center py-6">
-                        لا توجد تخاريج من كتب الخدمة لهذا الحديث.
+                        لا توجد كتب علل مسجلة لهذا الحديث.
                       </div>
                     ) : (
-                      Object.entries(serviceBooksList).map(([typeGroup, books]) => (
-                        <div key={typeGroup} className="space-y-3">
-                          <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300 border-r-4 border-emerald-500 pr-2">
-                            {typeGroup}
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                             {books.map((b, idx) => (
-                               <a
-                                 key={idx}
-                                 href={`?view=library&book=${b.service_id}&page=${b.page || 1}&part=${b.part || 1}`}
-                                 className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all flex justify-between items-center gap-2 text-inherit decoration-none cursor-pointer w-full"
-                               >
-                                 <div className="text-xs text-slate-650 dark:text-slate-400">
-                                   <span className="font-semibold block text-slate-800 dark:text-slate-200 mb-1">{b.book_name}</span>
-                                   ({b.part} / {b.page})
-                                 </div>
-                               </a>
-                             ))}
-                          </div>
-                        </div>
-                      ))
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {Object.values(serviceBooksList).flat().map((b, idx) => (
+                          <a
+                            key={idx}
+                            href={`?view=library&book=${b.service_id}&page=${b.page || 1}&part=${b.part || 1}`}
+                            className="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/30 hover:border-emerald-500/30 dark:hover:border-emerald-500/30 hover:bg-emerald-50/10 dark:hover:bg-emerald-950/10 transition-all flex justify-between items-center gap-2 text-inherit decoration-none cursor-pointer w-full"
+                          >
+                            <div className="text-xs text-slate-650 dark:text-slate-400">
+                              <span className="font-semibold block text-slate-800 dark:text-slate-200 mb-1">{b.book_name}</span>
+                              ({b.part} / {b.page})
+                            </div>
+                          </a>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}

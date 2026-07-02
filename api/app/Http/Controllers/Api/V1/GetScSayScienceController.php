@@ -34,10 +34,19 @@ class GetScSayScienceController extends Controller
         if ($hadithMainId !== null) {
             $mainId = (int) $hadithMainId;
 
+            $hadithIds = \Illuminate\Support\Facades\DB::table('htakhreeg as t1')
+                ->join('htakhreeg as t2', 't1.GroupID', '=', 't2.GroupID')
+                ->where('t1.HadithMainID', $mainId)
+                ->pluck('t2.HadithMainID')
+                ->push($mainId)
+                ->unique()
+                ->values()
+                ->toArray();
+
             $services = $this->serviceModel->newQuery()
                 ->join('hadithsservices as hs', 'booktoc_services.MainID', '=', 'hs.ServiceMainID')
                 ->join('hadithsservicestypes as t', 'hs.TypeID', '=', 't.ID')
-                ->where('hs.HadithMainID', $mainId)
+                ->whereIn('hs.HadithMainID', $hadithIds)
                 ->select([
                     'booktoc_services.MainID as MainID',
                     'booktoc_services.BookName as BookName',
@@ -49,11 +58,27 @@ class GetScSayScienceController extends Controller
                     'booktoc_services.Annotations as Annotations',
                     't.Name as ServiceTypeName',
                     't.ID as ServiceTypeID',
+                    'hs.HadithMainID as HadithMainID',
                 ])
                 ->get();
 
+            $grouped = $services->groupBy(function ($item) {
+                return $item->ServiceTypeID . '_' . $item->BookName;
+            })->map(function ($items) use ($mainId) {
+                $exactMatch = $items->firstWhere('HadithMainID', $mainId);
+                if ($exactMatch) {
+                    return $exactMatch;
+                }
+                return $items->first();
+            })->values();
+
+            $results = $grouped->map(function ($item) {
+                unset($item->HadithMainID);
+                return $item;
+            });
+
             return $this->jsonResponse([
-                'services' => $services->toArray(),
+                'services' => $results->toArray(),
             ]);
         }
 

@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\GetHadithServiceBooksController;
 use App\Http\Controllers\Api\V1\GetHadithCommentaryController;
 use App\Http\Controllers\Api\V1\GetHadithThematicController;
 use App\Http\Controllers\Api\V1\GetHadithAnalysisController;
+use App\Http\Controllers\Api\V1\GetHadithAnalysisTreeController;
 use App\Http\Controllers\Api\V1\GetHadithOccasionsController;
 use App\Http\Controllers\Api\V1\GetIndexNamesController;
 use App\Http\Controllers\Api\V1\GetIndexPoetryController;
@@ -89,6 +90,7 @@ $router->prefix('v1')->group(function (Router $router) {
     $router->get('/hadith/commentary', GetHadithCommentaryController::class);
     $router->get('/hadith/thematic', GetHadithThematicController::class);
     $router->get('/hadith/analysis', GetHadithAnalysisController::class);
+    $router->get('/hadith/{id}/analysis-tree', GetHadithAnalysisTreeController::class);
     $router->get('/hadith/occasions', GetHadithOccasionsController::class);
     $router->get('/hadith_by_num', GetHadithByNumberController::class);
     $router->get('/hadith_by_page', GetHadithByPageController::class);

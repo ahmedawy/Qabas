@@ -491,7 +491,10 @@ export const api = {
     }),
 
   getMatnComparison: (id: number) =>
-    request<MatnComparisonResponse>(`hadith/matn-comparison?id=${id}`)
+    request<MatnComparisonResponse>(`hadith/matn-comparison?id=${id}`),
+
+  getHadithAnalysisTree: (id: number) =>
+    request<{ success: boolean; data: any }>(`hadith/${id}/analysis-tree`)
 };
 
 

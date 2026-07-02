@@ -418,19 +418,34 @@ export const HadithCard: React.FC<HadithCardProps> = ({
             )}
 
             {isServiceAvailable(hadith.ServiceFlags, 'analysis') && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onServiceClick(hadith, 'analysis');
-                }}
-                className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
-                title="تحليل الحديث وعلوم الحديث"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="hidden sm:inline">التحليل</span>
-              </button>
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onServiceClick(hadith, 'analysis');
+                  }}
+                  className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                  title="تحليل الحديث وعلوم الحديث"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span className="hidden sm:inline">التحليل</span>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onServiceClick(hadith, 'analysis_tree');
+                  }}
+                  className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                  title="شجرة تحليل الحديث"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2a4 4 0 00-4-4H3m12 6v-2a4 4 0 014-4h2m-9-3V4m-2 0h4m-8 6h4m8 0h4" />
+                  </svg>
+                  <span className="hidden sm:inline">شجرة التحليل</span>
+                </button>
+              </>
             )}
 
             {isServiceAvailable(hadith.ServiceFlags, 'occasions') && (

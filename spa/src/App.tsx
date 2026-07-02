@@ -7,6 +7,7 @@ import { DisplayMethodPanel } from './features/books/DisplayMethodPanel';
 import { HadithCard, HadithContentRenderer } from './features/hadiths/HadithCard';
 import { HadithServiceModal } from './features/hadiths/HadithServiceModal';
 import { MatnComparisonModal } from './features/hadiths/MatnComparisonModal';
+import { HadithAnalysisTreeModal } from './features/hadiths/HadithAnalysisTreeModal';
 import { SearchBar } from './features/search/SearchBar';
 import { SearchResults } from './features/search/SearchResults';
 import { Pagination } from './features/search/Pagination';
@@ -722,17 +723,6 @@ function App() {
                               setActiveServiceHadithId(hadith.MainID || null);
                               setActiveServiceType(type);
                             }}
-                            onClick={() => {
-                              if (h.HadithNum !== undefined && h.HadithNum !== null) {
-                                setHadithNum(String(h.HadithNum));
-                              }
-                              if (h.PartNum !== undefined && h.PartNum !== null) {
-                                setPartNum(String(h.PartNum));
-                              }
-                              if (h.PageNum !== undefined && h.PageNum !== null) {
-                                setPageNum(String(h.PageNum));
-                              }
-                            }}
                             isBookmarked={bookmarks.bookmarkedIds.has(h.MainID)}
                             onToggleBookmark={(hadith) => bookmarks.handleToggleBookmark(hadith as any)}
                           />
@@ -810,6 +800,16 @@ function App() {
 
       {activeServiceHadithId !== null && activeServiceType === 'matn_comparison' && (
         <MatnComparisonModal
+          hadithId={activeServiceHadithId}
+          onClose={() => {
+            setActiveServiceHadithId(null);
+            setActiveServiceType(null);
+          }}
+        />
+      )}
+
+      {activeServiceHadithId !== null && activeServiceType === 'analysis_tree' && (
+        <HadithAnalysisTreeModal
           hadithId={activeServiceHadithId}
           onClose={() => {
             setActiveServiceHadithId(null);
