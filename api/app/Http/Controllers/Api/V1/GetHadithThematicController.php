@@ -42,8 +42,14 @@ class GetHadithThematicController extends Controller
             }
         }
 
+        $hadith = \Illuminate\Support\Facades\DB::table('booktoc_hadith')->where('MainID', $id)->first();
+        $book_name_primary = $hadith ? $hadith->BookName : '';
+        $hadith_num_primary = $hadith ? $hadith->ID : '';
+
         return $this->jsonResponse([
             'success' => true,
+            'book_name' => $book_name_primary,
+            'hadith_num' => $hadith_num_primary,
             'nodes' => $nodes,
         ]);
     }

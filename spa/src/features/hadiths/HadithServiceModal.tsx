@@ -140,6 +140,14 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
   // New service-specific states
   const [commentaries, setCommentaries] = useState<any[]>([]);
   const [selectedCommentaryIdx, setSelectedCommentaryIdx] = useState<number>(0);
+  const [fiqhBooks, setFiqhBooks] = useState<any[]>([]);
+  const [selectedFiqhIdx, setSelectedFiqhIdx] = useState<number>(0);
+  const [idrajBooks, setIdrajBooks] = useState<any[]>([]);
+  const [selectedIdrajIdx, setSelectedIdrajIdx] = useState<number>(0);
+  const [tafseerBooks, setTafseerBooks] = useState<any[]>([]);
+  const [selectedTafseerIdx, setSelectedTafseerIdx] = useState<number>(0);
+  const [seerahBooks, setSeerahBooks] = useState<any[]>([]);
+  const [selectedSeerahIdx, setSelectedSeerahIdx] = useState<number>(0);
   const [thematicNodes, setThematicNodes] = useState<HadithThematicLink[]>([]);
   const [analysisData, setAnalysisData] = useState<any[]>([]);
   const [occasionsData, setOccasionsData] = useState<any[]>([]);
@@ -229,24 +237,64 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
           const res = await api.getHadithCommentary(hadithId);
           if (active) {
             setCommentaries(res.commentaries || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
             setLoading(false);
           }
         } else if (serviceType === 'thematic') {
           const res = await api.getHadithThematicLinks(hadithId);
           if (active) {
             setThematicNodes(res.nodes || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
             setLoading(false);
           }
         } else if (serviceType === 'analysis') {
           const res = await api.getHadithAnalysis(hadithId);
           if (active) {
             setAnalysisData(res.analysis || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
             setLoading(false);
           }
         } else if (serviceType === 'occasions') {
           const res = await api.getHadithOccasions(hadithId);
           if (active) {
             setOccasionsData(res.occasions || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
+            setLoading(false);
+          }
+        } else if (serviceType === 'fiqh') {
+          const res = await api.getHadithSpecificService(hadithId, 1);
+          if (active) {
+            setFiqhBooks(res.data || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
+            setLoading(false);
+          }
+        } else if (serviceType === 'idraj') {
+          const res = await api.getHadithSpecificService(hadithId, 2);
+          if (active) {
+            setIdrajBooks(res.data || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
+            setLoading(false);
+          }
+        } else if (serviceType === 'seerah') {
+          const res = await api.getHadithSpecificService(hadithId, 17);
+          if (active) {
+            setSeerahBooks(res.data || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
+            setLoading(false);
+          }
+        } else if (serviceType === 'tafseer') {
+          const res = await api.getHadithTafseer(hadithId);
+          if (active) {
+            setTafseerBooks(res.data || []);
+            setBookName(res.book_name || '');
+            setHadithNum(res.hadith_num || '');
             setLoading(false);
           }
         }
@@ -278,6 +326,10 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
       case 'analysis': return 'تحليل الحديث وعلوم الحديث';
       case 'occasions': return 'أسباب ورود الحديث وتواريخه';
       case 'compound': return 'المتن المجمع وفوائد الروايات البديلة';
+      case 'fiqh': return 'الاستدلال الفقهي';
+      case 'idraj': return 'الإدراج في الحديث';
+      case 'tafseer': return 'تفسير الآيات الواردة';
+      case 'seerah': return 'السيرة النبوية';
       default: return 'تفاصيل الخدمة';
     }
   };
@@ -814,9 +866,150 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                       </select>
                     </div>
 
-                    <div className="p-5 rounded-2xl border border-slate-250 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-inner leading-relaxed text-slate-800 dark:text-slate-200">
+                    <div className="p-5 rounded-2xl border border-slate-250 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-inner font-amiri text-lg md:text-xl leading-[2.1] text-slate-800 dark:text-slate-200 text-right whitespace-pre-wrap">
                       <HadithContentRenderer
                         content={commentaries[selectedCommentaryIdx]?.content || ''}
+                        annotations={commentaries[selectedCommentaryIdx]?.Annotations || undefined}
+                        onNarratorClick={handleLocalNarratorClick}
+                        onLexiconClick={onLexiconClick}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Fiqh View */}
+            {serviceType === 'fiqh' && (
+              <div className="space-y-4">
+                {fiqhBooks.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                    لم يتم العثور على استدلالات فقهية مسجلة لهذا الحديث.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">اختر الكتاب الفقهي:</label>
+                      <select
+                        value={selectedFiqhIdx}
+                        onChange={(e) => setSelectedFiqhIdx(Number(e.target.value))}
+                        className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                      >
+                        {fiqhBooks.map((b, idx) => (
+                          <option key={idx} value={idx}>{b.book_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="p-5 rounded-2xl border border-slate-250 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-inner font-amiri text-lg md:text-xl leading-[2.1] text-slate-800 dark:text-slate-200 text-right whitespace-pre-wrap">
+                      <HadithContentRenderer
+                        content={fiqhBooks[selectedFiqhIdx]?.content || ''}
+                        annotations={fiqhBooks[selectedFiqhIdx]?.Annotations || undefined}
+                        onNarratorClick={handleLocalNarratorClick}
+                        onLexiconClick={onLexiconClick}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Idraj View */}
+            {serviceType === 'idraj' && (
+              <div className="space-y-4">
+                {idrajBooks.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                    لم يتم العثور على تفاصيل إدراج مسجلة لهذا الحديث.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">اختر كتاب الإدراج:</label>
+                      <select
+                        value={selectedIdrajIdx}
+                        onChange={(e) => setSelectedIdrajIdx(Number(e.target.value))}
+                        className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                      >
+                        {idrajBooks.map((b, idx) => (
+                          <option key={idx} value={idx}>{b.book_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="p-5 rounded-2xl border border-slate-250 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-inner font-amiri text-lg md:text-xl leading-[2.1] text-slate-800 dark:text-slate-200 text-right whitespace-pre-wrap">
+                      <HadithContentRenderer
+                        content={idrajBooks[selectedIdrajIdx]?.content || ''}
+                        annotations={idrajBooks[selectedIdrajIdx]?.Annotations || undefined}
+                        onNarratorClick={handleLocalNarratorClick}
+                        onLexiconClick={onLexiconClick}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tafseer View */}
+            {serviceType === 'tafseer' && (
+              <div className="space-y-4">
+                {tafseerBooks.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                    لم يتم العثور على تفسير مسجل لآيات هذا الحديث.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">اختر تفسير الآية:</label>
+                      <select
+                        value={selectedTafseerIdx}
+                        onChange={(e) => setSelectedTafseerIdx(Number(e.target.value))}
+                        className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                      >
+                        {tafseerBooks.map((b, idx) => (
+                          <option key={idx} value={idx}>{b.book_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="p-5 rounded-2xl border border-slate-250 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-inner font-amiri text-lg md:text-xl leading-[2.1] text-slate-800 dark:text-slate-200 text-right whitespace-pre-wrap">
+                      <HadithContentRenderer
+                        content={tafseerBooks[selectedTafseerIdx]?.content || ''}
+                        annotations={tafseerBooks[selectedTafseerIdx]?.Annotations || undefined}
+                        onNarratorClick={handleLocalNarratorClick}
+                        onLexiconClick={onLexiconClick}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Seerah View */}
+            {serviceType === 'seerah' && (
+              <div className="space-y-4">
+                {seerahBooks.length === 0 ? (
+                  <div className="text-center py-12 text-slate-400 dark:text-slate-500 text-sm">
+                    لم يتم العثور على كتب سيرة مسجلة لهذا الحديث.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400">اختر كتاب السيرة:</label>
+                      <select
+                        value={selectedSeerahIdx}
+                        onChange={(e) => setSelectedSeerahIdx(Number(e.target.value))}
+                        className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
+                      >
+                        {seerahBooks.map((b, idx) => (
+                          <option key={idx} value={idx}>{b.book_name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="p-5 rounded-2xl border border-slate-250 dark:border-slate-800/80 bg-white dark:bg-slate-950 shadow-inner font-amiri text-lg md:text-xl leading-[2.1] text-slate-800 dark:text-slate-200 text-right whitespace-pre-wrap">
+                      <HadithContentRenderer
+                        content={seerahBooks[selectedSeerahIdx]?.content || ''}
+                        annotations={seerahBooks[selectedSeerahIdx]?.Annotations || undefined}
                         onNarratorClick={handleLocalNarratorClick}
                         onLexiconClick={onLexiconClick}
                       />
@@ -910,13 +1103,20 @@ export const HadithServiceModal: React.FC<HadithServiceModalProps> = ({
                       {occasionsData.map((item, idx) => (
                         <div
                           key={idx}
-                          className="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-800/80 text-xs flex flex-col gap-1.5"
+                          className="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/20 flex flex-col gap-3"
                         >
-                          <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800/60 pb-1.5 mb-1.5">
-                            <span className="font-bold text-slate-750 dark:text-slate-300">{item.event_name || 'سياق تاريخي'}</span>
-                            <span className="text-[10px] bg-slate-200 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 font-mono">{item.date}</span>
+                          <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
+                            <span className="font-bold text-sm text-slate-800 dark:text-slate-200">{item.event_name || 'سياق تاريخي'}</span>
+                            <span className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 rounded font-mono font-semibold">{item.date}</span>
                           </div>
-                          <p className="text-slate-555 dark:text-slate-400 leading-relaxed">{item.description}</p>
+                          <div className="p-5 rounded-xl border border-slate-250 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-inner font-amiri text-lg md:text-xl leading-[2.1] text-slate-800 dark:text-slate-200 text-right whitespace-pre-wrap">
+                            <HadithContentRenderer
+                              content={item.description}
+                              annotations={item.Annotations || undefined}
+                              onNarratorClick={handleLocalNarratorClick}
+                              onLexiconClick={onLexiconClick}
+                            />
+                          </div>
                         </div>
                       ))}
                     </div>

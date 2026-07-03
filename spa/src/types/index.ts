@@ -371,7 +371,7 @@ export interface MatnComparisonResponse {
   slaves: SlaveHadithComparison[];
 }
 
-export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions' | 'compound' | 'matn_comparison' | 'analysis_tree';
+export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions' | 'compound' | 'matn_comparison' | 'analysis_tree' | 'fiqh' | 'idraj' | 'tafseer' | 'seerah';
 
 
 

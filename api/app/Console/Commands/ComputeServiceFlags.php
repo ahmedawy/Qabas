@@ -34,6 +34,10 @@ class ComputeServiceFlags extends Command
     private const FLAG_ANALYSIS   = 128; // bit 7 — التحليل
     private const FLAG_OCCASIONS  = 256; // bit 8 — أسباب الورود
     private const FLAG_COMPOUND   = 512; // bit 9 — المتن المجمع
+    private const FLAG_FIQH       = 1024; // bit 10 — استدلال فقهي (TypeID=1)
+    private const FLAG_IDRAJ      = 2048; // bit 11 — الإدراج (TypeID=2)
+    private const FLAG_TAFSEER    = 4096; // bit 12 — تفسير بالمأثور (Quran verse)
+    private const FLAG_SEERAH     = 8192; // bit 13 — سيرة (TypeID=17)
 
     public function handle(): int
     {
@@ -144,7 +148,48 @@ class ComputeServiceFlags extends Command
                                     SELECT 1 FROM hcompoundmatn c
                                     WHERE c.HadithMainID = booktoc_hadith.MainID
                                 )
+                             )",
+            ],
+            [
+                'name'  => 'Fiqh (استدلال فقهي)',
+                'flag'  => self::FLAG_FIQH,
+                'sql'   => "UPDATE booktoc_hadith
+                            SET ServiceFlags = ServiceFlags | ?
+                            WHERE MainID BETWEEN ? AND ?
+                            AND EXISTS (
+                                SELECT 1 FROM hadithsservices s
+                                WHERE s.HadithMainID = booktoc_hadith.MainID AND s.TypeID = 1
                             )",
+            ],
+            [
+                'name'  => 'Idraj (الإدراج)',
+                'flag'  => self::FLAG_IDRAJ,
+                'sql'   => "UPDATE booktoc_hadith
+                            SET ServiceFlags = ServiceFlags | ?
+                            WHERE MainID BETWEEN ? AND ?
+                            AND EXISTS (
+                                SELECT 1 FROM hadithsservices s
+                                WHERE s.HadithMainID = booktoc_hadith.MainID AND s.TypeID = 2
+                            )",
+            ],
+            [
+                'name'  => 'Seerah (سيرة)',
+                'flag'  => self::FLAG_SEERAH,
+                'sql'   => "UPDATE booktoc_hadith
+                            SET ServiceFlags = ServiceFlags | ?
+                            WHERE MainID BETWEEN ? AND ?
+                            AND EXISTS (
+                                SELECT 1 FROM hadithsservices s
+                                WHERE s.HadithMainID = booktoc_hadith.MainID AND s.TypeID = 17
+                            )",
+            ],
+            [
+                'name'  => 'Tafseer (تفسير بالمأثور)',
+                'flag'  => self::FLAG_TAFSEER,
+                'sql'   => "UPDATE booktoc_hadith
+                            SET ServiceFlags = ServiceFlags | ?
+                            WHERE MainID BETWEEN ? AND ?
+                            AND Annotations LIKE '%\"type\":\"آية\"%'",
             ],
         ];
 

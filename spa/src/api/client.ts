@@ -289,16 +289,22 @@ export const api = {
     ),
 
   getHadithCommentary: (id: number) =>
-    request<{ success: boolean; commentaries: { id: number; book_name: string; content: string }[] }>(`hadith/commentary?id=${id}`),
+    request<{ success: boolean; book_name?: string; hadith_num?: string | number; commentaries: { id: number; book_name: string; content: string; Annotations?: any }[] }>(`hadith/commentary?id=${id}`),
+
+  getHadithSpecificService: (id: number, typeId: number) =>
+    request<{ status: string; book_name?: string; hadith_num?: string | number; data: { book_name: string; content: string; Annotations?: any }[] }>(`hadith/${id}/service/${typeId}`),
+
+  getHadithTafseer: (id: number) =>
+    request<{ status: string; book_name?: string; hadith_num?: string | number; data: { book_name: string; content: string; Annotations?: any }[] }>(`hadith/${id}/tafseer`),
 
   getHadithThematicLinks: (id: number) =>
-    request<{ success: boolean; nodes: any[] }>(`hadith/thematic?id=${id}`),
+    request<{ success: boolean; book_name?: string; hadith_num?: string | number; nodes: any[] }>(`hadith/thematic?id=${id}`),
 
   getHadithAnalysis: (id: number) =>
-    request<{ success: boolean; analysis: any[] }>(`hadith/analysis?id=${id}`),
+    request<{ success: boolean; book_name?: string; hadith_num?: string | number; analysis: any[] }>(`hadith/analysis?id=${id}`),
 
   getHadithOccasions: (id: number) =>
-    request<{ success: boolean; occasions: any[] }>(`hadith/occasions?id=${id}`),
+    request<{ success: boolean; book_name?: string; hadith_num?: string | number; occasions: any[] }>(`hadith/occasions?id=${id}`),
 
   getAtrafList: (books: string, q: string, letter?: string) => {
     let path = `atraf_list?books=${encodeURIComponent(books)}&q=${encodeURIComponent(q)}`;

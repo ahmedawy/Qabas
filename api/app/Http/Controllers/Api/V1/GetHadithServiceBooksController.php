@@ -10,19 +10,10 @@ class GetHadithServiceBooksController extends Controller
 {
     public function __invoke($hadithId)
     {
-        $hadithIds = DB::table('htakhreeg as t1')
-            ->join('htakhreeg as t2', 't1.GroupID', '=', 't2.GroupID')
-            ->where('t1.HadithMainID', $hadithId)
-            ->pluck('t2.HadithMainID')
-            ->push($hadithId)
-            ->unique()
-            ->values()
-            ->toArray();
-
         $services = DB::table('hadithsservices as hs')
             ->join('booktoc_services as bts', 'hs.ServiceMainID', '=', 'bts.MainID')
             ->join('hadithsservicestypes as hst', 'hs.TypeID', '=', 'hst.ID')
-            ->whereIn('hs.HadithMainID', $hadithIds)
+            ->where('hs.HadithMainID', $hadithId)
             ->where('hs.TypeID', 8)
             ->select(
                 'hst.Name as TypeName',

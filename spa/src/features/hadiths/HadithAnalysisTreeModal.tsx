@@ -181,27 +181,28 @@ export const HadithAnalysisTreeModal: React.FC<HadithAnalysisTreeModalProps> = (
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="px-6 py-4 border-b border-slate-250 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
-              <Network className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-950 dark:text-white">شجرة تحليل الحديث الشاملة</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-0.5">
-                هيكلية تفصيلية للأسانيد، الرواة، صيغ الأداء، الأحكام، والتصنيف الموضوعي
-              </p>
-            </div>
-          </div>
+        {/* Modal Header */}
+        <div className="hadith-detail-modal-card-17 dir-rtl shrink-0">
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all cursor-pointer"
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400 cursor-pointer"
+            aria-label="Close"
             title="إغلاق (Esc)"
           >
-            <X className="w-5 h-5" />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
-        </header>
+          
+          <div className="hadith-detail-modal-stack-19">
+            <span className="hadith-detail-modal-text-20">
+              شجرة تحليل الحديث الشاملة
+            </span>
+            <h2 className="hadith-detail-modal-title-21 text-right">
+              {treeData?.label || 'مخطط العلاقات والإسناد'}
+            </h2>
+          </div>
+        </div>
 
         {/* Content Tree */}
         <main className="flex-1 p-6 overflow-y-auto bg-slate-100/40 dark:bg-slate-900/20">

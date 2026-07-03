@@ -31,6 +31,8 @@ use App\Http\Controllers\Api\V1\GetHadithThematicController;
 use App\Http\Controllers\Api\V1\GetHadithAnalysisController;
 use App\Http\Controllers\Api\V1\GetHadithAnalysisTreeController;
 use App\Http\Controllers\Api\V1\GetHadithOccasionsController;
+use App\Http\Controllers\Api\V1\GetSpecificServiceController;
+use App\Http\Controllers\Api\V1\GetHadithTafseerController;
 use App\Http\Controllers\Api\V1\GetIndexNamesController;
 use App\Http\Controllers\Api\V1\GetIndexPoetryController;
 use App\Http\Controllers\Api\V1\GetIndexVersesController;
@@ -87,6 +89,9 @@ $router->prefix('v1')->group(function (Router $router) {
     $router->get('/hadith/matn-comparison', GetMatnComparisonController::class);
     $router->get('/hadith/{id}/shawahed', GetHadithShawahedController::class);
     $router->get('/hadith/{id}/service-books', GetHadithServiceBooksController::class);
+    $router->get('/hadith/{id}/service/{typeId}', GetSpecificServiceController::class);
+    $router->get('/service-item/{mainId}', \App\Http\Controllers\Api\V1\GetSpecificServiceItemController::class);
+    $router->get('/hadith/{id}/tafseer', GetHadithTafseerController::class);
     $router->get('/hadith/commentary', GetHadithCommentaryController::class);
     $router->get('/hadith/thematic', GetHadithThematicController::class);
     $router->get('/hadith/analysis', GetHadithAnalysisController::class);

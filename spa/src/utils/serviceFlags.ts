@@ -13,6 +13,10 @@ export const SERVICE_FLAGS = {
   analysis:   128, // bit 7 — التحليل
   occasions:  256, // bit 8 — أسباب الورود
   compound:   512, // bit 9 — المتن المجمع
+  fiqh:       1024, // bit 10 — استدلال فقهي
+  idraj:      2048, // bit 11 — الإدراج
+  tafseer:    4096, // bit 12 — تفسير بالمأثور
+  seerah:     8192, // bit 13 — سيرة
 } as const;
 
 import type { HadithServiceType } from '../types';

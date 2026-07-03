@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Annotation, HadithServiceType } from '../../types';
 import { getHadithAST } from '../../utils/hadithParser';
 import type { ASTNode } from '../../utils/hadithParser';
 import { buildASTFromAnnotations } from '../../utils/annotationRenderer';
 import { isServiceAvailable } from '../../utils/serviceFlags';
 
-export interface BaseHadithData {
+	export interface BaseHadithData {
   MainID?: number;
   ID?: number;
   BookName?: string;
@@ -23,6 +23,7 @@ export interface HadithCardProps {
   onNarratorClick?: (id: number) => void;
   onLexiconClick?: (wordId: number) => void;
   onServiceClick?: (hadith: BaseHadithData, serviceType: HadithServiceType) => void;
+  onHighlightClick?: (hadith: BaseHadithData, type: string, linkId: number | null, text: string) => void;
   isBookmarked?: boolean;
   onToggleBookmark?: (hadith: BaseHadithData) => void;
   onClick?: () => void;
@@ -41,7 +42,8 @@ export const HadithContentRenderer: React.FC<{
   annotations?: Annotation[] | string;
   onNarratorClick?: (id: number) => void;
   onLexiconClick?: (wordId: number) => void;
-}> = ({ content, annotations, onNarratorClick, onLexiconClick }) => {
+  onHighlightClick?: (type: string, linkId: number | null, text: string) => void;
+}> = ({ content, annotations, onNarratorClick, onLexiconClick, onHighlightClick }) => {
   if (!content) {
     return null;
   }
@@ -125,11 +127,34 @@ export const HadithContentRenderer: React.FC<{
           </span>
         );
       case 'إدراج':
+      case 'أصل':
+      case 'مخالف': {
+        const textContent = node.children.map(c => {
+          if (c.type === 'text') return c.text;
+          return '';
+        }).join('');
+        
+        let highlightClass = "text-amber-600 dark:text-amber-400 font-medium cursor-pointer border-b border-dotted border-amber-500 hover:text-amber-800 dark:hover:text-amber-300";
+        if (tag === 'إدراج') {
+          highlightClass = "text-slate-500 dark:text-slate-400 italic font-medium cursor-pointer border-b border-dotted border-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400";
+        } else if (tag === 'أصل') {
+          highlightClass = "text-emerald-600 dark:text-emerald-400 font-medium cursor-pointer border-b border-dotted border-emerald-500 hover:text-emerald-800 dark:hover:text-emerald-300";
+        }
+
         return (
-          <span key={index} className="text-slate-500 dark:text-slate-400 italic font-medium">
-            [{reactChildren}]
+          <span
+            key={index}
+            onClick={(e) => {
+              e.stopPropagation();
+              onHighlightClick?.(tag, isNaN(cleanId) ? null : cleanId, textContent);
+            }}
+            className={highlightClass}
+            title={`انقر لعرض تفاصيل ال${tag}`}
+          >
+            {tag === 'إدراج' ? `[${reactChildren}]` : reactChildren}
           </span>
         );
+      }
       case 'رقم_حديث':
       case 'رقم_حديث_للعرض':
         if (attrs['نوع'] === 'مطبوع') {
@@ -207,11 +232,78 @@ export const HadithCard: React.FC<HadithCardProps> = ({
   onNarratorClick,
   onLexiconClick,
   onServiceClick,
+  onHighlightClick,
   isBookmarked,
   onToggleBookmark,
   onClick,
   extraHeaderContent,
 }) => {
+  const [tooltipData, setTooltipData] = useState<{
+    type: string;
+    text: string;
+    bookName?: string;
+    content?: string;
+    part?: number;
+    page?: number;
+    loading: boolean;
+    error?: string;
+  } | null>(null);
+
+  const handleHighlightClickLocal = async (type: string, linkId: number | null, text: string) => {
+    // Call parent handler if provided
+    if (onHighlightClick) {
+      onHighlightClick(hadith, type, linkId, text);
+    }
+    
+    if (!linkId) {
+      let desc = '';
+      if (type === 'إدراج') {
+        desc = 'هذا اللفظ مدرج في الحديث الشريف (كلام مضاف من بعض الرواة).';
+      } else if (type === 'أصل') {
+        desc = 'هذا اللفظ يمثل رواية الأصل للحديث.';
+      } else if (type === 'مخالف') {
+        desc = 'هذا اللفظ يمثل رواية المخالف للفظ الأصل.';
+      }
+      setTooltipData({
+        type,
+        text,
+        content: desc,
+        loading: false
+      });
+      return;
+    }
+
+    setTooltipData({ type, text, loading: true });
+
+    try {
+      const response = await fetch(`/api/v1/service-item/${linkId}`);
+      if (!response.ok) {
+        throw new Error('فشل تحميل تفاصيل التخريج/الإدراج');
+      }
+      const json = await response.json();
+      if (json.status === 'success' && json.data) {
+        setTooltipData({
+          type,
+          text,
+          bookName: json.data.book_name,
+          content: json.data.content,
+          part: json.data.part,
+          page: json.data.page,
+          loading: false
+        });
+      } else {
+        throw new Error('لا توجد بيانات مسجلة');
+      }
+    } catch (err: any) {
+      setTooltipData({
+        type,
+        text,
+        loading: false,
+        error: err.message || 'حدث خطأ أثناء تحميل البيانات'
+      });
+    }
+  };
+
   return (
     <div 
       onClick={onClick}
@@ -262,6 +354,7 @@ export const HadithCard: React.FC<HadithCardProps> = ({
           annotations={hadith.Annotations || undefined}
           onNarratorClick={onNarratorClick}
           onLexiconClick={onLexiconClick}
+          onHighlightClick={handleHighlightClickLocal}
         />
       </div>
 
@@ -401,6 +494,70 @@ export const HadithCard: React.FC<HadithCardProps> = ({
               </button>
             )}
 
+            {isServiceAvailable(hadith.ServiceFlags, 'tafseer') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onServiceClick(hadith, 'tafseer');
+                }}
+                className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                title="تفسير الآيات"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span className="hidden sm:inline">تفسير</span>
+              </button>
+            )}
+
+            {isServiceAvailable(hadith.ServiceFlags, 'seerah') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onServiceClick(hadith, 'seerah');
+                }}
+                className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                title="السيرة النبوية"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span className="hidden sm:inline">سيرة</span>
+              </button>
+            )}
+
+            {isServiceAvailable(hadith.ServiceFlags, 'fiqh') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onServiceClick(hadith, 'fiqh');
+                }}
+                className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                title="الاستنباطات الفقهية"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span className="hidden sm:inline">فقه</span>
+              </button>
+            )}
+
+            {isServiceAvailable(hadith.ServiceFlags, 'idraj') && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onServiceClick(hadith, 'idraj');
+                }}
+                className="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-900 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-400 text-slate-500 transition-all border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1 cursor-pointer"
+                title="الألفاظ المدرجة"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                <span className="hidden sm:inline">إدراج</span>
+              </button>
+            )}
+
             {isServiceAvailable(hadith.ServiceFlags, 'thematic') && (
               <button
                 onClick={(e) => {
@@ -466,6 +623,52 @@ export const HadithCard: React.FC<HadithCardProps> = ({
           </div>
         )}
       </div>
+
+      {/* Floating Highlight Tooltip */}
+      {tooltipData && (
+        <div 
+          onClick={(e) => e.stopPropagation()}
+          className="absolute z-30 bottom-16 right-6 left-6 p-4 rounded-xl bg-slate-900/95 dark:bg-slate-950/95 text-white text-xs shadow-2xl border border-slate-700/40 dark:border-slate-800/80 transition-all duration-300 dir-rtl text-right font-sans"
+        >
+          <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-2">
+            <span className="font-bold text-emerald-400">
+              تفاصيل ال{tooltipData.type}: <span className="text-white italic">"{tooltipData.text}"</span>
+            </span>
+            <button 
+              onClick={() => setTooltipData(null)}
+              className="text-slate-400 hover:text-white cursor-pointer text-sm font-bold px-1"
+            >
+              ✕
+            </button>
+          </div>
+
+          {tooltipData.loading ? (
+            <div className="flex items-center gap-2 py-2 text-slate-400">
+              <svg className="animate-spin h-4 w-4 text-emerald-400" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span>جاري تحميل التفاصيل...</span>
+            </div>
+          ) : tooltipData.error ? (
+            <div className="text-rose-400 py-1">{tooltipData.error}</div>
+          ) : (
+            <div className="space-y-2 leading-relaxed whitespace-pre-wrap">
+              {tooltipData.bookName && (
+                <div className="text-[10px] text-emerald-500 font-bold">
+                  المصدر: {tooltipData.bookName} 
+                  {((tooltipData.part ?? 0) > 0 || (tooltipData.page ?? 0) > 0) && (
+                    <span> (جزء: {tooltipData.part} صفحة: {tooltipData.page})</span>
+                  )}
+                </div>
+              )}
+              <div className="text-slate-200 text-xs max-h-48 overflow-y-auto custom-scrollbar">
+                {tooltipData.content}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -1879,7 +1879,7 @@ body {
 }
 
 .hadith-card-element-13 {
-  @apply select-text leading-loose;
+  @apply select-text leading-loose whitespace-pre-wrap;
   font-family: var(--font-amiri);
   line-height: 2.25rem;
   font-size: 1.5rem;

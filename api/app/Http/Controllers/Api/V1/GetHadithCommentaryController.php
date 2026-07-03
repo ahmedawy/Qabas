@@ -43,25 +43,65 @@ class GetHadithCommentaryController extends Controller
                 'booktoc_services.BookName as book_name',
                 'booktoc_services.CleanContent as content',
                 'booktoc_services.Annotations as Annotations',
+                'booktoc_services.NextParagraphID as next_id',
+                'booktoc_services.ParentID as parent_id',
                 'hs.HadithMainID'
             ])
             ->get();
 
         $groupedCommentaries = $commentaries->groupBy('book_name')->map(function ($items) use ($id) {
             // Prefer the explanation matching the exact current hadith
-            $exactMatch = $items->firstWhere('HadithMainID', $id);
-            if ($exactMatch) {
-                unset($exactMatch->HadithMainID);
-                return $exactMatch;
+            $selected = $items->firstWhere('HadithMainID', $id) ?: $items->first();
+            
+            $fullContent = $selected->content;
+            $nextId = $selected->next_id;
+            $parentId = $selected->parent_id;
+            
+            $mergedAnnotations = [];
+            $anno1 = $selected->Annotations;
+            if (is_string($anno1)) {
+                $anno1 = json_decode($anno1, true);
+            }
+            if (is_array($anno1)) {
+                $mergedAnnotations = $anno1;
             }
             
-            $first = $items->first();
-            unset($first->HadithMainID);
-            return $first;
+            $currentOffset = mb_strlen($selected->content);
+            
+            while ($nextId != 0) {
+                $nextNode = \Illuminate\Support\Facades\DB::table('booktoc_services')->where('MainID', $nextId)->first();
+                if (!$nextNode || $nextNode->ParentID != $parentId) break;
+                
+                $fullContent .= "\n" . $nextNode->CleanContent;
+                $currentOffset += 1; // accounting for "\n"
+                
+                $annoNext = json_decode($nextNode->Annotations, true);
+                if (is_array($annoNext)) {
+                    foreach ($annoNext as $ann) {
+                        $ann['start'] += $currentOffset;
+                        $mergedAnnotations[] = $ann;
+                    }
+                }
+                
+                $currentOffset += mb_strlen($nextNode->CleanContent);
+                $nextId = $nextNode->NextParagraphID;
+            }
+            
+            $selected->content = $fullContent;
+            $selected->Annotations = $mergedAnnotations;
+            unset($selected->HadithMainID);
+            unset($selected->next_id);
+            return $selected;
         })->values();
+
+        $hadith = \Illuminate\Support\Facades\DB::table('booktoc_hadith')->where('MainID', $id)->first();
+        $book_name_primary = $hadith ? $hadith->BookName : '';
+        $hadith_num_primary = $hadith ? $hadith->ID : '';
 
         return $this->jsonResponse([
             'success' => true,
+            'book_name' => $book_name_primary,
+            'hadith_num' => $hadith_num_primary,
             'commentaries' => $groupedCommentaries->toArray(),
         ]);
     }

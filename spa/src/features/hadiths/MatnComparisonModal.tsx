@@ -110,31 +110,28 @@ export const MatnComparisonModal: React.FC<MatnComparisonModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-white dark:bg-slate-950 flex flex-col dir-rtl overflow-hidden">
-      {/* Header */}
-      <header className="px-6 py-4 border-b border-slate-200 dark:border-slate-850 flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-lg font-bold text-slate-950 dark:text-white">مقارنة المتون</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-sans mt-0.5">
-              مقارنة الحديث الحالي مع أحاديث تخريجه وتحديد أوجه التطابق والاختلاف
-            </p>
-          </div>
-        </div>
+      {/* Modal Header */}
+      <div className="hadith-detail-modal-card-17 dir-rtl shrink-0">
         <button
           onClick={onClose}
-          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all cursor-pointer"
+          className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-500 dark:text-slate-400 cursor-pointer"
+          aria-label="Close"
           title="إغلاق (Esc)"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-      </header>
+        
+        <div className="hadith-detail-modal-stack-19">
+          <span className="hadith-detail-modal-text-20">
+            مقارنة المتون وأوجه الاختلاف
+          </span>
+          <h2 className="hadith-detail-modal-title-21 text-right">
+            {data.master.book_name} - حديث رقم {data.master.hadith_num}
+          </h2>
+        </div>
+      </div>
 
       {/* Main Grid */}
       <main className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4 overflow-hidden bg-slate-100/40 dark:bg-slate-900/20">
@@ -149,7 +146,7 @@ export const MatnComparisonModal: React.FC<MatnComparisonModalProps> = ({
               {data.master.book_name} - رقم {data.master.hadith_num}
             </span>
           </div>
-          <div className="flex-1 p-6 overflow-y-auto leading-loose text-lg font-medium text-slate-800 dark:text-slate-200 select-text whitespace-pre-wrap font-serif">
+          <div className="flex-1 p-6 overflow-y-auto font-amiri text-lg md:text-xl leading-[2.1] text-slate-850 dark:text-slate-100 select-text whitespace-pre-wrap text-right">
             {data.master.clean_content}
           </div>
         </section>
@@ -170,7 +167,7 @@ export const MatnComparisonModal: React.FC<MatnComparisonModalProps> = ({
               </span>
             )}
           </div>
-          <div className="flex-1 p-6 overflow-y-auto leading-loose text-lg font-medium text-slate-800 dark:text-slate-200 select-text whitespace-pre-wrap font-serif">
+          <div className="flex-1 p-6 overflow-y-auto font-amiri text-lg md:text-xl leading-[2.1] text-slate-850 dark:text-slate-100 select-text whitespace-pre-wrap text-right">
             {selectedSlave ? selectedSlave.clean_content : (
               <div className="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-500">
                 <svg className="w-12 h-12 mb-2 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
