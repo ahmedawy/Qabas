@@ -373,5 +373,20 @@ export interface MatnComparisonResponse {
 
 export type HadithServiceType = 'judgments' | 'chains' | 'sanad' | 'takhreeg' | 'combined' | 'commentary' | 'thematic' | 'analysis' | 'occasions' | 'compound' | 'matn_comparison' | 'analysis_tree' | 'fiqh' | 'idraj' | 'tafseer' | 'seerah';
 
+export interface AsanedTreeNode {
+  ID: number;
+  Name: string;
+  ParentID?: number;
+  RawyID?: number;
+  IsLeaf: number;
+  isMarfoa?: number;
+  isMawkof?: number;
+  isMaktoa?: number;
+  isMarfoaHokm?: number;
+  children?: AsanedTreeNode[];
+  isLoaded?: boolean;
+}
+
+
 
 

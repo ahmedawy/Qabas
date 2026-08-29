@@ -1,5 +1,5 @@
 import React from 'react';
-import type { HadithSummary, HadithServiceType } from '../../types';
+import type { HadithSummary, HadithServiceType, Book } from '../../types';
 import { HadithCard } from '../hadiths/HadithCard';
 
 interface SearchResultsProps {
@@ -12,6 +12,7 @@ interface SearchResultsProps {
   onServiceClick?: (hadithId: number, serviceType: HadithServiceType) => void;
   bookmarkedIds?: Set<number>;
   onToggleBookmark?: (hadith: HadithSummary) => void;
+  allBooks?: Book[];
 }
 
 export const SearchResults: React.FC<SearchResultsProps> = ({
@@ -24,6 +25,7 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
   onServiceClick,
   bookmarkedIds,
   onToggleBookmark,
+  allBooks = [],
 }) => {
   if (loading) {
     return (
@@ -61,17 +63,21 @@ export const SearchResults: React.FC<SearchResultsProps> = ({
         </div>
       ) : (
         <div className="space-y-6 animate-in fade-in duration-300">
-          {results.map((h) => (
-            <HadithCard
-              key={h.MainID}
-              hadith={h}
-              onNarratorClick={onNarratorClick}
-              onLexiconClick={onLexiconClick}
-              onServiceClick={(hadithItem, type) => onServiceClick?.(hadithItem.MainID || 0, type)}
-              isBookmarked={bookmarkedIds?.has(h.MainID)}
-              onToggleBookmark={(hadith) => onToggleBookmark?.(hadith as any)}
-            />
-          ))}
+          {results.map((h) => {
+            const isServiceBook = allBooks.find(b => b.ID === h.BookID)?.type === 'service';
+            return (
+              <HadithCard
+                key={h.MainID}
+                hadith={h}
+                onNarratorClick={onNarratorClick}
+                onLexiconClick={onLexiconClick}
+                onServiceClick={(hadithItem, type) => onServiceClick?.(hadithItem.MainID || 0, type)}
+                isBookmarked={bookmarkedIds?.has(h.MainID)}
+                onToggleBookmark={(hadith) => onToggleBookmark?.(hadith as any)}
+                isServiceBook={isServiceBook}
+              />
+            );
+          })}
         </div>
       )}
     </div>

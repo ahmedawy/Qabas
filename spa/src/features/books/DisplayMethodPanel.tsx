@@ -136,44 +136,48 @@ export const DisplayMethodPanel: React.FC<DisplayMethodPanelProps> = ({
   return (
     <div className="bg-white dark:bg-slate-900/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-100/50 dark:shadow-none text-right">
       <div className="flex flex-row items-center gap-4 flex-wrap w-full">
-        {/* 1. Tarqeem Selection */}
-        <div className="flex items-center gap-2 min-w-[200px] flex-1">
-          <label htmlFor="ddlTarqeemType" className="text-xs text-slate-400 dark:text-slate-500 font-semibold whitespace-nowrap">الترقيم:</label>
-          <select
-            id="ddlTarqeemType"
-            value={tarqeem}
-            onChange={(e) => handleTarqeemChange(e.target.value)}
-            className="w-full text-right py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-emerald-500"
-          >
-            <option value="ID">حرف (الافتراضي)</option>
-            {availableTarqeems.TarqeemHarf?.available && (
-              <option value="TarqeemHarf">حرف الموثق</option>
-            )}
-            {availableTarqeems.TarqeemMatboa1?.available && (
-              <option value="TarqeemMatboa1">دار طوق النجاة</option>
-            )}
-            {availableTarqeems.TarqeemMatboa2?.available && (
-              <option value="TarqeemMatboa2">الطبعة المصورة</option>
-            )}
-          </select>
-        </div>
+        {selectedBook.type !== 'service' && (
+          <>
+            {/* 1. Tarqeem Selection */}
+            <div className="flex items-center gap-2 min-w-[200px] flex-1">
+              <label htmlFor="ddlTarqeemType" className="text-xs text-slate-400 dark:text-slate-500 font-semibold whitespace-nowrap">الترقيم:</label>
+              <select
+                id="ddlTarqeemType"
+                value={tarqeem}
+                onChange={(e) => handleTarqeemChange(e.target.value)}
+                className="w-full text-right py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs focus:outline-none focus:border-emerald-500"
+              >
+                <option value="ID">حرف (الافتراضي)</option>
+                {availableTarqeems.TarqeemHarf?.available && (
+                  <option value="TarqeemHarf">حرف الموثق</option>
+                )}
+                {availableTarqeems.TarqeemMatboa1?.available && (
+                  <option value="TarqeemMatboa1">دار طوق النجاة</option>
+                )}
+                {availableTarqeems.TarqeemMatboa2?.available && (
+                  <option value="TarqeemMatboa2">الطبعة المصورة</option>
+                )}
+              </select>
+            </div>
 
-        {/* 2. Hadith Selection */}
-        <div className="flex items-center gap-2 min-w-[150px] flex-1">
-          <label htmlFor="txtHadithNumber" className="text-xs text-slate-400 dark:text-slate-500 font-semibold whitespace-nowrap">
-            الحديث {activeBounds.min_hadith !== undefined && activeBounds.max_hadith !== undefined && `(${activeBounds.min_hadith}-${activeBounds.max_hadith})`}:
-          </label>
-          <input
-            type="number"
-            id="txtHadithNumber"
-            value={hadithNum}
-            onChange={(e) => setHadithNum(e.target.value)}
-            onKeyDown={handleHadithKeyDown}
-            className="w-full text-right py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono focus:outline-none focus:border-emerald-500"
-            min={activeBounds.min_hadith ?? 1}
-            max={activeBounds.max_hadith}
-          />
-        </div>
+            {/* 2. Hadith Selection */}
+            <div className="flex items-center gap-2 min-w-[150px] flex-1">
+              <label htmlFor="txtHadithNumber" className="text-xs text-slate-400 dark:text-slate-500 font-semibold whitespace-nowrap">
+                الحديث {activeBounds.min_hadith !== undefined && activeBounds.max_hadith !== undefined && `(${activeBounds.min_hadith}-${activeBounds.max_hadith})`}:
+              </label>
+              <input
+                type="number"
+                id="txtHadithNumber"
+                value={hadithNum}
+                onChange={(e) => setHadithNum(e.target.value)}
+                onKeyDown={handleHadithKeyDown}
+                className="w-full text-right py-1.5 px-3 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs font-mono focus:outline-none focus:border-emerald-500"
+                min={activeBounds.min_hadith ?? 1}
+                max={activeBounds.max_hadith}
+              />
+            </div>
+          </>
+        )}
 
         {/* 3. Part Selection */}
         <div className="flex items-center gap-2 min-w-[100px] flex-1">

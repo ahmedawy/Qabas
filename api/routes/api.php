@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\GetAmthalController;
-use App\Http\Controllers\Api\V1\GetAtrafAsanedController;
 use App\Http\Controllers\Api\V1\GetAtrafExtraController;
 use App\Http\Controllers\Api\V1\GetAtrafListController;
 use App\Http\Controllers\Api\V1\GetBookmarksController;
@@ -118,10 +117,12 @@ $router->prefix('v1')->group(function (Router $router) {
 
     // Module 8: Atraf & Comparisons
     $router->get('/atraf_list', GetAtrafListController::class);
-    $router->get('/atraf_asaned', GetAtrafAsanedController::class);
     $router->get('/atraf_extra', GetAtrafExtraController::class);
     $router->get('/rwah_extra', GetRwahExtraController::class);
     $router->get('/grouped_mtn', GetGroupedMtnController::class);
+    $router->get('/asaned_roots', \App\Http\Controllers\Api\V1\GetAsanedRootsController::class);
+    $router->get('/asaned_children', \App\Http\Controllers\Api\V1\GetAsanedChildrenController::class);
+    $router->get('/asaned_hadiths', \App\Http\Controllers\Api\V1\GetAsanedHadithsController::class);
 
     // Module 9: Thematic Trees & Lexicons
     $router->get('/subject_tree', GetSubjectTreeController::class);

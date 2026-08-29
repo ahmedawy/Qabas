@@ -119,6 +119,7 @@ export const TocTree: React.FC<TocTreeProps> = ({ bookId, bookType, selectedNode
           onSelect={(node) => onSelectNode(node.raw)}
           emptyMessage="لا توجد أبواب مطابقة"
           className="space-y-1 pr-1 flex-grow overflow-y-auto"
+          defaultExpandRoots={true}
         />
       </div>
     </div>

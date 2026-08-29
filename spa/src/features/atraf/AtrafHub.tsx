@@ -2,8 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from '../../api/client';
 import type { Book, AtrafResult, AtrafExtraResult, GroupedMtnResult, NarratorSummary, ServiceText, Annotation } from '../../types';
 import { highlightArabicText } from '../../utils/arabicHighlighter';
-import { AlphabetBar } from '../search/AlphabetBar';
 import { HadithCard, HadithContentRenderer } from '../hadiths/HadithCard';
+import { AtrafAsanedTab } from './AtrafAsanedTab';
 
 interface AtrafHubProps {
   onSelectHadith?: (id: number) => void;
@@ -17,7 +17,7 @@ interface AtrafHubProps {
   onToggleBookmark?: (hadith: any) => void;
 }
 
-type TabType = 'list' | 'comparison' | 'rwah_extra' | 'grouped';
+type TabType = 'list' | 'atraf_asaned' | 'comparison' | 'rwah_extra' | 'grouped';
 
 export const AtrafHub: React.FC<AtrafHubProps> = ({ 
   onSelectHadith, 
@@ -44,11 +44,14 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
 
   // Tab 1: Atraf List & Chains state
   const [selectedBookIds, setSelectedBookIds] = useState<number[]>([]);
-  const [atrafQuery, setAtrafQuery] = useState('');
   const [atrafResults, setAtrafResults] = useState<AtrafResult[]>([]);
-  const [searchType, setSearchType] = useState<'text' | 'rawy'>('text');
-  const [rawyQuery, setRawyQuery] = useState('');
-  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
+  const [selectedHadithTypes, setSelectedHadithTypes] = useState<string[]>([]);
+  const [pagination, setPagination] = useState<{
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  } | null>(null);
 
   // Tab 2: Parallel Comparison state
   const [sourceBookId, setSourceBookId] = useState<number>(0);
@@ -84,7 +87,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
     api.getHadithBooks().then((res) => {
       setBooks(res.books);
       if (res.books.length > 0) {
-        setSelectedBookIds([res.books[0].ID]);
+        setSelectedBookIds(res.books.map(b => b.ID)); // Default select all books like legacy UI
         setSourceBookId(res.books[0].ID);
         if (res.books.length > 1) {
           setTargetBookId(res.books[1].ID);
@@ -93,19 +96,25 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
     }).catch(console.error);
   }, []);
 
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+
   // Trigger Atraf Search (Tab 1)
-  const handleAtrafSearch = async (e?: React.FormEvent, letterOverride?: string | null) => {
+  const handleAtrafSearch = async (e?: React.FormEvent, targetPage: number = 1) => {
     if (e) e.preventDefault();
     if (selectedBookIds.length === 0) return;
     setLoading(true);
-    const letterVal = letterOverride !== undefined ? letterOverride : selectedLetter;
     try {
-      if (searchType === 'text') {
-        const res = await api.getAtrafList(selectedBookIds.join(','), atrafQuery, letterVal || undefined);
-        setAtrafResults(res.results);
-      } else {
-        const res = await api.getAtrafAsaned(selectedBookIds.join(','), rawyQuery, atrafQuery);
-        setAtrafResults(res.results);
+      const res = await api.getAtrafList(
+        selectedBookIds.join(','),
+        '',
+        undefined,
+        selectedHadithTypes,
+        targetPage,
+        20
+      );
+      setAtrafResults(res.results || []);
+      if (res.pagination) {
+        setPagination(res.pagination);
       }
     } catch (err) {
       console.error(err);
@@ -114,11 +123,51 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
     }
   };
 
-  const handleSelectLetter = (letter: string | null) => {
-    setSelectedLetter(letter);
-    if (selectedBookIds.length > 0) {
-      handleAtrafSearch(undefined, letter);
+  const handleToggleAllBooks = () => {
+    if (selectedBookIds.length === books.length) {
+      setSelectedBookIds([]);
+    } else {
+      setSelectedBookIds(books.map((b) => b.ID));
     }
+  };
+
+  const ALL_HADITH_TYPE_IDS = ['qudsi', 'marfu', 'qawliyyah', 'fiiliyyah', 'taqririyyah', 'wasfiyyah', 'mawkof', 'maktoa', 'marfu_hukman'];
+
+  const handleToggleAllTypes = () => {
+    if (selectedHadithTypes.length === ALL_HADITH_TYPE_IDS.length) {
+      setSelectedHadithTypes([]);
+    } else {
+      setSelectedHadithTypes([...ALL_HADITH_TYPE_IDS]);
+    }
+  };
+
+  const handleTypeToggle = (typeId: string) => {
+    setSelectedHadithTypes((prev) => {
+      let next: string[];
+      if (typeId === 'marfu') {
+        const marfuGroup = ['marfu', 'qawliyyah', 'fiiliyyah', 'taqririyyah', 'wasfiyyah'];
+        const allSelected = marfuGroup.every((id) => prev.includes(id));
+        if (allSelected) {
+          next = prev.filter((id) => !marfuGroup.includes(id));
+        } else {
+          next = Array.from(new Set([...prev, ...marfuGroup]));
+        }
+      } else {
+        if (prev.includes(typeId)) {
+          next = prev.filter((id) => id !== typeId);
+        } else {
+          next = [...prev, typeId];
+        }
+      }
+      return next;
+    });
+  };
+
+  const handleResetFilters = () => {
+    setSelectedBookIds(books.map(b => b.ID));
+    setSelectedHadithTypes([]);
+    setAtrafResults([]);
+    setPagination(null);
   };
 
   // Trigger Comparison Load (Tab 2)
@@ -208,7 +257,7 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
         {segments.map((seg, i) => (
           <span
             key={i}
-            className={seg.isHighlighted ? 'bg-amber-400/30 text-amber-300 px-0.5 rounded font-black' : ''}
+            className={seg.isHighlighted ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 px-1 rounded font-bold' : ''}
           >
             {seg.text}
           </span>
@@ -217,28 +266,32 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
     );
   };
 
+  const filteredSidebarBooks = selectedCategoryFilter === 'all' 
+    ? books 
+    : books.filter(b => b.category === selectedCategoryFilter);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Top Banner */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-900/60 to-slate-900 border border-emerald-800/40 p-8 mb-8 shadow-xl">
+      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-emerald-50 via-teal-50/40 to-slate-50 dark:from-emerald-950/40 dark:via-slate-900 dark:to-slate-900 border border-emerald-200/80 dark:border-emerald-500/20 p-8 mb-8 shadow-sm">
         <div className="atraf-hub-grid-11"></div>
         <div className="relative z-10 max-w-3xl">
-          <h1 className="text-3xl font-black text-emerald-300 leading-tight">
+          <h1 className="text-3xl font-black text-emerald-800 dark:text-emerald-400 leading-tight">
             بوابة الأطراف والمقارنات البينية
           </h1>
-          <p className="mt-3 text-base text-slate-350 leading-relaxed">
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
             استعرض أطراف الأحاديث ومقارنة نصوص المتون جنباً إلى جنب للتعرف على وجوه الاختلاف والزيادة، مع بيان رواة الزوائد والمتون المشتركة لمختلف سلاسل الأسانيد.
           </p>
         </div>
       </div>
 
       {/* Tabs Nav */}
-      <div className="border-b border-slate-800 mb-8 overflow-x-auto">
+      <div className="border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto">
         <nav className="-mb-px flex space-x-8 space-x-reverse" aria-label="Tabs">
           {(
             [
               { id: 'list', label: 'أطراف الأحاديث والأسانيد' },
+              { id: 'atraf_asaned', label: 'أطراف على الأسانيد' },
               { id: 'comparison', label: 'مقارنة المتون الثنائية' },
               { id: 'rwah_extra', label: 'رواة الزوائد والوفرة' },
               { id: 'grouped', label: 'المتون المشتركة والمجموعات' },
@@ -248,10 +301,10 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`
-                whitespace-nowrap border-b-2 py-4 px-1 text-sm font-semibold transition-all duration-200
+                whitespace-nowrap border-b-2 py-4 px-1 text-sm font-semibold transition-all duration-200 cursor-pointer
                 ${activeTab === tab.id
-                  ? 'border-emerald-500 text-emerald-400'
-                  : 'border-transparent text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                  ? 'border-emerald-600 dark:border-emerald-500 text-emerald-700 dark:text-emerald-400 font-bold'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700 hover:text-slate-800 dark:hover:text-slate-200'
                 }
               `}
             >
@@ -261,122 +314,371 @@ export const AtrafHub: React.FC<AtrafHubProps> = ({
         </nav>
       </div>
 
+      {/* Tab: Atraf Asaned (Tree View) */}
+      {activeTab === 'atraf_asaned' && (
+        <AtrafAsanedTab onSelectHadith={onSelectHadith} />
+      )}
+
       {/* Tab 1: Atraf List & Chains */}
       {activeTab === 'list' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="rounded-xl bg-slate-900 border border-slate-800 p-5">
-              <h3 className="atraf-hub-title-2">حدد كتب أطراف السنن</h3>
-              <div className="atraf-hub-element-16">
-                {books.map((book) => (
-                  <label key={book.ID} className="flex items-start gap-2.5 text-xs text-slate-300 cursor-pointer select-none leading-relaxed">
-                    <input
-                      type="checkbox"
-                      checked={selectedBookIds.includes(book.ID)}
-                      onChange={() => handleBookToggle(book.ID)}
-                      className="atraf-hub-text-18"
-                    />
-                    <span>{book.Title}</span>
-                  </label>
+          {/* Sidebar with Legacy Filter Criteria */}
+          <div className="lg:col-span-1 space-y-5">
+            {/* Books Filter Panel */}
+            <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                  <span>📚</span> كتب المتون ({books.length})
+                </h3>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={books.length > 0 && selectedBookIds.length === books.length}
+                    onChange={handleToggleAllBooks}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>كل الكتب</span>
+                </label>
+              </div>
+
+              {/* Quick Category Filter Pills */}
+              <div className="flex flex-wrap gap-1.5 text-[11px]">
+                {[
+                  { id: 'all', label: 'الكل' },
+                  { id: 'الصحاح', label: 'الصحاح' },
+                  { id: 'السنن', label: 'السنن' },
+                  { id: 'المسانيد', label: 'المسانيد' },
+                  { id: 'المصنفات', label: 'المصنفات' },
+                  { id: 'المعاجم', label: 'المعاجم' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategoryFilter(cat.id)}
+                    className={`px-2.5 py-1 rounded-full font-medium transition-colors cursor-pointer ${selectedCategoryFilter === cat.id ? 'bg-emerald-600 text-white font-bold shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 border border-slate-200/80 dark:border-slate-700/50'}`}
+                  >
+                    {cat.label}
+                  </button>
                 ))}
               </div>
+
+              {/* Legacy Books Data Table Grid */}
+              <div className="max-h-80 overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 custom-scrollbar">
+                <table className="w-full text-right text-xs">
+                  <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 backdrop-blur-xs border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-semibold">
+                    <tr>
+                      <th className="p-2 text-center w-8">
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">م({selectedBookIds.length})</span>
+                      </th>
+                      <th className="p-2">الكتاب</th>
+                      <th className="p-2 text-center">التصنيف</th>
+                      <th className="p-2 text-left">الوفاة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
+                    {filteredSidebarBooks.map((book) => {
+                      const isChecked = selectedBookIds.includes(book.ID);
+                      return (
+                        <tr
+                          key={book.ID}
+                          onClick={() => handleBookToggle(book.ID)}
+                          className={`cursor-pointer transition-colors ${isChecked ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-900 dark:text-emerald-300 font-medium border-r-2 border-emerald-600' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50'}`}
+                        >
+                          <td className="p-2 text-center" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => handleBookToggle(book.ID)}
+                              className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                            />
+                          </td>
+                          <td className="p-2 leading-relaxed">
+                            <div className="font-semibold text-slate-800 dark:text-slate-200">{book.Title}</div>
+                            {book.AuthorName && (
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">{book.AuthorName}</div>
+                            )}
+                          </td>
+                          <td className="p-2 text-center whitespace-nowrap">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700/50">
+                              {book.category}
+                            </span>
+                          </td>
+                          <td className="p-2 text-left whitespace-nowrap text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            {book.AuthorDeath ? `${book.AuthorDeath} هـ` : '-'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Legacy Hadith Type Filter Panel */}
+            <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-5 shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 className="text-sm font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
+                  <span>📜</span> نوع الحديث
+                </h3>
+                <label className="flex items-center gap-2 text-xs font-medium text-slate-600 dark:text-slate-300 cursor-pointer hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={ALL_HADITH_TYPE_IDS.length > 0 && selectedHadithTypes.length === ALL_HADITH_TYPE_IDS.length}
+                    onChange={handleToggleAllTypes}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>كل أنواع الحديث</span>
+                </label>
+              </div>
+
+              <div className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
+                {/* 1. قدسية */}
+                <label className="flex items-center gap-2.5 cursor-pointer select-none leading-relaxed hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={selectedHadithTypes.includes('qudsi')}
+                    onChange={() => handleTypeToggle('qudsi')}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span className="font-semibold">أحاديث قدسية</span>
+                </label>
+
+                {/* 2. مرفوعة + sub-types */}
+                <div className="space-y-2 border-r-2 border-emerald-500/40 pr-3 my-2">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none leading-relaxed hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={['marfu', 'qawliyyah', 'fiiliyyah', 'taqririyyah', 'wasfiyyah'].every((id) => selectedHadithTypes.includes(id))}
+                      onChange={() => handleTypeToggle('marfu')}
+                      className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">أحاديث مرفوعة</span>
+                  </label>
+
+                  {/* Sub-types for Marfu */}
+                  <div className="grid grid-cols-2 gap-2 pr-4 pt-1">
+                    {[
+                      { id: 'qawliyyah', label: 'سنة قولية' },
+                      { id: 'fiiliyyah', label: 'سنة فعلية' },
+                      { id: 'taqririyyah', label: 'سنة تقريرية' },
+                      { id: 'wasfiyyah', label: 'صفات وشمائل' },
+                    ].map((st) => (
+                      <label key={st.id} className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200">
+                        <input
+                          type="checkbox"
+                          checked={selectedHadithTypes.includes(st.id)}
+                          onChange={() => handleTypeToggle(st.id)}
+                          className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-3.5 h-3.5 cursor-pointer"
+                        />
+                        <span>{st.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. قول صحابي */}
+                <label className="flex items-center gap-2.5 cursor-pointer select-none leading-relaxed hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={selectedHadithTypes.includes('mawkof')}
+                    onChange={() => handleTypeToggle('mawkof')}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>قول صحابي (موقوف)</span>
+                </label>
+
+                {/* 4. قول تابعي */}
+                <label className="flex items-center gap-2.5 cursor-pointer select-none leading-relaxed hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={selectedHadithTypes.includes('maktoa')}
+                    onChange={() => handleTypeToggle('maktoa')}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>قول تابعي (مقطوع)</span>
+                </label>
+
+                {/* 5. ما له حكم الرفع */}
+                <label className="flex items-center gap-2.5 cursor-pointer select-none leading-relaxed hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={selectedHadithTypes.includes('marfu_hukman')}
+                    onChange={() => handleTypeToggle('marfu_hukman')}
+                    className="rounded border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
+                  />
+                  <span>ما له حكم الرفع</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Control Reset Button */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="w-full py-2.5 px-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-colors border border-slate-200 dark:border-slate-700/80 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>🔄</span> إعادة ضبط المعايير
+              </button>
             </div>
           </div>
 
           {/* Main Area */}
           <div className="lg:col-span-3 space-y-6">
-            {searchType === 'text' && (
-              <AlphabetBar
-                selectedLetter={selectedLetter}
-                onSelectLetter={handleSelectLetter}
-              />
-            )}
-            <div className="atraf-hub-card-30">
-              <div className="atraf-hub-element-31">
-                <button
-                  type="button"
-                  onClick={() => setSearchType('text')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${searchType === 'text' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  بحث بمتن الطرف
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSearchType('rawy')}
-                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${searchType === 'rawy' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-slate-400'}`}
-                >
-                  بحث بالراوي والطرف
-                </button>
+            {/* Top Action Header Bar */}
+            <div className="rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <span>عرض نتائج الأطراف حسب المعايير المختارة</span>
+                </h4>
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-3">
+                  <span>المصادر: <strong className="text-emerald-600 dark:text-emerald-400">{selectedBookIds.length}</strong> كتاباً</span>
+                  <span>•</span>
+                  <span>الأنواع: <strong className="text-emerald-600 dark:text-emerald-400">{selectedHadithTypes.length === 0 ? 'كل الأنواع' : `${selectedHadithTypes.length} تصنيفاً`}</strong></span>
+                </div>
               </div>
 
-              <form onSubmit={handleAtrafSearch} className="space-y-4">
-                {searchType === 'rawy' && (
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-2">اسم الراوي (رواة الأسانيد)</label>
-                    <input
-                      type="text"
-                      placeholder="أدخل اسم الراوي في الإسناد..."
-                      value={rawyQuery}
-                      onChange={(e) => setRawyQuery(e.target.value)}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950 px-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:border-emerald-500 focus:outline-hidden"
-                      dir="rtl"
-                    />
-                  </div>
-                )}
-                <div>
-                  <label className="block text-xs text-slate-400 mb-2">مقطع متن الطرف</label>
-                  <div className="atraf-hub-element-14">
-                    <input
-                      type="text"
-                      placeholder="أدخل كلمة أو جملة من أول الحديث (الطرف)..."
-                      value={atrafQuery}
-                      onChange={(e) => setAtrafQuery(e.target.value)}
-                      className="atraf-hub-text-15"
-                      dir="rtl"
-                    />
-                    <button
-                      type="submit"
-                      disabled={loading || selectedBookIds.length === 0}
-                      className="atraf-hub-text-19"
-                    >
-                      {loading ? 'جاري التحميل...' : 'ابحث الآن'}
-                    </button>
-                  </div>
-                </div>
-                {selectedBookIds.length === 0 && (
-                  <p className="atraf-hub-text-32">⚠️ الرجاء اختيار كتاب واحد على الأقل من الجانب الأيمن.</p>
-                )}
-              </form>
+              <button
+                type="button"
+                onClick={(e) => handleAtrafSearch(e, 1)}
+                disabled={loading || selectedBookIds.length === 0}
+                className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-md shadow-emerald-600/10 transition-all disabled:opacity-40 flex items-center gap-2.5 cursor-pointer"
+              >
+                <span>🔍</span>
+                <span>{loading ? 'جاري التحميل...' : 'عرض النتائج'}</span>
+              </button>
             </div>
 
-            {/* Results */}
-            <div className="space-y-4">
-              <h4 className="text-sm font-bold text-slate-400">أطراف الأحاديث المكتشفة ({atrafResults.length})</h4>
+            {selectedBookIds.length === 0 && (
+              <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-xl border border-emerald-200 dark:border-emerald-800/40">
+                ⚠️ الرجاء اختيار كتاب واحد على الأقل من القائمة اليمنى لعرض النتائج.
+              </p>
+            )}
+
+            {/* Results Grid & Pagination */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                  أطراف الأحاديث المكتشفة {pagination ? `(${pagination.total})` : `(${atrafResults.length})`}
+                </h4>
+                {pagination && pagination.total > 0 && (
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-mono bg-slate-100 dark:bg-slate-900 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-800">
+                    الصفحة {pagination.current_page} من {pagination.last_page}
+                  </span>
+                )}
+              </div>
+
               {atrafResults.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-slate-800 py-12 text-center text-slate-500 text-sm">
-                  حدد الكتب وخيارات التصفية لعرض قائمة أطراف الأحاديث مع إسنادها وتفاصيل موضعها
+                <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 py-16 text-center text-slate-500 dark:text-slate-400 text-sm bg-white dark:bg-slate-900/20 space-y-3">
+                  <div className="text-4xl">📚</div>
+                  <div className="font-bold text-slate-700 dark:text-slate-300">اختر معايير البحث من الجانب الأيمن</div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                    حدد الكتب وأنواع الحديث المطلوبة من القائمة اليمنى، ثم اضغط على زر <strong className="text-emerald-600 dark:text-emerald-400">"عرض النتائج"</strong> لمطالعة قائمة أطراف الأحاديث المكتشفة.
+                  </p>
                 </div>
               ) : (
-                <div className="atraf-hub-grid-9">
-                  {atrafResults.map((atraf) => (
-                    <div
-                      key={atraf.MainID}
-                      onClick={() => onSelectHadith ? onSelectHadith(atraf.MainID) : showDetailModal(atraf.MainID, atraf.Text, atraf.BookName, atraf.HadithNum, atraf.PartNum, atraf.PageNum, 'الرجاء النقر على تفاصيل الكتاب لقراءة المتن الكامل.', null)}
-                      className="group rounded-xl border border-slate-800 bg-slate-900/30 p-5 hover:border-emerald-800/60 hover:bg-slate-900/50 hover:shadow-lg transition-all duration-300 cursor-pointer"
-                    >
-                      <h5 className="font-extrabold text-slate-200 group-hover:text-emerald-400 transition-colors leading-relaxed">
-                        {renderHighlighted(atraf.Text, atrafQuery)}
-                      </h5>
-                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-400">
-                        <span className="atraf-hub-text-34">{atraf.BookName}</span>
-                        <span>الحديث رقم: {atraf.HadithNum}</span>
-                        {atraf.PartNum !== undefined && <span>الجزء: {atraf.PartNum}</span>}
-                        {atraf.PageNum !== undefined && <span>الصفحة: {atraf.PageNum}</span>}
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {atrafResults.map((atraf) => (
+                      <div
+                        key={atraf.MainID}
+                        onClick={() => onSelectHadith ? onSelectHadith(atraf.MainID) : showDetailModal(atraf.MainID, atraf.Text, atraf.BookName, atraf.HadithNum, atraf.PartNum, atraf.PageNum, 'الرجاء النقر على تفاصيل الكتاب لقراءة المتن الكامل.', null)}
+                        className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-5 hover:border-emerald-500 dark:hover:border-emerald-500/50 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                      >
+                        <h5 className="font-semibold text-slate-800 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors leading-relaxed text-sm">
+                          {atraf.Text}
+                        </h5>
+                        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium border border-slate-200 dark:border-slate-700/50">
+                            {atraf.BookName}
+                          </span>
+                          <div className="flex gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                            <span>رقم: {atraf.HadithNum}</span>
+                            {atraf.PartNum !== undefined && <span>ج: {atraf.PartNum}</span>}
+                            {atraf.PageNum !== undefined && <span>ص: {atraf.PageNum}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Pagination Bar */}
+                  {pagination && pagination.last_page > 1 && (
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs font-semibold">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        إجمالي النتائج: <span className="text-emerald-700 dark:text-emerald-400 font-mono font-bold">{pagination.total}</span> طرف حديث
+                      </div>
+
+                      <div className="flex items-center gap-1.5 dir-rtl">
+                        {/* First Page */}
+                        <button
+                          type="button"
+                          onClick={() => handleAtrafSearch(undefined, 1)}
+                          disabled={loading || pagination.current_page <= 1}
+                          className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+                        >
+                          « الأول
+                        </button>
+
+                        {/* Previous Page */}
+                        <button
+                          type="button"
+                          onClick={() => handleAtrafSearch(undefined, Math.max(1, pagination.current_page - 1))}
+                          disabled={loading || pagination.current_page <= 1}
+                          className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+                        >
+                          ‹ السابق
+                        </button>
+
+                        {/* Page Numbers */}
+                        {Array.from({ length: Math.min(5, pagination.last_page) }, (_, idx) => {
+                          let pageNum: number;
+                          if (pagination.last_page <= 5) {
+                            pageNum = idx + 1;
+                          } else if (pagination.current_page <= 3) {
+                            pageNum = idx + 1;
+                          } else if (pagination.current_page >= pagination.last_page - 2) {
+                            pageNum = pagination.last_page - 4 + idx;
+                          } else {
+                            pageNum = pagination.current_page - 2 + idx;
+                          }
+                          const isActive = pageNum === pagination.current_page;
+                          return (
+                            <button
+                              key={pageNum}
+                              type="button"
+                              onClick={() => handleAtrafSearch(undefined, pageNum)}
+                              disabled={loading}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all cursor-pointer ${isActive ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                            >
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+
+                        {/* Next Page */}
+                        <button
+                          type="button"
+                          onClick={() => handleAtrafSearch(undefined, Math.min(pagination.last_page, pagination.current_page + 1))}
+                          disabled={loading || pagination.current_page >= pagination.last_page}
+                          className="px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+                        >
+                          التالي ›
+                        </button>
+
+                        {/* Last Page */}
+                        <button
+                          type="button"
+                          onClick={() => handleAtrafSearch(undefined, pagination.last_page)}
+                          disabled={loading || pagination.current_page >= pagination.last_page}
+                          className="px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 transition-colors cursor-pointer"
+                        >
+                          الأخير »
+                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
               )}
             </div>
           </div>

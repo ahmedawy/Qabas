@@ -10,6 +10,7 @@ interface TreeProps {
   onLoadChildren?: (id: number) => Promise<void>;
   emptyMessage?: string;
   className?: string;
+  defaultExpandRoots?: boolean;
 }
 
 export const Tree: React.FC<TreeProps> = ({
@@ -19,7 +20,8 @@ export const Tree: React.FC<TreeProps> = ({
   onSelect,
   onLoadChildren,
   emptyMessage = 'لا توجد عناصر لعرضها',
-  className = "space-y-1 pr-1 max-h-96 overflow-y-auto"
+  className = "space-y-1 pr-1 max-h-96 overflow-y-auto",
+  defaultExpandRoots = false,
 }) => {
   if (roots.length === 0) {
     return (
@@ -40,6 +42,7 @@ export const Tree: React.FC<TreeProps> = ({
           onSelect={onSelect}
           onLoadChildren={onLoadChildren}
           level={0}
+          defaultExpandRoots={defaultExpandRoots}
         />
       ))}
     </div>

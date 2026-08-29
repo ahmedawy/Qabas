@@ -1,1 +1,4 @@
 /.agents
+all_data.sql
+*.sql.gz
+*.sql.zip

@@ -106,7 +106,7 @@ export const TransmissionChainSvg: React.FC<TransmissionChainSvgProps> = ({
           <span>شجرة اتصال السند التفاعلية</span>
         </h4>
         <span className="transmission-chain-svg-text-9">
-          معرّف الإسناد: #{sanadId} • {narrators.length} رواة
+          {narrators.length} رواة
         </span>
       </div>
 

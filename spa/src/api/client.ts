@@ -27,7 +27,8 @@ import type {
   IndexItemNode,
   ShawahedItem,
   ServiceBookItem,
-  MatnComparisonResponse
+  MatnComparisonResponse,
+  AsanedTreeNode
 } from '../types';
 
 /**
@@ -172,10 +173,15 @@ export const api = {
     return request<{ success: boolean; hadiths: HadithSummary[] }>(path);
   },
 
-  search: (q: string, bookId: number, page: number = 1, limit: number = 10) =>
-    request<{ success: boolean; total: number; page: number; limit: number; results: HadithSummary[] }>(
-      `search?q=${encodeURIComponent(q)}&book_id=${bookId}&page=${page}&limit=${limit}`
-    ),
+  search: (q: string, bookId: number, page: number = 1, limit: number = 10, hadithTypes?: string[]) => {
+    let path = `search?q=${encodeURIComponent(q)}&book_id=${bookId}&page=${page}&limit=${limit}`;
+    if (hadithTypes && hadithTypes.length > 0) {
+      hadithTypes.forEach(t => {
+        path += `&hadith_types[]=${encodeURIComponent(t)}`;
+      });
+    }
+    return request<{ success: boolean; total: number; page: number; limit: number; results: HadithSummary[] }>(path);
+  },
 
   getNarratorsList: (q: string, fields: string[] = ['Name']) =>
     request<{ success: boolean; results: NarratorSummary[] }>(
@@ -306,18 +312,27 @@ export const api = {
   getHadithOccasions: (id: number) =>
     request<{ success: boolean; book_name?: string; hadith_num?: string | number; occasions: any[] }>(`hadith/occasions?id=${id}`),
 
-  getAtrafList: (books: string, q: string, letter?: string) => {
-    let path = `atraf_list?books=${encodeURIComponent(books)}&q=${encodeURIComponent(q)}`;
+  getAtrafList: (books: string, q: string = '', letter?: string, hadithTypes?: string[], page: number = 1, perPage: number = 20) => {
+    let path = `atraf_list?books=${encodeURIComponent(books)}&q=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}`;
     if (letter) {
       path += `&letter=${encodeURIComponent(letter)}`;
     }
-    return request<{ success: boolean; results: AtrafResult[] }>(path);
+    if (hadithTypes && hadithTypes.length > 0) {
+      hadithTypes.forEach(t => {
+        path += `&hadith_types[]=${encodeURIComponent(t)}`;
+      });
+    }
+    return request<{
+      success: boolean;
+      results: AtrafResult[];
+      pagination?: {
+        current_page: number;
+        last_page: number;
+        per_page: number;
+        total: number;
+      };
+    }>(path);
   },
-
-  getAtrafAsaned: (books: string, rawy: string, text: string) =>
-    request<{ success: boolean; results: AtrafResult[] }>(
-      `atraf_asaned?books=${encodeURIComponent(books)}&rawy=${encodeURIComponent(rawy)}&text=${encodeURIComponent(text)}`
-    ),
 
   getAtrafExtra: (src: number, tgt: number) =>
     request<{ success: boolean; results: AtrafExtraResult[] }>(
@@ -500,7 +515,23 @@ export const api = {
     request<MatnComparisonResponse>(`hadith/matn-comparison?id=${id}`),
 
   getHadithAnalysisTree: (id: number) =>
-    request<{ success: boolean; data: any }>(`hadith/${id}/analysis-tree`)
+    request<{ success: boolean; data: any }>(`hadith/${id}/analysis-tree`),
+
+  getAsanedRoots: (q: string = '', sanadType: string = '', page: number = 1, perPage: number = 30) =>
+    request<{
+      results: AsanedTreeNode[];
+      pagination: { current_page: number; last_page: number; per_page: number; total: number };
+    }>(`asaned_roots?q=${encodeURIComponent(q)}&sanad_type=${encodeURIComponent(sanadType)}&page=${page}&per_page=${perPage}`),
+
+  getAsanedChildren: (parentId: number) =>
+    request<{ results: AsanedTreeNode[] }>(`asaned_children?parent_id=${parentId}`),
+
+  getAsanedHadiths: (treeId: number, books: string = '', page: number = 1, perPage: number = 20) =>
+    request<{
+      results: any[];
+      chain_path: number[];
+      pagination: { current_page: number; last_page: number; per_page: number; total: number };
+    }>(`asaned_hadiths?tree_id=${treeId}&books=${encodeURIComponent(books)}&page=${page}&per_page=${perPage}`)
 };
 
 

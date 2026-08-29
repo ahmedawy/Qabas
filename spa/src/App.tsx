@@ -151,11 +151,11 @@ function App() {
   };
 
   // Search execution wrapper
-  const onSearchQuery = (query: string, bookId: number, page: number = 1) => {
+  const onSearchQuery = (query: string, bookId: number, page: number = 1, hadithTypes?: string[]) => {
     setError(null);
     search.handleSearch(query, bookId, page, (msg) => {
       setError(msg);
-    });
+    }, hadithTypes);
   };
 
   const handleSelectSearch = (query: string, bookId: number) => {
@@ -613,7 +613,7 @@ function App() {
               <SearchBar
                 allBooks={allBooks}
                 preselectedBookId={selectedBook ? selectedBook.ID : 0}
-                onSearch={onSearchQuery}
+                onSearch={(q, b, t) => onSearchQuery(q, b, 1, t)}
               />
 
               {search.isSearching ? (
@@ -648,13 +648,14 @@ function App() {
                     }}
                     bookmarkedIds={bookmarks.bookmarkedIds}
                     onToggleBookmark={bookmarks.handleToggleBookmark}
+                    allBooks={allBooks}
                   />
 
                   <Pagination
                     currentPage={search.searchPage}
                     totalItems={search.searchTotal}
                     itemsPerPage={10}
-                    onPageChange={(page) => onSearchQuery(search.searchQuery, search.searchBookId, page)}
+                    onPageChange={(page) => onSearchQuery(search.searchQuery, search.searchBookId, page, search.selectedHadithTypes)}
                   />
                 </div>
               ) : selectedBook ? (
@@ -725,6 +726,7 @@ function App() {
                             }}
                             isBookmarked={bookmarks.bookmarkedIds.has(h.MainID)}
                             onToggleBookmark={(hadith) => bookmarks.handleToggleBookmark(hadith as any)}
+                            isServiceBook={selectedBook?.type === 'service'}
                           />
                         ))}
 

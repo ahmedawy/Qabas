@@ -9,6 +9,7 @@ use App\Http\Resources\HadithSummaryResource;
 use App\Models\BookTocHadith;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SearchHadithsController extends Controller
 {
@@ -44,7 +45,10 @@ class SearchHadithsController extends Controller
             $limit = 10;
         }
 
-        if ($q === '') {
+        $hadithTypes = $request->input('hadith_types');
+        $hasTypes = is_array($hadithTypes) && count($hadithTypes) > 0;
+
+        if ($q === '' && !$hasTypes) {
             return $this->jsonResponse([
                 'total' => 0,
                 'page' => $page,
@@ -54,26 +58,50 @@ class SearchHadithsController extends Controller
         }
 
         $query = $this->hadithModel->newQuery()
-            ->where('IsLeaf', 1);
+            ->where('booktoc_hadith.IsLeaf', 1);
 
         if ($bookId > 0) {
-            $query->where('BookID', $bookId);
+            $query->where('booktoc_hadith.BookID', $bookId);
+        }
+
+        if ($hasTypes) {
+            $query->whereExists(function ($q) use ($hadithTypes) {
+                $q->select(DB::raw(1))
+                    ->from('hadith_type_map')
+                    ->join('hadith_types', 'hadith_types.id', '=', 'hadith_type_map.type_id')
+                    ->whereColumn('hadith_type_map.hadith_main_id', 'booktoc_hadith.MainID')
+                    ->whereIn('hadith_types.slug', $hadithTypes);
+            });
         }
 
         // Apply morphological stored procedure filter
-        $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$q])->q;
-        $words = array_filter(explode(' ', $normalizedQuery));
-        $matchQuery = implode('* ', $words) . '*';
+        if ($q !== '') {
+            $normalizedQuery = \Illuminate\Support\Facades\DB::selectOne("SELECT normalize_arabic(?) as q", [$q])->q;
+            $words = array_filter(explode(' ', $normalizedQuery));
+            
+            if (count($words) > 0) {
+                $matchQuery = implode('* ', $words) . '*';
 
-        $query->whereRaw(
-            'MATCH(CleanContent_Normalized) AGAINST(? IN BOOLEAN MODE)',
-            [$matchQuery]
-        );
+                $query->whereRaw(
+                    'MATCH(booktoc_hadith.CleanContent_Normalized) AGAINST(? IN BOOLEAN MODE)',
+                    [$matchQuery]
+                );
+            }
+        }
 
         $total = $query->count();
 
         $results = $query->select([
-            'MainID', 'BookID', 'BookName', 'ID', 'PartNum', 'PageNum', 'Tarf', 'CleanContent', 'Annotations', 'ServiceFlags'
+            'booktoc_hadith.MainID',
+            'booktoc_hadith.BookID',
+            'booktoc_hadith.BookName',
+            'booktoc_hadith.ID',
+            'booktoc_hadith.PartNum',
+            'booktoc_hadith.PageNum',
+            'booktoc_hadith.Tarf',
+            'booktoc_hadith.CleanContent',
+            'booktoc_hadith.Annotations',
+            'booktoc_hadith.ServiceFlags'
         ])
             ->skip(($page - 1) * $limit)
             ->take($limit)

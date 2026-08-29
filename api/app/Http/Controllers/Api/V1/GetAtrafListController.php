@@ -39,24 +39,40 @@ class GetAtrafListController extends Controller
         $letter = trim((string) $request->input('letter', ''));
 
         $queryBuilder = $this->hadithModel->newQuery()
-            ->where('IsLeaf', 1)
-            ->whereIn('BookID', $bookIds);
+            ->select('booktoc_hadith.*')
+            ->where('booktoc_hadith.IsLeaf', 1)
+            ->whereIn('booktoc_hadith.BookID', $bookIds);
+
+        $hadithTypes = $request->input('hadith_types');
+        if (is_array($hadithTypes) && count($hadithTypes) > 0) {
+            $queryBuilder->whereExists(function ($q) use ($hadithTypes) {
+                $q->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('hadith_type_map')
+                    ->join('hadith_types', 'hadith_types.id', '=', 'hadith_type_map.type_id')
+                    ->whereColumn('hadith_type_map.hadith_main_id', 'booktoc_hadith.MainID')
+                    ->whereIn('hadith_types.slug', $hadithTypes);
+            });
+        }
 
         if ($letter !== '') {
-            $queryBuilder->whereRaw('normalize_arabic(Tarf) LIKE CONCAT(normalize_arabic(?), \'%\')', [$letter]);
+            $queryBuilder->whereRaw('normalize_arabic(booktoc_hadith.Tarf) LIKE CONCAT(normalize_arabic(?), \'%\')', [$letter]);
         }
 
         if ($query !== '') {
-            $queryBuilder->whereRaw('normalize_arabic(Tarf) LIKE normalize_arabic(?)', ['%'.$query.'%']);
+            $queryBuilder->whereRaw('normalize_arabic(booktoc_hadith.Tarf) LIKE normalize_arabic(?)', ['%'.$query.'%']);
         } else {
-            $queryBuilder->whereNotNull('Tarf')->where('Tarf', '!=', '');
+            $queryBuilder->whereNotNull('booktoc_hadith.Tarf')->where('booktoc_hadith.Tarf', '!=', '');
         }
 
-        $results = $queryBuilder
-            ->limit(50)
-            ->get();
+        $perPage = max(1, min(100, (int) $request->input('per_page', 20)));
+        $page = max(1, (int) $request->input('page', 1));
 
-        $mapped = $results->map(fn (BookTocHadith $h) => [
+        $paginator = $queryBuilder
+            ->orderBy('booktoc_hadith.BookID', 'asc')
+            ->orderBy('booktoc_hadith.ID', 'asc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        $mapped = collect($paginator->items())->map(fn (BookTocHadith $h) => [
             'MainID' => $h->MainID,
             'Text' => $h->Tarf,
             'BookName' => $h->BookName,
@@ -67,6 +83,12 @@ class GetAtrafListController extends Controller
 
         return $this->jsonResponse([
             'results' => $mapped->toArray(),
+            'pagination' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page' => $paginator->lastPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+            ],
         ]);
     }
 }

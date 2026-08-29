@@ -28,6 +28,7 @@ export interface HadithCardProps {
   onToggleBookmark?: (hadith: BaseHadithData) => void;
   onClick?: () => void;
   extraHeaderContent?: React.ReactNode;
+  isServiceBook?: boolean;
 }
 
 const decodeHtmlEntities = (text: string): string => {
@@ -237,6 +238,7 @@ export const HadithCard: React.FC<HadithCardProps> = ({
   onToggleBookmark,
   onClick,
   extraHeaderContent,
+  isServiceBook,
 }) => {
   const [tooltipData, setTooltipData] = useState<{
     type: string;
@@ -343,7 +345,7 @@ export const HadithCard: React.FC<HadithCardProps> = ({
           <span>الجزء {hadith.PartNum}، الصفحة {hadith.PageNum}</span>
         </div>
         <div className="bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded font-mono font-bold text-slate-600 dark:text-slate-300">
-          حديث رقم: {hadith.HadithNum}
+          {isServiceBook ? 'رقم:' : 'حديث رقم:'} {hadith.HadithNum}
         </div>
       </div>
 
@@ -360,9 +362,7 @@ export const HadithCard: React.FC<HadithCardProps> = ({
 
       {/* Footer Actions */}
       <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-4 mt-2 gap-4">
-        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
-          معرّف المتن: #{hadith.MainID}
-        </span>
+        <div className="flex-1" /> {/* Spacer since we removed the Matn ID on the left */}
         
         {onServiceClick && (hadith.ServiceFlags ?? 0) > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 text-xs">

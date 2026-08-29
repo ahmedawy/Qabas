@@ -17,6 +17,7 @@ export function useSearch(allBooks: Book[]) {
   const [searchLoading, setSearchLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [selectedHadithTypes, setSelectedHadithTypes] = useState<string[]>([]);
 
   // Load search history on mount
   useEffect(() => {
@@ -34,11 +35,16 @@ export function useSearch(allBooks: Book[]) {
     query: string,
     bookId: number,
     page: number = 1,
-    onError?: (msg: string | null) => void
+    onError?: (msg: string | null) => void,
+    hadithTypes?: string[]
   ) => {
+    const typesToUse = hadithTypes !== undefined ? hadithTypes : selectedHadithTypes;
     setSearchQuery(query);
     setSearchBookId(bookId);
     setSearchPage(page);
+    if (hadithTypes !== undefined) {
+      setSelectedHadithTypes(hadithTypes);
+    }
     setSearchLoading(true);
     setIsSearching(true);
 
@@ -58,7 +64,7 @@ export function useSearch(allBooks: Book[]) {
       });
     }
 
-    api.search(query, bookId, page, 10)
+    api.search(query, bookId, page, 10, typesToUse)
       .then((data) => {
         setSearchResults(data.results);
         setSearchTotal(data.total);
@@ -102,6 +108,8 @@ export function useSearch(allBooks: Book[]) {
     setIsSearching,
     searchHistory,
     setSearchHistory,
+    selectedHadithTypes,
+    setSelectedHadithTypes,
     handleSearch,
     handleClearHistory,
     handleRemoveHistoryItem,

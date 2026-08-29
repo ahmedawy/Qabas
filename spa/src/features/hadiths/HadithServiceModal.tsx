@@ -64,7 +64,7 @@ const NarratorChainViewer: React.FC<NarratorChainViewerProps> = ({
               onClick={() => onNarratorClick?.(id)}
               className="hover:underline hover:text-emerald-600 dark:hover:text-emerald-400 cursor-pointer"
             >
-              #{id}
+              راوٍ غير معروف
             </button>
           </React.Fragment>
         ))}

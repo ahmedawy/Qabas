@@ -44,9 +44,7 @@ export const BookCard: React.FC<BookCardProps> = ({ book, isSelected, onSelect }
 
       {/* Footer/Action */}
       <div className="book-card-element-8">
-        <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-          معرّف الكتاب: #{book.ID}
-        </span>
+        <div className="flex-1" /> {/* Spacer */}
         <span className="book-card-text-10">
           تصفح الكتاب 
           <svg className="book-card-element-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
